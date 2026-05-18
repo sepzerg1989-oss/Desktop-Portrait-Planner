@@ -3,11 +3,14 @@
     <!-- 拖拽区域 -->
     <div class="drag-region absolute inset-0"></div>
     
-    <!-- 左侧标题 -->
-    <div class="flex items-center space-x-2 relative z-10">
+    <!-- 居中标题 -->
+    <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center space-x-2 pointer-events-none z-10">
       <img src="../../assets/logo.png" class="w-4 h-4 opacity-80" alt="Logo" />
       <span class="text-[10px] uppercase tracking-[0.3em] text-morandi-text/80 font-medium">Portrait Planner</span>
     </div>
+
+    <!-- 左侧占位（以保持原有的 flex 结构） -->
+    <div></div>
 
     <!-- 右侧控制按钮 (Windows/Linux) -->
     <div v-if="!isMac" class="flex items-center h-full relative z-10">
