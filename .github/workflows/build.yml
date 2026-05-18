@@ -1,4 +1,4 @@
-name: Build Multi-Platform
+name: Build macOS
 
 on:
   push:
@@ -6,11 +6,7 @@ on:
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
-    
-    strategy:
-      matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: macos-latest
     
     steps:
     - uses: actions/checkout@v4
@@ -23,37 +19,11 @@ jobs:
     - name: Install Dependencies
       run: npm ci
     
-    - name: Build Windows
-      if: matrix.os == 'windows-latest'
-      run: |
-        set ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-binaries/
-        npm run build:win
-    
     - name: Build macOS
-      if: matrix.os == 'macos-latest'
       run: npm run build
-    
-    - name: Build Linux
-      if: matrix.os == 'ubuntu-latest'
-      run: npm run build
-    
-    - name: Upload Windows Artifact
-      if: matrix.os == 'windows-latest'
-      uses: actions/upload-artifact@v4
-      with:
-        name: windows-build
-        path: dist-release/*.exe
     
     - name: Upload macOS Artifact
-      if: matrix.os == 'macos-latest'
       uses: actions/upload-artifact@v4
       with:
         name: macos-build
         path: dist-release/*.dmg
-    
-    - name: Upload Linux Artifact
-      if: matrix.os == 'ubuntu-latest'
-      uses: actions/upload-artifact@v4
-      with:
-        name: linux-build
-        path: dist-release/*.AppImage
