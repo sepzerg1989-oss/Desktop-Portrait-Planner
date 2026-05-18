@@ -1,0 +1,78 @@
+{
+  "name": "portraitplanner",
+  "private": true,
+  "version": "1.1.0",
+  "type": "module",
+  "main": "dist-electron/main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && electron-builder",
+    "build:win": "set ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-binaries/&& vite build && electron-builder --win",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.9.0",
+    "electron-store": "^11.0.2",
+    "html2canvas": "^1.4.1",
+    "pinia": "^3.0.4",
+    "sharp": "^0.34.5",
+    "suncalc": "^1.9.0",
+    "vue": "^3.5.32",
+    "vue-router": "^5.0.6",
+    "vuedraggable": "^4.1.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.6",
+    "autoprefixer": "^10.5.0",
+    "electron": "^32.0.0",
+    "electron-builder": "^26.8.1",
+    "electron-rebuild": "^3.2.9",
+    "esbuild": "^0.28.0",
+    "postcss": "^8.5.10",
+    "tailwindcss": "^3.4.19",
+    "vite": "^8.0.10",
+    "vite-plugin-electron": "^0.29.1",
+    "vite-plugin-electron-renderer": "^0.14.6"
+  },
+  "build": {
+    "appId": "com.portraitplanner.app",
+    "productName": "Portrait Planner",
+    "icon": "build/icon.ico",
+    "asar": true,
+    "asarUnpack": [
+      "node_modules/better-sqlite3/**",
+      "node_modules/sharp/**"
+    ],
+    "npmRebuild": true,
+    "directories": {
+      "output": "dist-release"
+    },
+    "files": [
+      "dist",
+      "dist-electron"
+    ],
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [
+        "nsis"
+      ],
+      "forceCodeSigning": false,
+      "signAndEditExecutable": true
+    },
+    "mac": {
+      "icon": "src/assets/logo.png",
+      "target": [
+        "dmg"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico"
+    },
+    "electronDownload": {
+      "mirror": "https://npmmirror.com/mirrors/electron/"
+    }
+  }
+}
