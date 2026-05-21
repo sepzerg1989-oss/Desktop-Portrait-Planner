@@ -1,0 +1,6 @@
+{
+  "version": "1.1.0",
+  "changelog": "1. 增加软件自动更新与手动更新功能\n2. 全局设置页面并重构为 Tab 侧边栏布局\n3. 支持数据拖拽导入高速静默合并\n4. 优化国内网络代理环境下网络请求的 TLS 稳定性",
+  "downloadUrl": "https://github.com/sepzerg1989-oss/Desktop-Portrait-Planner/releases/download/v1.1.0/PortraitPlanner_Setup.exe",
+  "macDownloadUrl": "https://github.com/sepzerg1989-oss/Desktop-Portrait-Planner/releases/download/v1.1.0/PortraitPlanner_Mac.dmg"
+}
