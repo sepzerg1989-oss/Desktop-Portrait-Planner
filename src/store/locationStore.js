@@ -81,5 +81,15 @@ export const useLocationStore = defineStore('location', {
         console.error('[locationStore] 删除场地失败:', e)
       }
     },
+
+    /** 批量删除场地 */
+    async removeBatch(ids) {
+      try {
+        await window.electronAPI.deleteLocationsBatch(ids)
+        await this.fetchAll()
+      } catch (e) {
+        console.error('[locationStore] 批量删除场地失败:', e)
+      }
+    },
   },
 })

@@ -9,7 +9,7 @@
         :id="'module-' + module.id"
         class="group transition-all duration-500 py-16 border-t border-black/10 first:border-t-0 first:pt-0"
         :class="[ 
-          store.activeModuleId === module.id ? 'ring-2 ring-morandi-blue ring-offset-8 ring-offset-white' : '',
+          (isEditing && store.activeModuleId === module.id) ? 'ring-2 ring-morandi-blue ring-offset-8 ring-offset-white' : '',
           isEditing ? 'cursor-pointer' : ''
         ]"
         @click="isEditing && store.setActiveModule(module.id)"

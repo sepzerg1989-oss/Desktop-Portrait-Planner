@@ -7,6 +7,8 @@ import fs from 'fs'
 import WorkspaceService from './services/WorkspaceService.js'
 import DatabaseService from './services/DatabaseService.js'
 import ImageService from './services/ImageService.js'
+import ExportService from './services/ExportService.js'
+import UpdateService from './services/UpdateService.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -92,6 +94,14 @@ app.whenReady().then(async () => {
 
   createWindow()
 
+  // 启动 4 秒后延迟执行自动更新检测，避免抢占首屏资源
+  setTimeout(() => {
+    const wins = BrowserWindow.getAllWindows()
+    if (wins.length > 0) {
+      UpdateService.autoCheck(wins[0])
+    }
+  }, 4000)
+
   // 隐藏默认菜单
   Menu.setApplicationMenu(null)
 
@@ -146,6 +156,15 @@ ipcMain.handle('db:models:delete', async (event, id) => {
   return result
 })
 
+ipcMain.handle('db:models:deleteBatch', async (event, ids) => {
+  const result = DatabaseService.deleteBatch('models', ids)
+  if (result.success) {
+    Promise.all(ids.map(id => ImageService.deleteEntityFolder(`models/${id}`)))
+      .catch(e => console.error('[main] 批量删除模特图片目录失败:', e))
+  }
+  return result
+})
+
 // --- 场地库 CRUD ---
 ipcMain.handle('db:locations:getAll', () => {
   return DatabaseService.getAll('locations')
@@ -163,6 +182,15 @@ ipcMain.handle('db:locations:delete', async (event, id) => {
   const result = DatabaseService.delete('locations', id)
   if (result.success) {
     await ImageService.deleteEntityFolder(`locations/${id}`)
+  }
+  return result
+})
+
+ipcMain.handle('db:locations:deleteBatch', async (event, ids) => {
+  const result = DatabaseService.deleteBatch('locations', ids)
+  if (result.success) {
+    Promise.all(ids.map(id => ImageService.deleteEntityFolder(`locations/${id}`)))
+      .catch(e => console.error('[main] 批量删除场地图片目录失败:', e))
   }
   return result
 })
@@ -205,6 +233,15 @@ ipcMain.handle('db:plans:delete', async (event, id) => {
   const result = DatabaseService.delete('plans', id)
   if (result.success) {
     await ImageService.deleteEntityFolder(`plans/${id}`)
+  }
+  return result
+})
+
+ipcMain.handle('db:plans:deleteBatch', async (event, ids) => {
+  const result = DatabaseService.deleteBatch('plans', ids)
+  if (result.success) {
+    Promise.all(ids.map(id => ImageService.deleteEntityFolder(`plans/${id}`)))
+      .catch(e => console.error('[main] 批量删除策划图片目录失败:', e))
   }
   return result
 })
@@ -265,7 +302,16 @@ ipcMain.handle('image:cleanupTempFolder', async (event, category) => {
   return await ImageService.deleteEntityFolder(category)
 })
 
-// --- 导出功能 ---
+// --- 导出与导入功能 ---
+ipcMain.handle('system:exportData', async (event, ids) => {
+  const win = BrowserWindow.fromWebContents(event.sender)
+  return await ExportService.exportData(ids, win)
+})
+
+ipcMain.handle('system:importData', async (event, filePath) => {
+  const win = BrowserWindow.fromWebContents(event.sender)
+  return await ExportService.importData(win, filePath)
+})
 ipcMain.handle('system:exportImage', async (event, dataUrl, defaultName) => {
   const win = BrowserWindow.fromWebContents(event.sender)
   const result = await dialog.showSaveDialog(win, {
@@ -310,6 +356,14 @@ ipcMain.on('window-toggle-maximize', (event) => {
 ipcMain.on('window-close', (event) => {
   const win = BrowserWindow.fromWebContents(event.sender)
   win.close()
+})
+
+// --- 自动与手动更新 ---
+ipcMain.handle('update:check', () => UpdateService.manualCheck())
+ipcMain.handle('update:ignore', (event, version) => UpdateService.ignoreVersion(version))
+ipcMain.handle('update:download', (event, url) => {
+  const win = BrowserWindow.fromWebContents(event.sender)
+  return UpdateService.startDownloadAndInstall(url, win)
 })
 
 // ==================== 辅助函数 ====================

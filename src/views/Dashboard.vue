@@ -1,13 +1,50 @@
 <template>
   <div class="h-full overflow-y-auto px-12 py-10">
-    <div class="flex justify-between items-end mb-12">
+    <div class="flex flex-col md:flex-row justify-between items-stretch md:items-end gap-6 mb-12">
       <div>
         <h1 class="text-4xl font-serif text-morandi-text/90 mb-2 tracking-[0.1em]">我的策划</h1>
         <p class="text-morandi-muted text-[10px] tracking-[0.3em] uppercase">All Plans / Moodboards</p>
       </div>
-      <div class="flex items-center">
+      <div class="flex flex-wrap items-center gap-4">
+        <!-- 搜索策划案 -->
+        <input 
+          v-model="searchQuery"
+          type="text" 
+          placeholder="搜索策划案..." 
+          class="px-4 py-2 border border-black/10 bg-transparent outline-none focus:border-morandi-text text-xs min-w-[200px] transition-colors"
+        />
+
+        <!-- 排序下拉框 -->
+        <div class="relative w-[90px]">
+          <select 
+            v-model="selectedSort"
+            class="w-full px-3 py-2 border border-black/10 bg-transparent outline-none focus:border-morandi-text text-xs transition-colors font-sans appearance-none cursor-pointer text-morandi-text"
+          >
+            <option value="modified">最近修改</option>
+            <option value="created">最近创建</option>
+            <option value="title">标题升序</option>
+          </select>
+          <div class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-morandi-muted text-[10px]">
+            ▼
+          </div>
+        </div>
+
+        <!-- 批量管理按钮 -->
+        <button 
+          v-if="store.plans.length > 0"
+          @click="isManageMode = !isManageMode"
+          :class="[
+            'px-6 py-2 text-xs uppercase tracking-wider transition-colors border',
+            isManageMode 
+              ? 'bg-[#A34A4A] text-white border-transparent' 
+              : 'border-morandi-text text-morandi-text hover:bg-morandi-canvas'
+          ]"
+        >
+          {{ isManageMode ? '取消管理' : '批量管理' }}
+        </button>
+
         <!-- 组合式新建按钮 (Split Button) -->
-        <div class="flex items-stretch shadow-sm">
+        <div v-if="!isManageMode" class="flex items-stretch shadow-sm">
           <!-- 主动作：新建空策划 -->
           <button 
             @click="createNewPlan"
@@ -49,7 +86,7 @@
 
     <!-- 加载状态 -->
     <div v-if="store.loading" class="flex justify-center items-center py-20">
-      <p class="text-morandi-muted text-sm uppercase tracking-widest">Loading...</p>
+      <p class="text-morandi-muted text-sm uppercase tracking-widest animate-pulse">Loading...</p>
     </div>
 
     <!-- 空状态 -->
@@ -67,10 +104,25 @@
     <!-- 画册式网格布局 (优化为一行六列卡片式设计) -->
     <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
       <div 
-        v-for="plan in store.plans" :key="plan.id" 
-        class="group cursor-pointer bg-white border border-black/5 p-3 hover:shadow-xl hover:-translate-y-1 transition-all duration-500"
-        @click="openPlan(plan)"
+        v-for="plan in filteredPlans" :key="plan.id" 
+        class="group relative cursor-pointer bg-white border p-3 hover:shadow-xl hover:-translate-y-1 transition-all duration-500"
+        :class="[
+          selectedIds.includes(plan.id) ? 'border-[#8B9D8B] bg-[#8B9D8B]/5 shadow-lg' : 'border-black/5',
+          isManageMode ? 'scale-[0.98]' : ''
+        ]"
+        @click="handleCardClick(plan)"
       >
+        <!-- 批量勾选小复选框 -->
+        <div 
+          v-if="isManageMode" 
+          class="absolute top-4 left-4 z-10 w-5 h-5 border rounded flex items-center justify-center transition-colors"
+          :class="selectedIds.includes(plan.id) ? 'border-[#8B9D8B] bg-[#8B9D8B]' : 'border-black/20 bg-white'"
+        >
+          <svg v-if="selectedIds.includes(plan.id)" class="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+
         <div class="relative overflow-hidden aspect-square bg-morandi-canvas mb-4">
           <!-- 封面图：提取主题模块第一张图 -->
           <img v-if="getPlanCover(plan)" :src="getPlanCover(plan)" alt="Cover" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
@@ -79,11 +131,21 @@
           </div>
         </div>
         <div class="px-1 pb-1">
-          <h2 class="font-serif text-sm text-morandi-text mb-1 truncate group-hover:text-morandi-blue transition-colors">{{ plan.title }}</h2>
+          <h2 class="font-sans text-sm text-morandi-text mb-1 truncate group-hover:text-morandi-blue transition-colors">{{ plan.title }}</h2>
           <p class="text-[10px] text-morandi-muted uppercase tracking-widest">{{ formatDate(plan.created_at) }}</p>
         </div>
       </div>
     </div>
+
+    <!-- 底部批量管理悬浮操作栏 -->
+    <BatchActionBar 
+      :show="isManageMode"
+      :selected-count="selectedIds.length"
+      :is-all-selected="isAllSelected"
+      @toggle-all="toggleAll"
+      @cancel="cancelManageMode"
+      @delete="executeBatchDelete"
+    />
 
     <!-- 自定义精美弹窗 (Morandi Style Modal) -->
     <transition name="fade">
@@ -127,17 +189,61 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { usePlanStore } from '../store/planStore'
 import { useModal } from '../composables/useModal'
+import BatchActionBar from '../components/common/BatchActionBar.vue'
 
 const router = useRouter()
 const store = usePlanStore()
 const showTemplateMenu = ref(false)
 
+// 批量管理状态
+const isManageMode = ref(false)
+const selectedIds = ref([])
+const searchQuery = ref('')
+const selectedSort = ref('modified')
+
 // 弹窗状态管理（复用 composable）
 const { modal, showModal, closeModal, handleModalConfirm } = useModal()
+
+// 过滤与多维排序后的策划案列表
+const filteredPlans = computed(() => {
+  let list = [...store.plans]
+  
+  // 1. 过滤
+  if (searchQuery.value.trim()) {
+    const q = searchQuery.value.toLowerCase()
+    list = list.filter(plan => 
+      plan.title.toLowerCase().includes(q)
+    )
+  }
+  
+  // 2. 排序
+  list.sort((a, b) => {
+    if (selectedSort.value === 'modified') {
+      const timeA = new Date(a.updated_at || a.created_at).getTime()
+      const timeB = new Date(b.updated_at || b.created_at).getTime()
+      return timeB - timeA
+    } else if (selectedSort.value === 'created') {
+      const timeA = new Date(a.created_at).getTime()
+      const timeB = new Date(b.created_at).getTime()
+      return timeB - timeA
+    } else if (selectedSort.value === 'title') {
+      return (a.title || '').localeCompare(b.title || '', 'zh-CN')
+    }
+    return 0
+  })
+  
+  return list
+})
+
+// 是否已全部选中当前过滤策划案
+const isAllSelected = computed(() => {
+  if (filteredPlans.value.length === 0) return false
+  return filteredPlans.value.every(plan => selectedIds.value.includes(plan.id))
+})
 
 // 页面加载时拉取策划案列表和模板列表
 onMounted(async () => {
@@ -146,6 +252,56 @@ onMounted(async () => {
     store.fetchTemplates(),
   ])
 })
+
+// 全选/反选当前过滤的策划案
+const toggleAll = () => {
+  if (isAllSelected.value) {
+    selectedIds.value = selectedIds.value.filter(id => 
+      !filteredPlans.value.some(p => p.id === id)
+    )
+  } else {
+    filteredPlans.value.forEach(plan => {
+      if (!selectedIds.value.includes(plan.id)) {
+        selectedIds.value.push(plan.id)
+      }
+    })
+  }
+}
+
+// 拦截式卡片点击逻辑 (方案 A)
+const handleCardClick = (plan) => {
+  if (isManageMode.value) {
+    const idx = selectedIds.value.indexOf(plan.id)
+    if (idx === -1) {
+      selectedIds.value.push(plan.id)
+    } else {
+      selectedIds.value.splice(idx, 1)
+    }
+  } else {
+    openPlan(plan)
+  }
+}
+
+// 执行批量删除
+const executeBatchDelete = () => {
+  if (selectedIds.value.length === 0) return
+  showModal({
+    title: '批量删除确认',
+    message: `确定要删除这 ${selectedIds.value.length} 个策划案吗？此操作将永久物理销毁所选策划案的所有本地图片，且无法撤销！`,
+    type: 'confirm',
+    onConfirm: async () => {
+      await store.deletePlansBatch(selectedIds.value)
+      selectedIds.value = []
+      isManageMode.value = false
+    }
+  })
+}
+
+// 取消管理模式
+const cancelManageMode = () => {
+  isManageMode.value = false
+  selectedIds.value = []
+}
 
 /** 新建空策划案并跳转到编辑器 (自动进入编辑模式) */
 const createNewPlan = () => {

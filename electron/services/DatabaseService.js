@@ -149,6 +149,19 @@ class DatabaseService {
     return { success: true }
   }
 
+  /** 批量删除记录 (使用 SQLite 事务) */
+  deleteBatch(table, ids) {
+    this._validateTable(table)
+    const stmt = this.db.prepare(`DELETE FROM ${table} WHERE id = ?`)
+    const deleteTx = this.db.transaction((targetIds) => {
+      for (const id of targetIds) {
+        stmt.run(id)
+      }
+    })
+    deleteTx(ids)
+    return { success: true }
+  }
+
   // ==================== 策划案业务方法 ====================
 
   /** 保存策划案 (含更新时间戳) */

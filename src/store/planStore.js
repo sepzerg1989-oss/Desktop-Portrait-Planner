@@ -66,6 +66,16 @@ export const usePlanStore = defineStore('plan', {
       }
     },
 
+    /** 批量删除策划案 */
+    async deletePlansBatch(ids) {
+      try {
+        await window.electronAPI.deletePlansBatch(ids)
+        await this.fetchPlans()
+      } catch (e) {
+        console.error('[planStore] 批量删除策划案失败:', e)
+      }
+    },
+
     // ==================== 当前编辑中的策划案 ====================
 
     /** 加载指定策划案到编辑器 */

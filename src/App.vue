@@ -3,6 +3,7 @@ import { useRoute } from 'vue-router'
 import { ref, onMounted } from 'vue'
 import TopHeader from './components/TopHeader.vue'
 import TitleBar from './components/common/TitleBar.vue'
+import UpdatePromptModal from './components/common/UpdatePromptModal.vue'
 
 const route = useRoute()
 const isMac = ref(false)
@@ -27,6 +28,9 @@ onMounted(() => {
         </transition>
       </router-view>
     </main>
+
+    <!-- 自动更新弹窗组件 -->
+    <UpdatePromptModal />
   </div>
 </template>
 

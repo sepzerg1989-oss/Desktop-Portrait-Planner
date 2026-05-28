@@ -127,6 +127,9 @@ const locationStore = useLocationStore()
 
 const activeModule = computed(() => store.activeModule)
 
+const showModelLibrary = ref(false)
+const showLocationLibrary = ref(false)
+
 const sanitize = (name) => {
   return (name || '').replace(/[\\\/:\*\?"<>\|]/g, '_').trim() || 'unnamed'
 }
@@ -140,6 +143,10 @@ const formData = ref({})
 // 当选中不同模块时，重置表单数据
 watch(activeModule, (newVal, oldVal) => {
   if (newVal?.id === oldVal?.id && oldVal !== undefined) return
+
+  // 核心修复：一旦切换模块，立即关闭所有仍处于开启状态的素材库选择弹窗，杜绝数据越界错位注入
+  showModelLibrary.value = false
+  showLocationLibrary.value = false
 
   if (newVal) {
     formData.value = JSON.parse(JSON.stringify(newVal.data)) // 使用深拷贝防止引用干扰
@@ -176,8 +183,6 @@ watch(formData, (newVal) => {
 }, { deep: true })
 
 // ==================== 模特库联动 ====================
-const showModelLibrary = ref(false)
-
 const toggleModelLibrary = async () => {
   if (!showModelLibrary.value) {
     await modelStore.fetchAll()
@@ -231,8 +236,6 @@ const saveToLibrary = async () => {
 }
 
 // ==================== 场地库联动 ====================
-const showLocationLibrary = ref(false)
-
 const toggleLocationLibrary = async () => {
   if (!showLocationLibrary.value) {
     await locationStore.fetchAll()

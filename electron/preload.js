@@ -8,12 +8,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   createModel: (data) => ipcRenderer.invoke('db:models:create', data),
   updateModel: (id, data) => ipcRenderer.invoke('db:models:update', id, data),
   deleteModel: (id) => ipcRenderer.invoke('db:models:delete', id),
+  deleteModelsBatch: (ids) => ipcRenderer.invoke('db:models:deleteBatch', ids),
 
   // ==================== 场地库 CRUD ====================
   getLocations: () => ipcRenderer.invoke('db:locations:getAll'),
   createLocation: (data) => ipcRenderer.invoke('db:locations:create', data),
   updateLocation: (id, data) => ipcRenderer.invoke('db:locations:update', id, data),
   deleteLocation: (id) => ipcRenderer.invoke('db:locations:delete', id),
+  deleteLocationsBatch: (ids) => ipcRenderer.invoke('db:locations:deleteBatch', ids),
 
   // ==================== 策划案 CRUD ====================
   getPlans: () => ipcRenderer.invoke('db:plans:getAll'),
@@ -22,6 +24,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getPlanById: (id) => ipcRenderer.invoke('db:plans:getById', id),
   savePlan: (id, data) => ipcRenderer.invoke('db:plans:save', id, data),
   deletePlan: (id) => ipcRenderer.invoke('db:plans:delete', id),
+  deletePlansBatch: (ids) => ipcRenderer.invoke('db:plans:deleteBatch', ids),
 
   // ==================== 模板 ====================
   getTemplates: () => ipcRenderer.invoke('db:templates:getAll'),
@@ -43,13 +46,30 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   getFilePath: (file) => webUtils.getPathForFile(file),
 
-  // ==================== 导出功能 ====================
+  // ==================== 导出与导入功能 ====================
   exportImage: (dataUrl, fileName) => ipcRenderer.invoke('system:exportImage', dataUrl, fileName),
+  exportData: (ids) => ipcRenderer.invoke('system:exportData', ids),
+  importData: (filePath) => ipcRenderer.invoke('system:importData', filePath),
 
   // ==================== 工作区管理 ====================
   workspace: {
     getPath: () => ipcRenderer.invoke('workspace:getPath'),
     selectAndSet: () => ipcRenderer.invoke('workspace:selectAndSet')
+  },
+
+  // ==================== 自动与手动更新 ====================
+  checkUpdate: () => ipcRenderer.invoke('update:check'),
+  ignoreVersion: (ver) => ipcRenderer.invoke('update:ignore', ver),
+  startDownload: (url) => ipcRenderer.invoke('update:download', url),
+  onDownloadProgress: (callback) => {
+    const listener = (e, val) => callback(val)
+    ipcRenderer.on('update:download-progress', listener)
+    return () => ipcRenderer.removeListener('update:download-progress', listener)
+  },
+  onUpdateAvailable: (callback) => {
+    const listener = (e, data) => callback(data)
+    ipcRenderer.on('update:available', listener)
+    return () => ipcRenderer.removeListener('update:available', listener)
   },
 
   // ==================== 窗口控制 ====================

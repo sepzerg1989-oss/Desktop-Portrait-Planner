@@ -86,5 +86,15 @@ export const useModelStore = defineStore('model', {
         console.error('[modelStore] 删除模特失败:', e)
       }
     },
+
+    /** 批量删除模特 */
+    async removeBatch(ids) {
+      try {
+        await window.electronAPI.deleteModelsBatch(ids)
+        await this.fetchAll()
+      } catch (e) {
+        console.error('[modelStore] 批量删除模特失败:', e)
+      }
+    },
   },
 })

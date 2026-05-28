@@ -54,6 +54,8 @@ onMounted(() => {
     return
   }
 
+  store.setActiveModule(null) // 每次进入初始化清除选中状态
+
   if (route.query.mode === 'edit') {
     isEditing.value = true
   }
@@ -67,6 +69,7 @@ const toggleEdit = () => {
 const finishEditing = async () => {
   autoSave.cancel()
   await store.savePlan()
+  store.setActiveModule(null) // 完成编辑后重置选中状态
   isEditing.value = false
 }
 

@@ -1,17 +1,49 @@
 <template>
   <div class="h-full overflow-y-auto px-12 py-10 relative">
-    <div class="flex justify-between items-end mb-12">
+    <div class="flex flex-col md:flex-row justify-between items-stretch md:items-end gap-6 mb-12">
       <div>
         <h1 class="text-4xl font-serif text-morandi-text/90 mb-2 tracking-[0.1em]">模特素材库</h1>
         <p class="text-morandi-muted text-[10px] tracking-[0.3em] uppercase">Model Library / Collection</p>
       </div>
-      <button 
-        @click="openCreateDrawer"
-        class="px-6 py-2 border border-morandi-text text-morandi-text text-sm uppercase tracking-wider hover:bg-morandi-text hover:text-white transition-colors"
-      >
-        + 新建模特
-      </button>
+      <div class="flex flex-wrap items-center gap-3">
+        <!-- 高级检索过滤面板 (同行内联) -->
+        <FilterPanel 
+          v-if="modelStore.models.length > 0 && !isManageMode"
+          v-model:searchQuery="searchQuery"
+          v-model:selectedRegion="selectedRegion"
+          v-model:selectedTags="selectedTags"
+          v-model:selectedSort="selectedSort"
+          :sortOptions="modelSortOptions"
+          :regions="regions"
+          :tags="allTags"
+          @reset="resetFilters"
+        />
+
+        <!-- 批量管理 -->
+        <button 
+          v-if="modelStore.models.length > 0"
+          @click="isManageMode = !isManageMode"
+          :class="[
+            'px-6 py-2 text-xs uppercase tracking-wider transition-colors border',
+            isManageMode 
+              ? 'bg-[#A34A4A] text-white border-transparent' 
+              : 'border-morandi-text text-morandi-text hover:bg-morandi-canvas'
+          ]"
+        >
+          {{ isManageMode ? '取消管理' : '批量管理' }}
+        </button>
+
+        <button 
+          v-if="!isManageMode"
+          @click="openCreateDrawer"
+          class="px-6 py-2 bg-morandi-text text-white text-sm uppercase tracking-wider hover:bg-black transition-colors"
+        >
+          + 新建模特
+        </button>
+      </div>
     </div>
+
+
 
     <!-- 加载状态 -->
     <div v-if="modelStore.loading" class="flex justify-center items-center py-20">
@@ -33,17 +65,32 @@
     <!-- 模特卡片墙 -->
     <div v-else class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-8">
       <div 
-        v-for="model in modelStore.models" :key="model.id" 
-        class="group cursor-pointer bg-white border border-black/5 p-4 hover:shadow-xl transition-all duration-300"
-        @click="openViewDrawer(model)"
+        v-for="model in filteredModels" :key="model.id" 
+        class="group relative cursor-pointer bg-white border p-4 hover:shadow-xl transition-all duration-300"
+        :class="[
+          selectedIds.includes(model.id) ? 'border-[#8B9D8B] bg-[#8B9D8B]/5 shadow-lg' : 'border-black/5',
+          isManageMode ? 'scale-[0.98]' : ''
+        ]"
+        @click="handleCardClick(model)"
       >
+        <!-- 批量管理勾选框 -->
+        <div 
+          v-if="isManageMode" 
+          class="absolute top-4 left-4 z-10 w-5 h-5 border rounded flex items-center justify-center transition-colors"
+          :class="selectedIds.includes(model.id) ? 'border-[#8B9D8B] bg-[#8B9D8B]' : 'border-black/20 bg-white'"
+        >
+          <svg v-if="selectedIds.includes(model.id)" class="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+
         <div class="aspect-square overflow-hidden bg-black/5 mb-4">
           <img v-if="model.avatarURL" :src="model.avatarURL" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
           <div v-else class="w-full h-full flex items-center justify-center text-morandi-muted/30 text-5xl font-serif">
             {{ model.name?.charAt(0) || '?' }}
           </div>
         </div>
-        <h2 class="font-serif text-xl text-morandi-text text-center mb-1">{{ model.name }}</h2>
+        <h2 class="font-sans text-base text-morandi-text text-center mb-1 font-medium">{{ model.name }}</h2>
         <div class="flex justify-center flex-wrap gap-2 mt-3">
           <span v-for="tag in model.tags" :key="tag" class="px-2 py-1 text-[10px] uppercase tracking-wider bg-morandi-canvas text-morandi-text">
             {{ tag }}
@@ -51,6 +98,16 @@
         </div>
       </div>
     </div>
+
+    <!-- 底部批量管理悬浮操作栏 -->
+    <BatchActionBar 
+      :show="isManageMode"
+      :selected-count="selectedIds.length"
+      :is-all-selected="isAllSelected"
+      @toggle-all="toggleAll"
+      @cancel="cancelManageMode"
+      @delete="executeBatchDelete"
+    />
 
     <!-- 抽屉组件 -->
     <ResourceDrawer 
@@ -142,6 +199,8 @@ import ResourceDrawer from '../components/ResourceDrawer.vue'
 import ConfirmModal from '../components/ConfirmModal.vue'
 import ModelView from '../components/Models/ModelView.vue'
 import ModelForm from '../components/Models/ModelForm.vue'
+import FilterPanel from '../components/common/FilterPanel.vue'
+import BatchActionBar from '../components/common/BatchActionBar.vue'
 import { useModelStore } from '../store/modelStore'
 
 const modelStore = useModelStore()
@@ -151,6 +210,90 @@ const editingId = ref(null)
 const tempId = ref(null) // 用于暂存未保存模特的文件目录 ID
 const initialFolderName = ref('') // 会话开始时的文件夹名称
 const previewUrl = ref(null)
+
+// 筛选与批量状态
+const searchQuery = ref('')
+const selectedRegion = ref('')
+const selectedTags = ref([])
+const isManageMode = ref(false)
+const selectedIds = ref([])
+const selectedSort = ref('recently_added')
+
+const modelSortOptions = [
+  { value: 'recently_added', label: '最近添加' },
+  { value: 'name_pinyin', label: '姓名排序' },
+  { value: 'price_asc', label: '价格升序' },
+  { value: 'price_desc', label: '价格降序' }
+]
+
+// 从数据中自动提取地区
+const regions = computed(() => {
+  const all = modelStore.models.map(m => m.region).filter(Boolean)
+  return [...new Set(all)]
+})
+
+// 从数据中自动提取所有标签
+const allTags = computed(() => {
+  const tags = modelStore.models.flatMap(m => m.tags || []).filter(Boolean)
+  return [...new Set(tags)]
+})
+
+// 辅助函数：从混合文本中智能抓取数值用于价格精准排序，无数值者归为最底端
+const parseNumericPrice = (priceStr) => {
+  if (!priceStr) return 0
+  const match = String(priceStr).match(/(\d+(\.\d+)?)/)
+  return match ? parseFloat(match[1]) : 0
+}
+
+// 实时响应式多维检索与智能排序
+const filteredModels = computed(() => {
+  // 1. 过滤
+  let list = modelStore.models.filter(m => {
+    const matchesSearch = !searchQuery.value.trim() || 
+      m.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+      m.tags.some(t => t.toLowerCase().includes(searchQuery.value.toLowerCase())) ||
+      (m.social && m.social.toLowerCase().includes(searchQuery.value.toLowerCase()))
+    
+    const matchesRegion = !selectedRegion.value || m.region === selectedRegion.value
+    
+    const matchesTags = selectedTags.value.length === 0 || 
+      selectedTags.value.every(t => m.tags.includes(t))
+      
+    return matchesSearch && matchesRegion && matchesTags
+  })
+
+  // 2. 排序
+  list.sort((a, b) => {
+    if (selectedSort.value === 'recently_added') {
+      const timeA = new Date(a.created_at).getTime()
+      const timeB = new Date(b.created_at).getTime()
+      return timeB - timeA
+    } else if (selectedSort.value === 'name_pinyin') {
+      return (a.name || '').localeCompare(b.name || '', 'zh-CN')
+    } else if (selectedSort.value === 'price_asc') {
+      const pA = parseNumericPrice(a.price)
+      const pB = parseNumericPrice(b.price)
+      if (pA === 0 && pB > 0) return 1
+      if (pB === 0 && pA > 0) return -1
+      return pA - pB
+    } else if (selectedSort.value === 'price_desc') {
+      const pA = parseNumericPrice(a.price)
+      const pB = parseNumericPrice(b.price)
+      if (pA === 0 && pB > 0) return 1
+      if (pB === 0 && pA > 0) return -1
+      return pB - pA
+    }
+    return 0
+  })
+
+  return list
+})
+
+// 判断是否已全部选中当前过滤出的模特
+const isAllSelected = computed(() => {
+  if (filteredModels.value.length === 0) return false
+  return filteredModels.value.every(m => selectedIds.value.includes(m.id))
+})
 
 const sanitize = (name) => {
   return (name || '').replace(/[\\\/:\*\?"<>\|]/g, '_').trim() || 'unnamed'
@@ -213,6 +356,71 @@ onMounted(async () => {
   await modelStore.fetchAll()
   await refreshImages()
 })
+
+const resetFilters = () => {
+  searchQuery.value = ''
+  selectedRegion.value = ''
+  selectedTags.value = []
+  selectedSort.value = 'recently_added'
+}
+
+// 拦截式卡片点击逻辑 (方案 A)
+const handleCardClick = (model) => {
+  if (isManageMode.value) {
+    const idx = selectedIds.value.indexOf(model.id)
+    if (idx === -1) {
+      selectedIds.value.push(model.id)
+    } else {
+      selectedIds.value.splice(idx, 1)
+    }
+  } else {
+    openViewDrawer(model)
+  }
+}
+
+// 全选当前过滤模特
+const toggleAll = () => {
+  if (isAllSelected.value) {
+    selectedIds.value = selectedIds.value.filter(id => 
+      !filteredModels.value.some(m => m.id === id)
+    )
+  } else {
+    filteredModels.value.forEach(model => {
+      if (!selectedIds.value.includes(model.id)) {
+        selectedIds.value.push(model.id)
+      }
+    })
+  }
+}
+
+// 执行批量删除
+const executeBatchDelete = () => {
+  if (selectedIds.value.length === 0) return
+  confirmMessage.value = `确定要批量删除选中的 ${selectedIds.value.length} 名模特吗？此操作将永久物理删除所有选定模特的作品集及图片，且无法撤销！`
+  isConfirmOpen.value = true
+}
+
+const executeDelete = async () => {
+  if (isManageMode.value) {
+    // 执行批量删除
+    await modelStore.removeBatch(selectedIds.value)
+    selectedIds.value = []
+    isManageMode.value = false
+    await refreshImages()
+    isConfirmOpen.value = false
+  } else if (currentModel.value) {
+    // 执行单条删除
+    await modelStore.remove(currentModel.value.id)
+    await refreshImages()
+    isConfirmOpen.value = false
+    isDrawerOpen.value = false
+  }
+}
+
+const cancelManageMode = () => {
+  isManageMode.value = false
+  selectedIds.value = []
+}
 
 const resetForm = () => {
   formData.name = ''
@@ -280,15 +488,6 @@ const confirmDelete = async () => {
   if (!currentModel.value) return
   confirmMessage.value = `确定要从模特库中删除 "${currentModel.value.name}" 吗？此操作不可撤销。`
   isConfirmOpen.value = true
-}
-
-const executeDelete = async () => {
-  if (currentModel.value) {
-    await modelStore.remove(currentModel.value.id)
-    await refreshImages()
-    isConfirmOpen.value = false
-    isDrawerOpen.value = false
-  }
 }
 
 const closeDrawer = async () => {
