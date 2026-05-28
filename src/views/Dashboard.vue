@@ -70,13 +70,26 @@
             <transition name="fade-pop-down">
               <div v-if="showTemplateMenu" class="absolute right-0 top-full mt-2 bg-white border border-black/5 shadow-2xl z-20 min-w-[220px] py-2 animate-in fade-in slide-in-from-top-2 duration-200">
                 <div class="px-4 py-2 text-[10px] text-morandi-muted uppercase tracking-widest border-b border-black/5 mb-1">选择模板</div>
-                <button 
+                <div 
                   v-for="tpl in store.templates" :key="tpl.id"
-                  @click="createFromTemplate(tpl)"
-                  class="w-full text-left px-4 py-3 text-sm text-morandi-text hover:bg-morandi-canvas transition-colors"
+                  class="group flex items-center justify-between px-4 py-1.5 hover:bg-morandi-canvas transition-colors"
                 >
-                  {{ tpl.name }}
-                </button>
+                  <button 
+                    @click="createFromTemplate(tpl)"
+                    class="flex-1 text-left py-2 text-sm text-morandi-text outline-none truncate"
+                  >
+                    {{ tpl.name }}
+                  </button>
+                  <button 
+                    @click.stop="handleDeleteTemplate(tpl)"
+                    class="p-2 text-morandi-muted hover:text-[#A34A4A] transition-colors rounded opacity-0 group-hover:opacity-100 focus:opacity-100"
+                    title="删除该预设"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
               </div>
             </transition>
           </div>
@@ -346,6 +359,19 @@ const createFromTemplate = (template) => {
 const openPlan = async (plan) => {
   await store.loadPlan(plan.id)
   router.push('/editor')
+}
+
+/** 删除指定模板 */
+const handleDeleteTemplate = (template) => {
+  showTemplateMenu.value = false
+  showModal({
+    title: '确认删除预设',
+    message: `确定要删除模板配置 "${template.name}" 吗？此操作无法撤销。`,
+    type: 'confirm',
+    onConfirm: async () => {
+      await store.deleteTemplate(template.id)
+    }
+  })
 }
 
 /** 格式化日期显示 */
