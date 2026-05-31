@@ -14,13 +14,13 @@
       </div>
       
       <div class="flex-1 pl-8">
-        <h2 class="text-4xl font-serif text-morandi-text mb-4">{{ model?.name }}</h2>
-        <div v-if="model?.tags && model.tags.length > 0" class="text-[10px] text-morandi-muted uppercase tracking-[0.2em] mt-2 mb-6 select-none">
+        <h2 class="text-luxury-title-lg text-morandi-text mb-4">{{ model?.name }}</h2>
+        <div v-if="model?.tags && model.tags.length > 0" class="text-luxury-meta-lg text-morandi-muted mt-2 mb-6 select-none">
           <span v-for="(tag, index) in model.tags" :key="tag">
-            {{ tag }}<span v-if="index < model.tags.length - 1" class="mx-2">·</span>
+            <span class="text-morandi-text">{{ tag }}</span><span v-if="index < model.tags.length - 1" class="mx-3 text-morandi-muted/30">·</span>
           </span>
         </div>
-        <div class="space-y-3 text-sm text-morandi-muted/80">
+        <div class="space-y-3 text-luxury-body text-morandi-muted/80">
           <p v-if="model?.region" class="flex items-center">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-morandi-muted/70 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -32,7 +32,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-morandi-muted/70 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            {{ model.price }} /h
+            <span class="text-luxury-num">{{ model.price }}</span>/h
           </p>
           <p v-if="model?.social" class="flex items-center">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-morandi-muted/70 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -46,7 +46,7 @@
 
     <!-- 中部：模卡 (一整行) -->
     <div v-if="model?.modelCardURL" class="space-y-4">
-      <h3 class="text-[10px] uppercase tracking-[0.3em] text-morandi-muted border-b border-black/5 pb-2 font-bold">模特卡 / MODEL CARD</h3>
+      <h3 class="text-luxury-meta-sm text-morandi-muted border-b border-black/5 pb-2 font-bold">模特卡 / MODEL CARD</h3>
       <div class="cursor-zoom-in overflow-hidden shadow-md" @click="$emit('preview', model.modelCardURL)">
         <img :src="model.modelCardURL" class="w-full h-auto block" />
       </div>
@@ -54,7 +54,7 @@
 
     <!-- 下部：照片库 (两列) -->
     <div v-if="model?.images?.length">
-      <h3 class="text-[10px] uppercase tracking-[0.3em] text-morandi-muted mb-4 border-b border-black/5 pb-2 font-bold">作品照片 / GALLERY</h3>
+      <h3 class="text-luxury-meta-sm text-morandi-muted mb-4 border-b border-black/5 pb-2 font-bold">作品照片 / GALLERY</h3>
       <div class="space-y-3">
          <div v-for="(row, rowIdx) in chunkArray(model.images, 2)" :key="rowIdx" class="flex gap-3 items-start">
            <div 

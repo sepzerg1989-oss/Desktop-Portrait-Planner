@@ -1,12 +1,12 @@
 <template>
   <div class="mb-0">
-    <h3 class="text-[10px] uppercase tracking-[0.3em] text-morandi-muted mb-8 font-bold text-center">拍摄时间 / SCHEDULE</h3>
+    <h3 class="text-luxury-meta-sm text-morandi-muted mb-8 font-bold text-center">拍摄时间 / SCHEDULE</h3>
     
     <div v-if="module.data.date || module.data.startTime" class="text-center mb-8 select-none">
-      <h2 class="text-6xl font-sans font-medium text-morandi-text tracking-tight mb-4">
+      <h2 class="text-5xl md:text-6xl font-sans font-light text-luxury-num text-morandi-text tracking-tight mb-4">
         {{ formatDate(module.data.date) }}
       </h2>
-      <p class="text-xl text-morandi-text/80 font-sans tracking-[0.1em] flex items-center justify-center gap-4">
+      <p class="text-lg md:text-xl text-morandi-text/80 text-luxury-num tracking-[0.15em] flex items-center justify-center gap-4">
         <span class="w-12 h-px bg-morandi-border/30"></span>
         {{ (module.data.startTime || 'TBD') + (module.data.endTime ? ' - ' + module.data.endTime : '') }}
         <span class="w-12 h-px bg-morandi-border/30"></span>
@@ -21,9 +21,9 @@
       <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div v-for="(group, idx) in sunTimes" :key="idx" 
              class="bg-transparent py-8 text-center">
-          <h4 class="text-xs text-morandi-muted font-bold mb-5 tracking-widest">{{ group.label }}</h4>
+          <h4 class="text-luxury-meta-sm text-morandi-muted font-bold mb-5">{{ group.label }}</h4>
           <div class="space-y-2">
-            <div v-for="(timeStr, tIdx) in group.times" :key="tIdx" class="text-xl font-sans text-morandi-text [font-variant-numeric:tabular-nums] tracking-tight">
+            <div v-for="(timeStr, tIdx) in group.times" :key="tIdx" class="text-lg font-sans text-luxury-num text-morandi-text tracking-tight">
               {{ timeStr }}
             </div>
           </div>

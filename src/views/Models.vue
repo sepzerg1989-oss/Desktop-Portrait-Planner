@@ -2,8 +2,8 @@
   <div class="h-full overflow-y-auto px-12 py-10 relative">
     <div class="flex flex-col md:flex-row justify-between items-stretch md:items-end gap-6 mb-12">
       <div>
-        <h1 class="text-4xl font-serif text-morandi-text/90 mb-2 tracking-[0.1em]">模特素材库</h1>
-        <p class="text-morandi-muted text-[10px] tracking-[0.3em] uppercase">Model Library / Collection</p>
+        <h1 class="text-luxury-title-lg text-morandi-text/90 mb-2">模特素材库</h1>
+        <p class="text-luxury-meta-sm text-morandi-muted">Model Library / Collection</p>
       </div>
       <div class="flex flex-wrap items-center gap-3">
         <!-- 高级检索过滤面板 (同行内联) -->
@@ -87,11 +87,11 @@
             {{ model.name?.charAt(0) || '?' }}
           </div>
         </div>
-        <h2 class="font-sans text-sm text-morandi-text text-center mb-1 font-medium group-hover:text-morandi-red transition-colors">{{ model.name }}</h2>
+        <h2 class="text-luxury-body font-sans text-morandi-text text-center mb-1 font-medium group-hover:text-morandi-red transition-colors">{{ model.name }}</h2>
         <div class="flex justify-center flex-wrap items-center gap-1.5 mt-3 select-none">
           <template v-for="(tag, idx) in model.tags" :key="tag">
             <span v-if="idx > 0" class="text-morandi-muted/40 text-[9px] font-sans">·</span>
-            <span class="text-[9px] uppercase tracking-widest text-morandi-muted font-sans font-medium">
+            <span class="text-luxury-meta-sm text-morandi-muted">
               {{ tag }}
             </span>
           </template>
@@ -156,10 +156,10 @@
     <transition name="fade">
       <div v-if="showNamePrompt" class="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="bg-morandi-paper p-8 shadow-2xl w-[400px] border border-morandi-border rounded-none">
-          <h3 class="text-xl font-serif text-morandi-text mb-2">新建模特</h3>
-          <p class="text-[10px] uppercase tracking-widest text-morandi-muted mb-6">Create New Model</p>
+          <h3 class="text-luxury-title-md text-morandi-text mb-2">新建模特</h3>
+          <p class="text-luxury-meta-sm text-morandi-muted mb-6">Create New Model</p>
           <div class="mb-8">
-            <label class="block text-xs uppercase tracking-wider text-morandi-muted mb-2">输入模特姓名</label>
+            <label class="block text-luxury-meta-sm text-morandi-muted mb-2">输入模特姓名</label>
             <input 
               v-model="promptName" 
               type="text" 

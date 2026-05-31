@@ -2,8 +2,8 @@
   <div class="h-full overflow-y-auto px-12 py-10">
     <div class="flex flex-col md:flex-row justify-between items-stretch md:items-end gap-6 mb-12">
       <div>
-        <h1 class="text-4xl font-serif text-morandi-text/90 mb-2 tracking-[0.1em]">我的策划</h1>
-        <p class="text-morandi-muted text-[10px] tracking-[0.3em] uppercase">All Plans / Moodboards</p>
+        <h1 class="text-luxury-title-lg text-morandi-text/90 mb-2">我的策划</h1>
+        <p class="text-luxury-meta-sm text-morandi-muted">All Plans / Moodboards</p>
       </div>
       <div class="flex flex-wrap items-center gap-4">
         <!-- 搜索策划案 -->
@@ -143,8 +143,8 @@
           </div>
         </div>
         <div class="px-1 pt-1">
-          <h2 class="font-sans text-xs text-morandi-text mb-1 truncate group-hover:text-morandi-red transition-colors font-medium">{{ plan.title }}</h2>
-          <p class="text-[9px] text-morandi-muted uppercase tracking-widest font-sans">{{ formatDate(plan.created_at) }}</p>
+          <h2 class="text-luxury-body font-sans text-morandi-text mb-1 truncate group-hover:text-morandi-red transition-colors font-medium">{{ plan.title }}</h2>
+          <p class="text-luxury-meta-sm text-luxury-num text-morandi-muted font-sans">{{ formatDate(plan.created_at) }}</p>
         </div>
       </div>
     </div>
@@ -163,8 +163,8 @@
     <transition name="fade">
       <div v-if="modal.show" class="fixed inset-0 z-[100] flex items-center justify-center px-4 bg-black/40 backdrop-blur-sm">
         <div class="bg-morandi-paper w-full max-w-md shadow-2xl p-8 animate-in fade-in zoom-in duration-300 border border-morandi-border rounded-none">
-          <h3 class="font-serif text-xl text-morandi-text mb-2">{{ modal.title }}</h3>
-          <p class="text-[10px] uppercase tracking-widest text-morandi-muted mb-6">
+          <h3 class="text-luxury-title-md text-morandi-text mb-2">{{ modal.title }}</h3>
+          <p class="text-luxury-meta-sm text-morandi-muted mb-6">
             {{ modal.type === 'prompt' ? 'Create New Plan' : 'Confirmation Required' }}
           </p>
           

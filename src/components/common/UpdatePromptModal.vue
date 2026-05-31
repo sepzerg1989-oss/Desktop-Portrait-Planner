@@ -2,61 +2,58 @@
   <transition name="fade">
     <div v-if="isOpen" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <!-- 遮罩 -->
-      <div class="absolute inset-0 bg-black/20 backdrop-blur-sm" @click="handleBackgroundClick"></div>
+      <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="handleBackgroundClick"></div>
       
-      <!-- 弹窗主体 -->
-      <div class="relative bg-white shadow-2xl border border-black/5 w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
-        <div class="p-8">
-          <!-- 标题 -->
-          <div class="flex items-center space-x-3 mb-4">
-            <div class="w-2.5 h-6 bg-morandi-green"></div>
-            <h3 class="font-serif text-xl text-morandi-text">发现新版本</h3>
-            <span class="px-2 py-0.5 text-[10px] tracking-wider bg-morandi-green/20 text-morandi-text border border-morandi-green/30">v{{ updateInfo.version }}</span>
+      <!-- 弹窗主体 (高奢直角卡纸与复合深阴影) -->
+      <div class="relative bg-morandi-paper shadow-2xl border border-morandi-border w-full max-w-md p-8 animate-in zoom-in-95 duration-200 rounded-none">
+        <!-- 标题区域 -->
+        <h3 class="font-serif text-xl text-morandi-text mb-2">发现新版本</h3>
+        <p class="text-[10px] uppercase tracking-widest text-morandi-muted mb-6">
+          New Version Available · v{{ updateInfo.version }}
+        </p>
+
+        <div v-if="!isDownloading">
+          <!-- 更新内容日志 (凹陷装裱卡槽) -->
+          <p class="text-[10px] uppercase tracking-widest text-morandi-muted mb-2 font-medium">更新内容 / Changelog：</p>
+          <div class="max-h-48 overflow-y-auto mb-8 bg-morandi-canvas/10 p-4 border border-morandi-border text-xs text-morandi-text leading-relaxed whitespace-pre-line font-sans scroll-thin shadow-[inset_0_2px_8px_rgba(0,0,0,0.01)]">
+            {{ updateInfo.changelog }}
           </div>
 
-          <div v-if="!isDownloading">
-            <!-- 更新内容日志 -->
-            <p class="text-xs text-morandi-muted mb-2 font-medium">更新内容：</p>
-            <div class="max-h-48 overflow-y-auto mb-6 bg-morandi-panel/60 p-4 border border-black/5 text-xs text-morandi-text leading-relaxed whitespace-pre-line font-sans">
-              {{ updateInfo.changelog }}
-            </div>
-
-            <!-- 操作按钮 -->
-            <div class="flex justify-end space-x-4">
-              <button 
-                @click="ignoreUpdate" 
-                class="px-5 py-2 text-xs tracking-wider text-morandi-muted hover:text-morandi-text transition-colors"
-              >
-                忽略此版本
-              </button>
-              <button 
-                @click="startUpdate" 
-                class="px-6 py-2 text-xs tracking-wider bg-morandi-text text-white hover:bg-black/80 transition-colors shadow shadow-black/5 font-medium"
-              >
-                立即更新
-              </button>
-            </div>
+          <!-- 操作按钮 (一Ghost一快门胶囊) -->
+          <div class="flex justify-end gap-3">
+            <button 
+              @click="ignoreUpdate" 
+              class="px-6 py-2 text-[11px] uppercase tracking-widest text-morandi-muted hover:text-morandi-text transition-colors font-medium outline-none"
+            >
+              忽略此版本 Ignore
+            </button>
+            <button 
+              @click="startUpdate" 
+              class="px-6 py-2 bg-morandi-text text-morandi-canvas text-[11px] uppercase tracking-widest rounded-full hover:opacity-90 transition-opacity font-medium outline-none shadow-sm"
+            >
+              立即更新 Update
+            </button>
           </div>
+        </div>
 
-          <!-- 下载进度条 -->
-          <div v-else class="py-4">
-            <div class="flex justify-between items-center text-xs text-morandi-text mb-2">
-              <span class="font-medium">{{ progressText }}</span>
-              <span class="font-bold text-morandi-green">{{ progress }}%</span>
-            </div>
-            <div class="w-full h-2 bg-morandi-panel overflow-hidden border border-black/5">
-              <div 
-                class="h-full bg-morandi-green transition-all duration-150 ease-out" 
-                :style="{ width: `${progress}%` }"
-              ></div>
-            </div>
-            <p v-if="downloadError" class="text-xs text-red-500 mt-2 font-medium">
-              下载失败：{{ downloadError }}
-            </p>
-            <p v-else class="text-xs text-morandi-muted mt-2 font-sans">
-              更新包下载完成后，将自动为您执行安装升级。
-            </p>
+        <!-- 下载进度条 (精密仪器线槽) -->
+        <div v-else class="py-2">
+          <div class="flex justify-between items-center text-xs text-morandi-text mb-3">
+            <span class="text-[10px] uppercase tracking-widest text-morandi-muted font-medium">{{ progressText }}</span>
+            <span class="text-xs font-serif font-bold text-morandi-text">{{ progress }}%</span>
           </div>
+          <div class="w-full h-1.5 bg-morandi-canvas/20 overflow-hidden border border-morandi-border shadow-[inset_0_1px_3px_rgba(0,0,0,0.02)]">
+            <div 
+              class="h-full bg-morandi-text transition-all duration-150 ease-out" 
+              :style="{ width: `${progress}%` }"
+            ></div>
+          </div>
+          <p v-if="downloadError" class="text-xs text-morandi-red mt-3 font-medium">
+            下载失败：{{ downloadError }}
+          </p>
+          <p v-else class="text-[10px] uppercase tracking-wider text-morandi-muted mt-3 font-sans leading-relaxed">
+            更新包下载完成后，将自动为您执行安装升级。
+          </p>
         </div>
       </div>
     </div>

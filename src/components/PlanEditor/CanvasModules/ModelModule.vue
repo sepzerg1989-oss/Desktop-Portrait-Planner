@@ -7,14 +7,15 @@
       </div>
       <div class="flex-1">
         <div class="mb-4">
-          <h3 class="text-[10px] uppercase tracking-[0.3em] text-morandi-muted font-bold">模特 / THE MUSE</h3>
+          <h3 class="text-luxury-meta-sm text-morandi-muted font-bold">模特 / THE MUSE</h3>
         </div>
-        <h2 class="text-5xl font-serif text-morandi-text mb-6 font-medium">{{ module.data.name }}</h2>
+        <h2 class="text-luxury-title-lg text-morandi-text mb-6">{{ module.data.name }}</h2>
         
         <div class="space-y-4 mb-8">
-          <div v-if="module.data.tags && module.data.tags.length > 0" class="text-[10px] text-morandi-muted uppercase tracking-[0.2em] mt-2 select-none">
+          <div v-if="module.data.tags && module.data.tags.length > 0" class="text-luxury-meta-lg text-morandi-muted mt-2 select-none">
             <span v-for="(tag, index) in module.data.tags" :key="tag">
-              {{ tag }}<span v-if="index < module.data.tags.length - 1" class="mx-2">·</span>
+              <span class="text-morandi-text">{{ tag }}</span>
+              <span v-if="index < module.data.tags.length - 1" class="mx-3 text-morandi-muted/30">·</span>
             </span>
           </div>
         </div>
@@ -23,7 +24,7 @@
 
     <!-- 模卡展示 -->
     <div v-if="module.data.modelCard" class="mb-12">
-      <h3 class="text-[10px] uppercase tracking-[0.3em] text-morandi-muted mb-4 text-center font-bold">模特卡 / MODEL CARD</h3>
+      <h3 class="text-luxury-meta-sm text-morandi-muted mb-4 text-center font-bold">模特卡 / MODEL CARD</h3>
       <div class="bg-black/5 overflow-hidden shadow-md relative group">
         <img :src="module.data.modelCard" class="w-full h-auto block" loading="lazy" />
         <button v-if="isEditing" @click.stop="module.data.modelCard = ''; $emit('save')" class="absolute top-4 right-4 w-8 h-8 bg-red-500/80 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-sm z-20 shadow-md hover:bg-red-600" title="移除模特卡">×</button>
@@ -32,7 +33,7 @@
 
     <!-- 模特照片库 -->
     <div v-if="module.data.images?.length" class="space-y-4">
-      <h3 class="text-[10px] uppercase tracking-[0.3em] text-morandi-muted mb-4 text-center font-bold">作品照片 / PHOTOS</h3>
+      <h3 class="text-luxury-meta-sm text-morandi-muted mb-4 text-center font-bold">作品照片 / PHOTOS</h3>
       <div v-for="(row, rowIdx) in chunkArray(module.data.images, 3)" :key="rowIdx" class="flex gap-4 items-start">
         <div 
           v-for="(img, imgIdx) in row" 

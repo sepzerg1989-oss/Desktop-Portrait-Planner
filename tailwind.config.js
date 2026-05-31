@@ -19,7 +19,7 @@ export default {
           gstart: 'var(--color-gradient-start)',
           gend: 'var(--color-gradient-end)',
           border: 'var(--color-border-line)',
-          muted: '#999999'
+          muted: 'var(--color-muted)'
         }
       },
       fontFamily: {

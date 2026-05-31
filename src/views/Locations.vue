@@ -2,8 +2,8 @@
   <div class="h-full overflow-y-auto px-12 py-10 relative scroll-thin">
     <div class="flex flex-col md:flex-row justify-between items-stretch md:items-end gap-6 mb-12">
       <div>
-        <h1 class="text-4xl font-serif text-morandi-text/90 mb-2 tracking-[0.1em]">拍摄场地库</h1>
-        <p class="text-morandi-muted text-[10px] tracking-[0.3em] uppercase">Location Library / Venues</p>
+        <h1 class="text-luxury-title-lg text-morandi-text/90 mb-2">拍摄场地库</h1>
+        <p class="text-luxury-meta-sm text-morandi-muted">Location Library / Venues</p>
       </div>
       <div class="flex flex-wrap items-center gap-3">
         <!-- 高级检索过滤面板 (同行内联) -->
@@ -91,8 +91,8 @@
           </div>
         </div>
         <div class="text-center p-4 pb-6">
-          <h2 class="font-sans text-xs text-morandi-text mb-1 font-medium group-hover:text-morandi-red transition-colors">{{ loc.name }}</h2>
-          <p class="text-[9px] text-morandi-muted uppercase tracking-widest mb-3 truncate px-2 font-sans">{{ loc.address }}</p>
+          <h2 class="text-luxury-body font-sans text-morandi-text mb-1 font-medium group-hover:text-morandi-red transition-colors">{{ loc.name }}</h2>
+          <p class="text-luxury-meta-sm text-morandi-muted mb-3 truncate px-2 font-sans">{{ loc.address }}</p>
           <div class="flex justify-center flex-wrap items-center gap-1.5 select-none">
             <template v-for="(tag, idx) in loc.tags" :key="tag">
               <span v-if="idx > 0" class="text-morandi-muted/40 text-[9px] font-sans">·</span>
@@ -159,10 +159,10 @@
     <transition name="fade">
       <div v-if="showNamePrompt" class="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="bg-morandi-paper p-8 shadow-2xl w-[400px] border border-morandi-border rounded-none">
-          <h3 class="text-xl font-serif text-morandi-text mb-2">新建场地</h3>
-          <p class="text-[10px] uppercase tracking-widest text-morandi-muted mb-6">Create New Location</p>
+          <h3 class="text-luxury-title-md text-morandi-text mb-2">新建场地</h3>
+          <p class="text-luxury-meta-sm text-morandi-muted mb-6">Create New Location</p>
           <div class="mb-8">
-            <label class="block text-xs uppercase tracking-wider text-morandi-muted mb-2">输入场地名称</label>
+            <label class="block text-luxury-meta-sm text-morandi-muted mb-2">输入场地名称</label>
             <input 
               v-model="promptName" 
               type="text" 

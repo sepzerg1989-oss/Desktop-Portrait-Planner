@@ -133,11 +133,44 @@
 ### 5.4 紧凑的时间输入区 (Time Range Picker)
 * 彻底删除多余的时钟 SVG 图标。
 * 将开始和结束时间输入框合并。**彻底去除**它们各自的背景色与全包围线框，仅保留底部一条极细的统一贯穿线 `border-b border-morandi-border/30`。
-* 输入框固定微小宽度并居中对齐 `w-12 text-center`，两者通过极简文字“至”字连结，展现像实体表格一般的干练排版。
+* 输入框固定微小宽度并居中对齐 `w-12 text-center`，两者通过极简连接符连结，展现像实体表格一般的干练排版。
 
 ---
 
-## 6. AI 开发严格护栏 (STRICT GUARDRAILS)
+## 6. 高奢排版设计规范与 Token 系统 (Typography & Token Standards)
+
+文字排版（Typography）是高奢画册视觉体系的灵魂骨架。为了让后续新页面（服装、道具、妆容等）完美适配艺术馆陈列感，所有开发者必须严格遵守本套排版规范与 Token 系统。
+
+### 6.1 核心字体族组合 (The Font Families)
+* **中文衬线字体组（慵懒书卷感）**：`Noto Serif SC` (思源宋体)、`Songti SC` (宋体)。大尺寸或长段中文叙事必须使用衬线体，呼吸感强。
+* **英文衬线字体组（高端复古感）**：`Playfair Display`。用于展现大标题、文学性批注。
+* **无衬线与数据字体组（精密仪器感）**：`Inter`、`PingFang SC`。小号英文大写标头、属性按钮、极细说明等，必须使用无衬线体，传递旁轴相机的精密质感。
+* **等宽数字（纵向稳定性）**：所有时间、价格、列表序号、日期，必须设置 `font-variant-numeric: tabular-nums`，确保数值纵向对齐，避免数据变动或加载时界面发生左右“抖动”。
+
+### 6.2 高奢排版 Token 阶梯
+全局必须使用在 `style.css` 注册的以下 7 大语义化排版 Token 工具类，**绝对禁止手写零散排版类**：
+
+1. **`text-luxury-display`**：巨型策展展示标题。中英文衬线体，`text-5xl` 至 `text-6xl` 自适应，`leading-tight`，字距 `tracking-[0.05em]`。用于画册精装封面、核心主题。
+2. **`text-luxury-title-lg`**：模块主标题。中英文衬线体，`text-3xl`，`leading-snug`，字距 `tracking-[0.04em]`。用于展厅单元介绍、模特名、场地主标题。
+3. **`text-luxury-title-md`**：弹出窗/卡片标题。中英文衬线体，`text-xl`，行高正常，`tracking-wide`。
+4. **`text-luxury-body`**：长描述/纯文字卡片。中英文衬线体，`text-[13px]`，宽裕行高 `leading-relaxed` (1.75倍)，字距 `tracking-wide`。
+5. **`text-luxury-meta-lg`**：常用标签/属性分类标签。无衬线体，`text-[11px]`，**全大写 (uppercase)**，字距极宽 `tracking-widest` (0.22em)。像相机金属刻度般坚硬。
+6. **`text-luxury-meta-sm`**：微型辅助元数据/序号/副标题。无衬线体，`text-[9.5px]`，**全大写 (uppercase)**，字距终极拓宽 `tracking-[0.3em]`。打字机铅字条带视觉感。
+7. **`text-luxury-num`**：数据/日期/价格/时间数字。等宽无衬线体，等宽对齐数据。
+
+### 6.3 字色与样式解耦 & 对比度防隐形防护线 (Contrast Shield)
+排版 Token **只声明排版样式，绝不写死字色**。在 HTML/Vue 中采用 `排版 Token` + `上下文色标` 组合开发：
+
+* **自适应墨色**：使用 `text-morandi-text`（主字色，随主题在深浅间自动翻转）和 `text-morandi-muted`（次要字色，随主题变更为对应色温的高级半透明灰）。
+* **强反色区域（如黑色悬浮胶囊）**：强写死深背景时，文字必须强写死自适应画布色 `text-morandi-paper` 或 `text-morandi-canvas`。
+* **强白底实体区域（强制轻量白色相纸卡片）**：若为了卡纸照片装裱效果而强写死 `bg-white` 容器时，字色**绝对禁止**使用自适应的 `text-morandi-text`，必须强制套用不随主题变浅的深黑墨色 Token **`text-forced-ink`** (`#2C2C2C`)，避免深色模式下文字变白隐形。
+
+### 6.4 高奢细滚动条类 `.scroll-thin`
+在侧抽屉、下拉面板、和过滤菜单等小尺寸滚动容器中，统一声明使用 `.scroll-thin` 滚动条类。该类已被定义为 **`4px` 的极致纤细微型滚动条**，色温自适应且极其精致低调。
+
+---
+
+## 7. AI 开发严格护栏 (STRICT GUARDRAILS)
 
 当后续 AI 在为该软件开发新模块或修改老组件时，必须谨记以下底线护栏，违者将导致项目重塑失败：
 
