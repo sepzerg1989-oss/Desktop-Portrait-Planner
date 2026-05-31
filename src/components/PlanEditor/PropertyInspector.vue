@@ -117,42 +117,24 @@
     />
 
     <!-- 快捷命名弹窗 (针对存入素材库) -->
-    <transition name="fade">
-      <div v-if="promptModal.isOpen" class="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-morandi-paper border border-morandi-border p-8 shadow-2xl w-[400px] rounded-none">
-          <h3 class="text-xl font-serif text-morandi-text mb-2">{{ promptModal.title }}</h3>
-          <p class="text-[10px] uppercase tracking-widest text-morandi-muted mb-6">Quick Save</p>
-          <div class="mb-8">
-            <label class="block text-xs uppercase tracking-wider text-morandi-muted mb-2">{{ promptModal.label }}</label>
-            <input 
-              v-model="promptModal.value" 
-              type="text" 
-              class="w-full px-1 py-3 border-b border-morandi-border bg-transparent focus:border-morandi-text outline-none text-sm text-morandi-text rounded-none" 
-              placeholder="必填..."
-              @keyup.enter="confirmPrompt"
-              autofocus
-            />
-          </div>
-          <div class="flex justify-end gap-3">
-            <button @click="cancelPrompt" class="px-6 py-2 text-[11px] uppercase tracking-widest text-morandi-muted hover:text-morandi-text transition-colors font-medium outline-none">
-              取消 / Cancel
-            </button>
-            <button 
-              @click="confirmPrompt" 
-              class="px-6 py-2 bg-morandi-text text-morandi-canvas text-[11px] uppercase tracking-widest rounded-full hover:opacity-90 transition-opacity disabled:opacity-50 font-medium outline-none shadow-sm"
-              :disabled="!promptModal.value.trim()"
-            >
-              确认 / Confirm
-            </button>
-          </div>
-        </div>
-      </div>
-    </transition>
+    <MorandiModal
+      :show="savePrompt.show"
+      :title="savePrompt.title"
+      :message="savePrompt.label"
+      sub-title="Quick Save"
+      type="prompt"
+      :input-value="savePrompt.value"
+      cancel-text="取消 / Cancel"
+      confirm-text="确认 / Confirm"
+      :on-confirm="handleSavePromptConfirm"
+      :on-cancel="handleSavePromptCancel"
+      @update:show="savePrompt.show = $event"
+    />
   </div>
 </template>
 
 <script setup>
-import { computed, watch, ref } from 'vue'
+import { computed, watch, ref, reactive } from 'vue'
 import { usePlanStore } from '../../store/planStore'
 import { useModelStore } from '../../store/modelStore'
 import { useLocationStore } from '../../store/locationStore'
@@ -175,6 +157,7 @@ import LocationLibraryModal from './LocationLibraryModal.vue'
 import ClothingLibraryModal from './ClothingLibraryModal.vue'
 import PropsLibraryModal from './PropsLibraryModal.vue'
 import MakeupLibraryModal from './MakeupLibraryModal.vue'
+import MorandiModal from '../common/MorandiModal.vue'
 
 const emit = defineEmits(['notify'])
 
@@ -620,44 +603,44 @@ const saveMakeupToLibrary = async () => {
 }
 
 // ==================== 快捷命名弹窗 ====================
-const promptModal = ref({
-  isOpen: false,
+const savePrompt = reactive({
+  show: false,
   title: '',
   label: '',
   value: '',
-  type: '', // 'model' | 'location' | 'clothing' | 'props' | 'makeup'
+  type: '',
   targetItem: null
 })
 
+const TYPE_LABELS = {
+  model: { title: '保存模特到素材库', label: '请输入模特姓名' },
+  location: { title: '保存场地到素材库', label: '请输入场地名称' },
+  clothing: { title: '保存服装到素材库', label: '请输入服装搭配名称' },
+  props: { title: '保存道具到素材库', label: '请输入道具名称' },
+  makeup: { title: '保存妆容到素材库', label: '请输入妆容名称' }
+}
+
 const showSavePrompt = (type, item = null) => {
-  promptModal.value = {
-    isOpen: true,
-    title: type === 'model' ? '保存模特到素材库' : 
-           type === 'location' ? '保存场地到素材库' : 
-           type === 'clothing' ? '保存服装到素材库' : 
-           type === 'props' ? '保存道具到素材库' : '保存妆容到素材库',
-    label: type === 'model' ? '请输入模特姓名' : 
-           type === 'location' ? '请输入场地名称' : 
-           type === 'clothing' ? '请输入服装搭配名称' : 
-           type === 'props' ? '请输入道具名称' : '请输入妆容名称',
-    value: '',
-    type: type,
-    targetItem: item
-  }
+  const labels = TYPE_LABELS[type] || TYPE_LABELS.model
+  savePrompt.show = true
+  savePrompt.title = labels.title
+  savePrompt.label = labels.label
+  savePrompt.value = ''
+  savePrompt.type = type
+  savePrompt.targetItem = item
 }
 
-const cancelPrompt = () => {
-  promptModal.value.isOpen = false
+const handleSavePromptCancel = () => {
+  savePrompt.show = false
 }
 
-const confirmPrompt = async () => {
-  if (!promptModal.value.value.trim()) return
+const handleSavePromptConfirm = async (inputVal) => {
+  if (!inputVal || !inputVal.trim()) return
   
-  const nameVal = promptModal.value.value.trim()
-  const targetType = promptModal.value.type
-  const targetItem = promptModal.value.targetItem
-  
-  promptModal.value.isOpen = false
+  const nameVal = inputVal.trim()
+  const targetType = savePrompt.type
+  const targetItem = savePrompt.targetItem
+  savePrompt.show = false
   
   if (targetType === 'model') {
     formData.value.name = nameVal

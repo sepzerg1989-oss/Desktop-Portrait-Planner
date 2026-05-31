@@ -18,35 +18,25 @@
       </button>
     </div>
 
-    <!-- 地区下拉框 -->
+    <!-- 地区下拉框 (高奢自定义) -->
     <div v-if="showRegion" class="relative w-[110px]">
-      <select 
-        :value="selectedRegion"
-        @change="$emit('update:selectedRegion', $event.target.value)"
-        class="w-full px-1 py-2 border-b border-morandi-border bg-transparent outline-none focus:border-morandi-text text-xs transition-colors font-sans appearance-none cursor-pointer text-morandi-text rounded-none"
-      >
-        <option value="">地区: 全部</option>
-        <option v-for="r in regions" :key="r" :value="r">{{ r }}</option>
-      </select>
-      <div class="absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none text-morandi-muted text-[10px]">
-        ▼
-      </div>
+      <CustomSelect 
+        :modelValue="selectedRegion"
+        @update:modelValue="$emit('update:selectedRegion', $event)"
+        :options="[{ value: '', label: '地区: 全部' }, ...regions]"
+        placeholder="选择地区"
+      />
     </div>
-
-    <!-- 排序下拉框 -->
+ 
+    <!-- 排序下拉框 (高奢自定义) -->
     <div v-if="sortOptions && sortOptions.length > 0" class="relative w-[90px]">
-      <select 
-        :value="selectedSort"
-        @change="$emit('update:selectedSort', $event.target.value)"
-        class="w-full px-1 py-2 border-b border-morandi-border bg-transparent outline-none focus:border-morandi-text text-xs transition-colors font-sans appearance-none cursor-pointer text-morandi-text rounded-none"
-      >
-        <option v-for="opt in sortOptions" :key="opt.value" :value="opt.value">
-          {{ opt.label }}
-        </option>
-      </select>
-      <div class="absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none text-morandi-muted text-[10px]">
-        ▼
-      </div>
+      <CustomSelect 
+        :modelValue="selectedSort"
+        @update:modelValue="$emit('update:selectedSort', $event)"
+        :options="sortOptions"
+        placeholder="排序"
+        align="right"
+      />
     </div>
 
     <!-- 标签筛选按钮 -->
@@ -97,6 +87,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import CustomSelect from './CustomSelect.vue'
 
 const props = defineProps({
   searchQuery: { type: String, default: '' },

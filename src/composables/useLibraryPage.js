@@ -184,18 +184,31 @@ export function useLibraryPage(options) {
   const uploadCategory = computed(() => `${categoryPath}/${getFolderName()}`)
 
   const executeBatchDeleteAction = async () => {
-    await store.removeBatch(selectedIds.value)
-    selectedIds.value = []
-    isManageMode.value = false
-    await onRefresh()
-    isConfirmOpen.value = false
+    try {
+      const cleanIds = JSON.parse(JSON.stringify(selectedIds.value))
+      await store.removeBatch(cleanIds)
+      selectedIds.value = []
+      isManageMode.value = false
+      await onRefresh()
+    } catch (e) {
+      alert("批量删除失败: " + e.message)
+      console.error(e)
+    } finally {
+      isConfirmOpen.value = false
+    }
   }
 
   const executeSingleDeleteAction = async (item) => {
-    await store.remove(item.id)
-    await onRefresh()
-    isConfirmOpen.value = false
-    isDrawerOpen.value = false
+    try {
+      await store.remove(item.id)
+      await onRefresh()
+    } catch (e) {
+      alert("删除失败: " + e.message)
+      console.error(e)
+    } finally {
+      isConfirmOpen.value = false
+      isDrawerOpen.value = false
+    }
   }
 
   const closeDrawer = async (cleanupFn) => {

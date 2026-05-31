@@ -106,8 +106,7 @@ class ImageService {
         const sizeRatio = Math.sqrt(this.MAX_SIZE_BYTES / buffer.length)
         currentWidth = Math.min(1200, Math.round(currentWidth * sizeRatio * 0.9))
         
-        buffer = await sharp(sourcePath)
-          .rotate()
+        buffer = await pipeline
           .resize({ width: currentWidth, withoutEnlargement: true })
           .jpeg({ quality: 60, mozjpeg: true, progressive: true })
           .toBuffer()
@@ -115,8 +114,7 @@ class ImageService {
 
       // 4. 兜底方案
       if (buffer.length > this.MAX_SIZE_BYTES) {
-        buffer = await sharp(sourcePath)
-          .rotate()
+        buffer = await pipeline
           .resize({ width: 800, withoutEnlargement: true })
           .jpeg({ quality: 40, mozjpeg: true })
           .toBuffer()

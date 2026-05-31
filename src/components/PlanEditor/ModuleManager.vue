@@ -8,48 +8,44 @@
         </h2>
       </div>
       
-      <!-- 添加模块按钮 (移至顶部) -->
-      <div class="relative">
+      <!-- 添加模块按钮区 (重塑为高奢一长一圆快门与几何硬件拨盘) -->
+      <div class="relative flex items-center gap-2.5">
         <!-- 点击外部收回的透明遮罩层 -->
         <div v-if="showAddMenu" class="fixed inset-0 z-10" @click="showAddMenu = false"></div>
 
+        <!-- 主动作：添加模块快门胶囊按钮 -->
+        <button 
+          @click="showAddMenu = !showAddMenu"
+          class="flex-1 py-2 bg-morandi-text text-morandi-canvas text-[11px] uppercase tracking-widest rounded-full hover:opacity-90 transition-opacity font-medium outline-none shadow-sm flex items-center justify-center gap-1.5"
+        >
+          <span class="text-xs leading-none">{{ showAddMenu ? '×' : '+' }}</span>
+          <span>{{ showAddMenu ? '收起菜单' : '添加模块' }}</span>
+        </button>
+
+        <!-- 次动作：另存为模板正圆按键 -->
+        <button 
+          @click="handleSaveTemplate"
+          class="w-9 h-9 rounded-full border border-morandi-border text-morandi-text hover:bg-morandi-text hover:text-morandi-canvas transition-all flex items-center justify-center shrink-0 shadow-sm outline-none group"
+          title="将当前策划案存为模板"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+          </svg>
+        </button>
+
+        <!-- 模块添加下拉列表 (直角纸张与悬浮微光) -->
         <transition name="fade-pop-down">
-          <div v-if="showAddMenu" class="absolute top-full left-0 right-0 bg-morandi-panel border border-morandi-border shadow-2xl p-2 mt-2 space-y-1 z-20">
+          <div v-if="showAddMenu" class="absolute top-full left-0 w-[180px] bg-morandi-paper border border-morandi-border shadow-2xl p-2 mt-2 space-y-1 z-20 rounded-none">
             <button 
               v-for="opt in addOptions" :key="opt.type"
               @click="addModule(opt.type)"
-              class="w-full text-left px-3 py-2.5 text-xs hover:bg-morandi-canvas transition-colors flex items-center group"
+              class="w-full text-left px-3 py-2 text-xs text-morandi-muted hover:text-morandi-text hover:bg-morandi-text/5 transition-all flex items-center group rounded-none outline-none"
             >
-              <component :is="getIcon(opt.type)" class="h-4 w-4 mr-3 text-morandi-muted group-hover:text-morandi-blue" />
-              {{ opt.label }}
+              <component :is="getIcon(opt.type)" class="h-3.5 w-3.5 mr-2.5 text-morandi-muted group-hover:text-morandi-text transition-colors" />
+              <span>{{ opt.label }}</span>
             </button>
           </div>
         </transition>
-        
-        <div class="flex items-stretch">
-          <!-- 主动作：添加 -->
-          <button 
-            @click="showAddMenu = !showAddMenu"
-            class="flex-1 py-2.5 border border-morandi-text border-r-0 text-morandi-text text-[10px] uppercase tracking-[0.2em] hover:bg-morandi-text hover:text-morandi-canvas transition-all flex items-center justify-center z-20 relative"
-            :class="{ 'bg-morandi-text text-morandi-canvas': showAddMenu }"
-          >
-            <span class="flex items-center">
-              <span v-if="!showAddMenu" class="text-sm mr-2 leading-none">+</span>
-              {{ showAddMenu ? '收起菜单 / CLOSE' : '添加模块 / ADD' }}
-            </span>
-          </button>
-
-          <!-- 次动作：另存为模板 -->
-          <button 
-            @click="handleSaveTemplate"
-            class="px-4 py-2.5 border border-morandi-text text-morandi-text hover:bg-morandi-text hover:text-morandi-canvas transition-all flex items-center justify-center group"
-            title="将当前策划案存为模板"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-            </svg>
-          </button>
-        </div>
       </div>
     </div>
     

@@ -1,6 +1,7 @@
 import { dialog, BrowserWindow, app } from 'electron'
 import fs from 'fs'
 import path from 'path'
+import crypto from 'crypto'
 import DatabaseService from './DatabaseService.js'
 import WorkspaceService from './WorkspaceService.js'
 
@@ -177,7 +178,7 @@ class ExportService {
         for (const [oldPath, base64Str] of Object.entries(exportData.images)) {
           const buffer = Buffer.from(base64Str, 'base64');
           // 生成随机防冲突文件名
-          const hash = Math.random().toString(36).substring(2, 10);
+          const hash = crypto.randomBytes(8).toString('hex');
           const ext = path.extname(oldPath) || '.jpg';
           const fileName = `${Date.now()}_${hash}${ext}`;
           const targetPath = path.join(importedImagesDir, fileName);
@@ -192,125 +193,122 @@ class ExportService {
         return pathMapping[oldPath] || oldPath; // 如果没找到映射，可能原图片就没有打包，保留原路径或清理
       };
 
-      // 2. 插入模特记录
-      if (exportData.data.models) {
-        for (const model of exportData.data.models) {
-          const newModel = {};
-          DatabaseService.constructor.VALID_COLUMNS.models.forEach(key => {
-            if (key !== 'id' && model[key] !== undefined) newModel[key] = model[key];
-          });
-          
-          newModel.avatar_path = replacePath(newModel.avatar_path);
-          newModel.model_card_path = replacePath(newModel.model_card_path);
-          
-          const images = JSON.parse(newModel.images_json || '[]');
-          images.forEach(img => img.path = replacePath(img.path));
-          newModel.images_json = JSON.stringify(images);
+      // 2. 在事务中插入所有记录，失败时自动回滚
+      DatabaseService.transaction(() => {
+        if (exportData.data.models) {
+          for (const model of exportData.data.models) {
+            const newModel = {};
+            DatabaseService.VALID_COLUMNS.models.forEach(key => {
+              if (key !== 'id' && model[key] !== undefined) newModel[key] = model[key];
+            });
+            
+            newModel.avatar_path = replacePath(newModel.avatar_path);
+            newModel.model_card_path = replacePath(newModel.model_card_path);
+            
+            const images = JSON.parse(newModel.images_json || '[]');
+            images.forEach(img => img.path = replacePath(img.path));
+            newModel.images_json = JSON.stringify(images);
 
-          DatabaseService.insert('models', newModel);
+            DatabaseService.insert('models', newModel);
+          }
         }
-      }
 
-      // 3. 插入场地记录
-      if (exportData.data.locations) {
-        for (const loc of exportData.data.locations) {
-          const newLoc = {};
-          DatabaseService.constructor.VALID_COLUMNS.locations.forEach(key => {
-            if (key !== 'id' && loc[key] !== undefined) newLoc[key] = loc[key];
-          });
-          
-          newLoc.cover_path = replacePath(newLoc.cover_path);
-          
-          const images = JSON.parse(newLoc.images_json || '[]');
-          images.forEach(img => img.path = replacePath(img.path));
-          newLoc.images_json = JSON.stringify(images);
+        if (exportData.data.locations) {
+          for (const loc of exportData.data.locations) {
+            const newLoc = {};
+            DatabaseService.VALID_COLUMNS.locations.forEach(key => {
+              if (key !== 'id' && loc[key] !== undefined) newLoc[key] = loc[key];
+            });
+            
+            newLoc.cover_path = replacePath(newLoc.cover_path);
+            
+            const images = JSON.parse(newLoc.images_json || '[]');
+            images.forEach(img => img.path = replacePath(img.path));
+            newLoc.images_json = JSON.stringify(images);
 
-          DatabaseService.insert('locations', newLoc);
+            DatabaseService.insert('locations', newLoc);
+          }
         }
-      }
 
-      // 4. 插入策划案记录
-      if (exportData.data.plans) {
-        for (const plan of exportData.data.plans) {
-          const newPlan = {};
-          DatabaseService.constructor.VALID_COLUMNS.plans.forEach(key => {
-            if (key !== 'id' && plan[key] !== undefined) newPlan[key] = plan[key];
-          });
-          
-          newPlan.cover_path = replacePath(newPlan.cover_path);
-          
-          const modules = JSON.parse(newPlan.modules_json || '[]');
-          modules.forEach(m => {
-            if (m.data?.images) m.data.images.forEach(img => img.path = replacePath(img.path));
-            if (m.data?.avatar) m.data.avatar = replacePath(m.data.avatar);
-            if (m.data?.modelCard) m.data.modelCard = replacePath(m.data.modelCard);
-            if (m.data?.items) {
-              m.data.items.forEach(item => {
-                if (item.images) {
-                  item.images.forEach(img => img.path = replacePath(img.path));
-                }
-              });
-            }
-          });
-          newPlan.modules_json = JSON.stringify(modules);
+        if (exportData.data.plans) {
+          for (const plan of exportData.data.plans) {
+            const newPlan = {};
+            DatabaseService.VALID_COLUMNS.plans.forEach(key => {
+              if (key !== 'id' && plan[key] !== undefined) newPlan[key] = plan[key];
+            });
+            
+            newPlan.cover_path = replacePath(newPlan.cover_path);
+            
+            const modules = JSON.parse(newPlan.modules_json || '[]');
+            modules.forEach(m => {
+              if (m.data?.images) m.data.images.forEach(img => img.path = replacePath(img.path));
+              if (m.data?.avatar) m.data.avatar = replacePath(m.data.avatar);
+              if (m.data?.modelCard) m.data.modelCard = replacePath(m.data.modelCard);
+              if (m.data?.items) {
+                m.data.items.forEach(item => {
+                  if (item.images) {
+                    item.images.forEach(img => img.path = replacePath(img.path));
+                  }
+                });
+              }
+            });
+            newPlan.modules_json = JSON.stringify(modules);
 
-          DatabaseService.insert('plans', newPlan);
+            DatabaseService.insert('plans', newPlan);
+          }
         }
-      }
 
-      // 5. 插入服装记录 (Clothing)
-      if (exportData.data.clothing) {
-        for (const item of exportData.data.clothing) {
-          const newItem = {};
-          DatabaseService.constructor.VALID_COLUMNS.clothing.forEach(key => {
-            if (key !== 'id' && item[key] !== undefined) newItem[key] = item[key];
-          });
-          
-          const images = JSON.parse(newItem.images_json || '[]');
-          images.forEach(img => {
-            if (img) img.path = replacePath(img.path);
-          });
-          newItem.images_json = JSON.stringify(images);
+        if (exportData.data.clothing) {
+          for (const item of exportData.data.clothing) {
+            const newItem = {};
+            DatabaseService.VALID_COLUMNS.clothing.forEach(key => {
+              if (key !== 'id' && item[key] !== undefined) newItem[key] = item[key];
+            });
+            
+            const images = JSON.parse(newItem.images_json || '[]');
+            images.forEach(img => {
+              if (img) img.path = replacePath(img.path);
+            });
+            newItem.images_json = JSON.stringify(images);
 
-          DatabaseService.insert('clothing', newItem);
+            DatabaseService.insert('clothing', newItem);
+          }
         }
-      }
 
-      // 6. 插入道具记录 (Props)
-      if (exportData.data.props) {
-        for (const item of exportData.data.props) {
-          const newItem = {};
-          DatabaseService.constructor.VALID_COLUMNS.props.forEach(key => {
-            if (key !== 'id' && item[key] !== undefined) newItem[key] = item[key];
-          });
-          
-          const images = JSON.parse(newItem.images_json || '[]');
-          images.forEach(img => {
-            if (img) img.path = replacePath(img.path);
-          });
-          newItem.images_json = JSON.stringify(images);
+        if (exportData.data.props) {
+          for (const item of exportData.data.props) {
+            const newItem = {};
+            DatabaseService.VALID_COLUMNS.props.forEach(key => {
+              if (key !== 'id' && item[key] !== undefined) newItem[key] = item[key];
+            });
+            
+            const images = JSON.parse(newItem.images_json || '[]');
+            images.forEach(img => {
+              if (img) img.path = replacePath(img.path);
+            });
+            newItem.images_json = JSON.stringify(images);
 
-          DatabaseService.insert('props', newItem);
+            DatabaseService.insert('props', newItem);
+          }
         }
-      }
 
-      // 7. 插入妆容记录 (Makeup)
-      if (exportData.data.makeup) {
-        for (const item of exportData.data.makeup) {
-          const newItem = {};
-          DatabaseService.constructor.VALID_COLUMNS.makeup.forEach(key => {
-            if (key !== 'id' && item[key] !== undefined) newItem[key] = item[key];
-          });
-          
-          const images = JSON.parse(newItem.images_json || '[]');
-          images.forEach(img => {
-            if (img) img.path = replacePath(img.path);
-          });
-          newItem.images_json = JSON.stringify(images);
+        if (exportData.data.makeup) {
+          for (const item of exportData.data.makeup) {
+            const newItem = {};
+            DatabaseService.VALID_COLUMNS.makeup.forEach(key => {
+              if (key !== 'id' && item[key] !== undefined) newItem[key] = item[key];
+            });
+            
+            const images = JSON.parse(newItem.images_json || '[]');
+            images.forEach(img => {
+              if (img) img.path = replacePath(img.path);
+            });
+            newItem.images_json = JSON.stringify(images);
 
-          DatabaseService.insert('makeup', newItem);
+            DatabaseService.insert('makeup', newItem);
+          }
         }
-      }
+      });
 
       return { success: true };
     } catch (e) {

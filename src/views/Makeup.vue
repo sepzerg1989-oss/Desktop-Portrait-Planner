@@ -14,6 +14,7 @@
           v-model:selectedSort="selectedSort"
           :sortOptions="makeupSortOptions"
           :tags="allTags"
+          :show-region="false"
           @reset="resetFilters"
         />
 
@@ -53,23 +54,21 @@
       </button>
     </div>
 
-    <!-- 妆容卡片墙 (富士拍立得 mini 相纸风格) -->
+    <!-- 妆容卡片墙 (拍立得相纸风格，外圈透明，内圈不对称白边框，3:4 比例) -->
     <div v-else class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-8">
       <div 
         v-for="makeup in filteredItems" :key="makeup.id" 
-        class="group relative cursor-pointer bg-morandi-paper border border-morandi-border/30 p-3 pb-8 transition-all duration-500 rounded-none shadow-[0_4px_16px_rgba(0,0,0,0.02),0_20px_50px_rgba(0,0,0,0.05)]"
+        class="group relative cursor-pointer bg-transparent transition-all duration-500"
         :class="[
-          selectedIds.includes(makeup.id)
-            ? 'border-morandi-text/40 shadow-2xl -translate-y-1'
-            : 'hover:-translate-y-1 hover:border-morandi-text/20',
+          selectedIds.includes(makeup.id) ? 'scale-[1.01] -translate-y-1 z-10' : 'hover:-translate-y-1',
           isManageMode ? 'scale-[0.98]' : ''
         ]"
         @click="handleCardClick(makeup)"
       >
-        <!-- 正圆形漂浮复选框 -->
+        <!-- 正圆形漂浮复选框 (浮于相纸之上) -->
         <div 
           v-if="isManageMode" 
-          class="absolute top-4 left-4 z-10 w-5 h-5 rounded-full flex items-center justify-center transition-all duration-200"
+          class="absolute top-3 left-3 z-20 w-5 h-5 rounded-full flex items-center justify-center transition-all duration-200"
           :class="selectedIds.includes(makeup.id)
             ? 'bg-morandi-text scale-105 shadow-md border-transparent'
             : 'border border-black/10 bg-morandi-paper'"
@@ -79,26 +78,36 @@
           </svg>
         </div>
 
-        <!-- 拍立得照片底片区 -->
-        <div class="aspect-[3/4] overflow-hidden bg-morandi-canvas/20 mb-4 border border-morandi-border/10 rounded-[1px] shadow-[inset_0_2px_8px_rgba(0,0,0,0.03)] relative">
-          <img v-if="makeup.coverURL" :src="makeup.coverURL" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-          <div v-else class="w-full h-full flex items-center justify-center text-morandi-text/20 bg-gradient-to-br from-morandi-gstart to-morandi-gend text-5xl font-serif">
-            {{ makeup.name?.charAt(0) || '?' }}
+        <!-- 拍立得相纸主体：内圈白框，四周不对称留白 (p-3 pb-8)，弹性高矮拉满对齐 (h-full flex flex-col) -->
+        <div 
+          class="bg-morandi-paper p-3 pb-8 transition-all duration-500 rounded-none shadow-[0_4px_16px_rgba(0,0,0,0.01),0_16px_48px_rgba(0,0,0,0.03)] h-full flex flex-col"
+          :class="[
+            selectedIds.includes(makeup.id)
+              ? 'ring-1 ring-morandi-text/20 shadow-xl'
+              : 'hover:shadow-md'
+          ]"
+        >
+          <!-- 3:4 比例竖图区 (带微弱描边与内阴影，禁止挤压 shrink-0) -->
+          <div class="aspect-[3/4] overflow-hidden bg-morandi-canvas/10 mb-4 border border-morandi-border/10 rounded-sm shadow-[inset_0_2px_8px_rgba(0,0,0,0.02)] shrink-0">
+            <img v-if="makeup.coverURL" :src="makeup.coverURL" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+            <div v-else class="w-full h-full flex items-center justify-center text-morandi-text/20 bg-gradient-to-br from-morandi-gstart to-morandi-gend text-5xl font-serif">
+              {{ makeup.name?.charAt(0) || '?' }}
+            </div>
           </div>
-        </div>
-
-        <!-- 拍立得底部手写感及参数排版 -->
-        <div class="text-center px-1">
-          <h2 class="font-serif text-sm text-morandi-text font-medium group-hover:text-morandi-red transition-colors duration-300 truncate mb-1">
-            {{ makeup.name }}
-          </h2>
-          <div class="flex justify-center flex-wrap items-center gap-1 mt-2">
-            <template v-for="(tag, idx) in makeup.tags.slice(0, 2)" :key="tag">
-              <span v-if="idx > 0" class="text-morandi-muted/30 text-[8px] font-sans">·</span>
-              <span class="text-[8px] uppercase tracking-widest text-morandi-muted font-sans font-medium">
-                {{ tag }}
-              </span>
-            </template>
+ 
+          <!-- 拍立得相纸底边手写体参数居中排版 (强制贴底对齐 mt-auto) -->
+          <div class="text-center px-1 mt-auto">
+            <h2 class="font-serif text-sm text-morandi-text font-medium group-hover:text-morandi-red transition-colors duration-300 truncate mb-1">
+              {{ makeup.name }}
+            </h2>
+            <div class="flex justify-center flex-wrap items-center gap-1 mt-2 select-none">
+              <template v-for="(tag, idx) in makeup.tags.slice(0, 3)" :key="tag">
+                <span v-if="idx > 0" class="text-morandi-muted/40 text-[10px] font-sans">·</span>
+                <span class="text-[10px] uppercase tracking-widest text-morandi-muted font-sans font-medium">
+                  {{ tag }}
+                </span>
+              </template>
+            </div>
           </div>
         </div>
       </div>
@@ -192,7 +201,7 @@
     <!-- 全屏大图预览 -->
     <transition name="fade">
       <div v-if="previewUrl" class="fixed inset-0 z-[100] backdrop-blur-md bg-white/10 flex justify-center items-center p-12 cursor-zoom-out" @click="closePreview">
-        <img :src="previewUrl" class="max-w-full max-h-full object-contain shadow-[0_30px_100px_rgba(0,0,0,0.2)] animate-in zoom-in-95 duration-300" @click.stop />
+        <img :src="previewUrl" loading="lazy" class="max-w-full max-h-full object-contain shadow-[0_30px_100px_rgba(0,0,0,0.2)] animate-in zoom-in-95 duration-300" @click.stop />
       </div>
     </transition>
   </div>
@@ -225,6 +234,7 @@ const {
   openCreateDrawer, confirmNamePrompt, cancelNamePrompt, openViewDrawer,
   executeBatchDeleteAction, executeSingleDeleteAction, closeDrawer,
   preview, closePreview,
+  allTags, filteredItems, isAllSelected,
 } = useLibraryPage({
   store: makeupStore,
   storeItems: () => makeupStore.makeups,

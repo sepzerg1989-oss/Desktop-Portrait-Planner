@@ -107,10 +107,10 @@ class DatabaseService {
     `)
 
     // 数据库迁移逻辑：尝试为老数据库的 models 表增加新字段
-    try { this.db.exec("ALTER TABLE models ADD COLUMN region TEXT DEFAULT ''") } catch(e) {}
-    try { this.db.exec("ALTER TABLE models ADD COLUMN price TEXT DEFAULT ''") } catch(e) {}
-    try { this.db.exec("ALTER TABLE models ADD COLUMN model_card_path TEXT DEFAULT ''") } catch(e) {}
-    try { this.db.exec("ALTER TABLE models ADD COLUMN images_json TEXT DEFAULT '[]'") } catch(e) {}
+    try { this.db.exec("ALTER TABLE models ADD COLUMN region TEXT DEFAULT ''") } catch(e) { if (!e.message.includes('duplicate column')) console.warn('[DatabaseService] 迁移 region 字段失败:', e.message) }
+    try { this.db.exec("ALTER TABLE models ADD COLUMN price TEXT DEFAULT ''") } catch(e) { if (!e.message.includes('duplicate column')) console.warn('[DatabaseService] 迁移 price 字段失败:', e.message) }
+    try { this.db.exec("ALTER TABLE models ADD COLUMN model_card_path TEXT DEFAULT ''") } catch(e) { if (!e.message.includes('duplicate column')) console.warn('[DatabaseService] 迁移 model_card_path 字段失败:', e.message) }
+    try { this.db.exec("ALTER TABLE models ADD COLUMN images_json TEXT DEFAULT '[]'") } catch(e) { if (!e.message.includes('duplicate column')) console.warn('[DatabaseService] 迁移 images_json 字段失败:', e.message) }
   }
 
   // ==================== 通用 CRUD ====================
@@ -241,6 +241,14 @@ class DatabaseService {
       this.db.close()
       this.db = null
     }
+  }
+
+  /** 在事务中执行回调，失败时自动回滚 */
+  transaction(fn) {
+    const tx = this.db.transaction(() => {
+      fn()
+    })
+    tx()
   }
 }
 

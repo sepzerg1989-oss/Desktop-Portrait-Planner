@@ -141,7 +141,7 @@ const props = defineProps({
   isOpen: { type: Boolean, default: false }
 })
 
-const emit = defineEmits(['update:isOpen', 'success'])
+const emit = defineEmits(['update:isOpen', 'success', 'export-done'])
 
 const planStore = usePlanStore()
 const modelStore = useModelStore()
@@ -351,13 +351,13 @@ const handleExport = async () => {
     
     const res = await window.electronAPI.exportData(ids)
     if (res.success) {
-      alert('导出成功：' + res.filePath)
+      emit('export-done', { success: true, message: '导出成功：' + res.filePath })
       close()
     } else if (res.error !== 'User canceled') {
-      alert('导出失败: ' + res.error)
+      emit('export-done', { success: false, message: '导出失败: ' + res.error })
     }
   } catch (error) {
-    alert('导出异常: ' + error.message)
+    emit('export-done', { success: false, message: '导出异常: ' + error.message })
   } finally {
     isExporting.value = false
   }

@@ -104,16 +104,24 @@ var DatabaseService_default = new class DatabaseService {
     `);
 		try {
 			this.db.exec("ALTER TABLE models ADD COLUMN region TEXT DEFAULT ''");
-		} catch (e) {}
+		} catch (e) {
+			if (!e.message.includes("duplicate column")) console.warn("[DatabaseService] 迁移 region 字段失败:", e.message);
+		}
 		try {
 			this.db.exec("ALTER TABLE models ADD COLUMN price TEXT DEFAULT ''");
-		} catch (e) {}
+		} catch (e) {
+			if (!e.message.includes("duplicate column")) console.warn("[DatabaseService] 迁移 price 字段失败:", e.message);
+		}
 		try {
 			this.db.exec("ALTER TABLE models ADD COLUMN model_card_path TEXT DEFAULT ''");
-		} catch (e) {}
+		} catch (e) {
+			if (!e.message.includes("duplicate column")) console.warn("[DatabaseService] 迁移 model_card_path 字段失败:", e.message);
+		}
 		try {
 			this.db.exec("ALTER TABLE models ADD COLUMN images_json TEXT DEFAULT '[]'");
-		} catch (e) {}
+		} catch (e) {
+			if (!e.message.includes("duplicate column")) console.warn("[DatabaseService] 迁移 images_json 字段失败:", e.message);
+		}
 	}
 	/** 允许操作的表白名单 — 防御性校验 */
 	static VALID_TABLES = [
@@ -312,6 +320,12 @@ var DatabaseService_default = new class DatabaseService {
 			this.db = null;
 		}
 	}
+	/** 在事务中执行回调，失败时自动回滚 */
+	transaction(fn) {
+		this.db.transaction(() => {
+			fn();
+		})();
+	}
 }();
 //#endregion
 //#region electron/services/ImageService.js
@@ -394,7 +408,7 @@ var ImageService = class {
 			if (buffer.length > this.MAX_SIZE_BYTES) {
 				const sizeRatio = Math.sqrt(this.MAX_SIZE_BYTES / buffer.length);
 				currentWidth = Math.min(1200, Math.round(currentWidth * sizeRatio * .9));
-				buffer = await sharp(sourcePath).rotate().resize({
+				buffer = await pipeline.resize({
 					width: currentWidth,
 					withoutEnlargement: true
 				}).jpeg({
@@ -403,7 +417,7 @@ var ImageService = class {
 					progressive: true
 				}).toBuffer();
 			}
-			if (buffer.length > this.MAX_SIZE_BYTES) buffer = await sharp(sourcePath).rotate().resize({
+			if (buffer.length > this.MAX_SIZE_BYTES) buffer = await pipeline.resize({
 				width: 800,
 				withoutEnlargement: true
 			}).jpeg({
@@ -755,7 +769,7 @@ var ExportService = class {
 			const pathMapping = {};
 			if (exportData.images) for (const [oldPath, base64Str] of Object.entries(exportData.images)) {
 				const buffer = Buffer.from(base64Str, "base64");
-				const hash = Math.random().toString(36).substring(2, 10);
+				const hash = crypto.randomBytes(8).toString("hex");
 				const ext = path.extname(oldPath) || ".jpg";
 				const fileName = `${Date.now()}_${hash}${ext}`;
 				const targetPath = path.join(importedImagesDir, fileName);
@@ -766,83 +780,85 @@ var ExportService = class {
 				if (!oldPath) return oldPath;
 				return pathMapping[oldPath] || oldPath;
 			};
-			if (exportData.data.models) for (const model of exportData.data.models) {
-				const newModel = {};
-				DatabaseService_default.constructor.VALID_COLUMNS.models.forEach((key) => {
-					if (key !== "id" && model[key] !== void 0) newModel[key] = model[key];
-				});
-				newModel.avatar_path = replacePath(newModel.avatar_path);
-				newModel.model_card_path = replacePath(newModel.model_card_path);
-				const images = JSON.parse(newModel.images_json || "[]");
-				images.forEach((img) => img.path = replacePath(img.path));
-				newModel.images_json = JSON.stringify(images);
-				DatabaseService_default.insert("models", newModel);
-			}
-			if (exportData.data.locations) for (const loc of exportData.data.locations) {
-				const newLoc = {};
-				DatabaseService_default.constructor.VALID_COLUMNS.locations.forEach((key) => {
-					if (key !== "id" && loc[key] !== void 0) newLoc[key] = loc[key];
-				});
-				newLoc.cover_path = replacePath(newLoc.cover_path);
-				const images = JSON.parse(newLoc.images_json || "[]");
-				images.forEach((img) => img.path = replacePath(img.path));
-				newLoc.images_json = JSON.stringify(images);
-				DatabaseService_default.insert("locations", newLoc);
-			}
-			if (exportData.data.plans) for (const plan of exportData.data.plans) {
-				const newPlan = {};
-				DatabaseService_default.constructor.VALID_COLUMNS.plans.forEach((key) => {
-					if (key !== "id" && plan[key] !== void 0) newPlan[key] = plan[key];
-				});
-				newPlan.cover_path = replacePath(newPlan.cover_path);
-				const modules = JSON.parse(newPlan.modules_json || "[]");
-				modules.forEach((m) => {
-					if (m.data?.images) m.data.images.forEach((img) => img.path = replacePath(img.path));
-					if (m.data?.avatar) m.data.avatar = replacePath(m.data.avatar);
-					if (m.data?.modelCard) m.data.modelCard = replacePath(m.data.modelCard);
-					if (m.data?.items) m.data.items.forEach((item) => {
-						if (item.images) item.images.forEach((img) => img.path = replacePath(img.path));
+			DatabaseService_default.transaction(() => {
+				if (exportData.data.models) for (const model of exportData.data.models) {
+					const newModel = {};
+					DatabaseService_default.VALID_COLUMNS.models.forEach((key) => {
+						if (key !== "id" && model[key] !== void 0) newModel[key] = model[key];
 					});
-				});
-				newPlan.modules_json = JSON.stringify(modules);
-				DatabaseService_default.insert("plans", newPlan);
-			}
-			if (exportData.data.clothing) for (const item of exportData.data.clothing) {
-				const newItem = {};
-				DatabaseService_default.constructor.VALID_COLUMNS.clothing.forEach((key) => {
-					if (key !== "id" && item[key] !== void 0) newItem[key] = item[key];
-				});
-				const images = JSON.parse(newItem.images_json || "[]");
-				images.forEach((img) => {
-					if (img) img.path = replacePath(img.path);
-				});
-				newItem.images_json = JSON.stringify(images);
-				DatabaseService_default.insert("clothing", newItem);
-			}
-			if (exportData.data.props) for (const item of exportData.data.props) {
-				const newItem = {};
-				DatabaseService_default.constructor.VALID_COLUMNS.props.forEach((key) => {
-					if (key !== "id" && item[key] !== void 0) newItem[key] = item[key];
-				});
-				const images = JSON.parse(newItem.images_json || "[]");
-				images.forEach((img) => {
-					if (img) img.path = replacePath(img.path);
-				});
-				newItem.images_json = JSON.stringify(images);
-				DatabaseService_default.insert("props", newItem);
-			}
-			if (exportData.data.makeup) for (const item of exportData.data.makeup) {
-				const newItem = {};
-				DatabaseService_default.constructor.VALID_COLUMNS.makeup.forEach((key) => {
-					if (key !== "id" && item[key] !== void 0) newItem[key] = item[key];
-				});
-				const images = JSON.parse(newItem.images_json || "[]");
-				images.forEach((img) => {
-					if (img) img.path = replacePath(img.path);
-				});
-				newItem.images_json = JSON.stringify(images);
-				DatabaseService_default.insert("makeup", newItem);
-			}
+					newModel.avatar_path = replacePath(newModel.avatar_path);
+					newModel.model_card_path = replacePath(newModel.model_card_path);
+					const images = JSON.parse(newModel.images_json || "[]");
+					images.forEach((img) => img.path = replacePath(img.path));
+					newModel.images_json = JSON.stringify(images);
+					DatabaseService_default.insert("models", newModel);
+				}
+				if (exportData.data.locations) for (const loc of exportData.data.locations) {
+					const newLoc = {};
+					DatabaseService_default.VALID_COLUMNS.locations.forEach((key) => {
+						if (key !== "id" && loc[key] !== void 0) newLoc[key] = loc[key];
+					});
+					newLoc.cover_path = replacePath(newLoc.cover_path);
+					const images = JSON.parse(newLoc.images_json || "[]");
+					images.forEach((img) => img.path = replacePath(img.path));
+					newLoc.images_json = JSON.stringify(images);
+					DatabaseService_default.insert("locations", newLoc);
+				}
+				if (exportData.data.plans) for (const plan of exportData.data.plans) {
+					const newPlan = {};
+					DatabaseService_default.VALID_COLUMNS.plans.forEach((key) => {
+						if (key !== "id" && plan[key] !== void 0) newPlan[key] = plan[key];
+					});
+					newPlan.cover_path = replacePath(newPlan.cover_path);
+					const modules = JSON.parse(newPlan.modules_json || "[]");
+					modules.forEach((m) => {
+						if (m.data?.images) m.data.images.forEach((img) => img.path = replacePath(img.path));
+						if (m.data?.avatar) m.data.avatar = replacePath(m.data.avatar);
+						if (m.data?.modelCard) m.data.modelCard = replacePath(m.data.modelCard);
+						if (m.data?.items) m.data.items.forEach((item) => {
+							if (item.images) item.images.forEach((img) => img.path = replacePath(img.path));
+						});
+					});
+					newPlan.modules_json = JSON.stringify(modules);
+					DatabaseService_default.insert("plans", newPlan);
+				}
+				if (exportData.data.clothing) for (const item of exportData.data.clothing) {
+					const newItem = {};
+					DatabaseService_default.VALID_COLUMNS.clothing.forEach((key) => {
+						if (key !== "id" && item[key] !== void 0) newItem[key] = item[key];
+					});
+					const images = JSON.parse(newItem.images_json || "[]");
+					images.forEach((img) => {
+						if (img) img.path = replacePath(img.path);
+					});
+					newItem.images_json = JSON.stringify(images);
+					DatabaseService_default.insert("clothing", newItem);
+				}
+				if (exportData.data.props) for (const item of exportData.data.props) {
+					const newItem = {};
+					DatabaseService_default.VALID_COLUMNS.props.forEach((key) => {
+						if (key !== "id" && item[key] !== void 0) newItem[key] = item[key];
+					});
+					const images = JSON.parse(newItem.images_json || "[]");
+					images.forEach((img) => {
+						if (img) img.path = replacePath(img.path);
+					});
+					newItem.images_json = JSON.stringify(images);
+					DatabaseService_default.insert("props", newItem);
+				}
+				if (exportData.data.makeup) for (const item of exportData.data.makeup) {
+					const newItem = {};
+					DatabaseService_default.VALID_COLUMNS.makeup.forEach((key) => {
+						if (key !== "id" && item[key] !== void 0) newItem[key] = item[key];
+					});
+					const images = JSON.parse(newItem.images_json || "[]");
+					images.forEach((img) => {
+						if (img) img.path = replacePath(img.path);
+					});
+					newItem.images_json = JSON.stringify(images);
+					DatabaseService_default.insert("makeup", newItem);
+				}
+			});
 			return { success: true };
 		} catch (e) {
 			console.error("[ExportService] 导入失败:", e);
@@ -1131,101 +1147,27 @@ ipcMain.handle("workspace:selectAndSet", async (event) => {
 	};
 	return { success: false };
 });
-ipcMain.handle("db:models:getAll", () => {
-	return DatabaseService_default.getAll("models");
-});
-ipcMain.handle("db:models:create", (event, data) => {
-	return DatabaseService_default.insert("models", data);
-});
-ipcMain.handle("db:models:update", (event, id, data) => {
-	return DatabaseService_default.update("models", id, data);
-});
-ipcMain.handle("db:models:delete", async (event, id) => {
-	const result = DatabaseService_default.delete("models", id);
-	if (result.success) await ImageService_default.deleteEntityFolder(`models/${id}`);
-	return result;
-});
-ipcMain.handle("db:models:deleteBatch", async (event, ids) => {
-	const result = DatabaseService_default.deleteBatch("models", ids);
-	if (result.success) Promise.all(ids.map((id) => ImageService_default.deleteEntityFolder(`models/${id}`))).catch((e) => console.error("[main] 批量删除模特图片目录失败:", e));
-	return result;
-});
-ipcMain.handle("db:locations:getAll", () => {
-	return DatabaseService_default.getAll("locations");
-});
-ipcMain.handle("db:locations:create", (event, data) => {
-	return DatabaseService_default.insert("locations", data);
-});
-ipcMain.handle("db:locations:update", (event, id, data) => {
-	return DatabaseService_default.update("locations", id, data);
-});
-ipcMain.handle("db:locations:delete", async (event, id) => {
-	const result = DatabaseService_default.delete("locations", id);
-	if (result.success) await ImageService_default.deleteEntityFolder(`locations/${id}`);
-	return result;
-});
-ipcMain.handle("db:locations:deleteBatch", async (event, ids) => {
-	const result = DatabaseService_default.deleteBatch("locations", ids);
-	if (result.success) Promise.all(ids.map((id) => ImageService_default.deleteEntityFolder(`locations/${id}`))).catch((e) => console.error("[main] 批量删除场地图片目录失败:", e));
-	return result;
-});
-ipcMain.handle("db:clothing:getAll", () => {
-	return DatabaseService_default.getAll("clothing");
-});
-ipcMain.handle("db:clothing:create", (event, data) => {
-	return DatabaseService_default.insert("clothing", data);
-});
-ipcMain.handle("db:clothing:update", (event, id, data) => {
-	return DatabaseService_default.update("clothing", id, data);
-});
-ipcMain.handle("db:clothing:delete", async (event, id) => {
-	const result = DatabaseService_default.delete("clothing", id);
-	if (result.success) await ImageService_default.deleteEntityFolder(`clothing/${id}`);
-	return result;
-});
-ipcMain.handle("db:clothing:deleteBatch", async (event, ids) => {
-	const result = DatabaseService_default.deleteBatch("clothing", ids);
-	if (result.success) Promise.all(ids.map((id) => ImageService_default.deleteEntityFolder(`clothing/${id}`))).catch((e) => console.error("[main] 批量删除服装图片目录失败:", e));
-	return result;
-});
-ipcMain.handle("db:props:getAll", () => {
-	return DatabaseService_default.getAll("props");
-});
-ipcMain.handle("db:props:create", (event, data) => {
-	return DatabaseService_default.insert("props", data);
-});
-ipcMain.handle("db:props:update", (event, id, data) => {
-	return DatabaseService_default.update("props", id, data);
-});
-ipcMain.handle("db:props:delete", async (event, id) => {
-	const result = DatabaseService_default.delete("props", id);
-	if (result.success) await ImageService_default.deleteEntityFolder(`props/${id}`);
-	return result;
-});
-ipcMain.handle("db:props:deleteBatch", async (event, ids) => {
-	const result = DatabaseService_default.deleteBatch("props", ids);
-	if (result.success) Promise.all(ids.map((id) => ImageService_default.deleteEntityFolder(`props/${id}`))).catch((e) => console.error("[main] 批量删除道具图片目录失败:", e));
-	return result;
-});
-ipcMain.handle("db:makeup:getAll", () => {
-	return DatabaseService_default.getAll("makeup");
-});
-ipcMain.handle("db:makeup:create", (event, data) => {
-	return DatabaseService_default.insert("makeup", data);
-});
-ipcMain.handle("db:makeup:update", (event, id, data) => {
-	return DatabaseService_default.update("makeup", id, data);
-});
-ipcMain.handle("db:makeup:delete", async (event, id) => {
-	const result = DatabaseService_default.delete("makeup", id);
-	if (result.success) await ImageService_default.deleteEntityFolder(`makeup/${id}`);
-	return result;
-});
-ipcMain.handle("db:makeup:deleteBatch", async (event, ids) => {
-	const result = DatabaseService_default.deleteBatch("makeup", ids);
-	if (result.success) Promise.all(ids.map((id) => ImageService_default.deleteEntityFolder(`makeup/${id}`))).catch((e) => console.error("[main] 批量删除妆容图片目录失败:", e));
-	return result;
-});
+function registerLibraryCrud(tableName) {
+	const name = tableName === "plans" ? "plans" : tableName;
+	ipcMain.handle(`db:${name}:getAll`, () => DatabaseService_default.getAll(tableName));
+	ipcMain.handle(`db:${name}:create`, (event, data) => DatabaseService_default.insert(tableName, data));
+	ipcMain.handle(`db:${name}:update`, (event, id, data) => DatabaseService_default.update(tableName, id, data));
+	ipcMain.handle(`db:${name}:delete`, async (event, id) => {
+		const result = DatabaseService_default.delete(tableName, id);
+		if (result.success) await ImageService_default.deleteEntityFolder(`${tableName}/${id}`);
+		return result;
+	});
+	ipcMain.handle(`db:${name}:deleteBatch`, async (event, ids) => {
+		const result = DatabaseService_default.deleteBatch(tableName, ids);
+		if (result.success) Promise.all(ids.map((id) => ImageService_default.deleteEntityFolder(`${tableName}/${id}`))).catch((e) => console.error(`[main] 批量删除${tableName}图片目录失败:`, e));
+		return result;
+	});
+}
+registerLibraryCrud("models");
+registerLibraryCrud("locations");
+registerLibraryCrud("clothing");
+registerLibraryCrud("props");
+registerLibraryCrud("makeup");
 ipcMain.handle("db:plans:getAll", () => {
 	return DatabaseService_default.getAll("plans");
 });

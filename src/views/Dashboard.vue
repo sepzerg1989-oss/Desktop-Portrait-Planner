@@ -14,19 +14,17 @@
           class="px-1 py-2 border-b border-morandi-border bg-transparent outline-none focus:border-morandi-text text-xs min-w-[200px] transition-colors rounded-none"
         />
 
-        <!-- 排序下拉框 -->
+        <!-- 排序下拉框 (高奢自定义) -->
         <div class="relative w-[100px]">
-          <select 
+          <CustomSelect 
             v-model="selectedSort"
-            class="w-full px-1 py-2 border-b border-morandi-border bg-transparent outline-none focus:border-morandi-text text-xs transition-colors font-sans appearance-none cursor-pointer text-morandi-text rounded-none"
-          >
-            <option value="modified">最近修改</option>
-            <option value="created">最近创建</option>
-            <option value="title">标题升序</option>
-          </select>
-          <div class="absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none text-morandi-muted text-[10px]">
-            ▼
-          </div>
+            :options="[
+              { value: 'modified', label: '最近修改' },
+              { value: 'created', label: '最近创建' },
+              { value: 'title', label: '标题升序' }
+            ]"
+            placeholder="排序"
+          />
         </div>
 
         <!-- 批量管理按钮（仅在非管理模式下显示，管理模式下由悬浮胶囊栏承载退出功能） -->
@@ -125,7 +123,7 @@
         <!-- 精致圆形漂浮复选框 -->
         <div 
           v-if="isManageMode" 
-          class="absolute top-3 left-3 z-10 w-5 h-5 rounded-full flex items-center justify-center transition-all duration-200"
+          class="absolute top-3 left-3 z-20 w-5 h-5 rounded-full flex items-center justify-center transition-all duration-200"
           :class="selectedIds.includes(plan.id)
             ? 'bg-morandi-text scale-105 shadow-md border-transparent'
             : 'border border-black/10 bg-morandi-paper'"
@@ -160,45 +158,19 @@
     />
 
     <!-- 自定义精美弹窗 (Morandi Style Modal) -->
-    <transition name="fade">
-      <div v-if="modal.show" class="fixed inset-0 z-[100] flex items-center justify-center px-4 bg-black/40 backdrop-blur-sm">
-        <div class="bg-morandi-paper w-full max-w-md shadow-2xl p-8 animate-in fade-in zoom-in duration-300 border border-morandi-border rounded-none">
-          <h3 class="text-luxury-title-md text-morandi-text mb-2">{{ modal.title }}</h3>
-          <p class="text-luxury-meta-sm text-morandi-muted mb-6">
-            {{ modal.type === 'prompt' ? 'Create New Plan' : 'Confirmation Required' }}
-          </p>
-          
-          <p class="text-xs text-morandi-muted mb-8 leading-relaxed">{{ modal.message }}</p>
-          
-          <!-- Prompt 输入框 (Ghost 极简底线) -->
-          <div v-if="modal.type === 'prompt'" class="mb-8">
-            <input 
-              v-model="modal.inputValue" 
-              type="text" 
-              class="w-full px-1 py-3 border-b border-morandi-border bg-transparent outline-none focus:border-morandi-text text-sm text-morandi-text rounded-none"
-              autofocus
-              @keyup.enter="handleModalConfirm"
-            />
-          </div>
-
-          <div class="flex justify-end gap-3">
-            <button 
-              v-if="modal.type !== 'alert'"
-              @click="closeModal" 
-              class="px-6 py-2 text-[11px] uppercase tracking-widest text-morandi-muted hover:text-morandi-text transition-colors font-medium outline-none"
-            >
-              取消 Cancel
-            </button>
-            <button 
-              @click="handleModalConfirm" 
-              class="px-6 py-2 bg-morandi-text text-morandi-canvas text-[11px] uppercase tracking-widest rounded-full hover:opacity-90 transition-opacity font-medium outline-none shadow-sm"
-            >
-              确定 Confirm
-            </button>
-          </div>
-        </div>
-      </div>
-    </transition>
+    <MorandiModal
+      :show="modal.show"
+      :title="modal.title"
+      :message="modal.message"
+      :type="modal.type"
+      :input-value="modal.inputValue"
+      :sub-title="modal.type === 'prompt' ? 'Create New Plan' : 'Confirmation Required'"
+      cancel-text="取消 Cancel"
+      confirm-text="确定 Confirm"
+      :on-confirm="handleModalConfirm"
+      :on-cancel="closeModal"
+      @update:show="modal.show = $event"
+    />
   </div>
 </template>
 
@@ -208,6 +180,8 @@ import { useRouter } from 'vue-router'
 import { usePlanStore } from '../store/planStore'
 import { useModal } from '../composables/useModal'
 import BatchActionBar from '../components/common/BatchActionBar.vue'
+import MorandiModal from '../components/common/MorandiModal.vue'
+import CustomSelect from '../components/common/CustomSelect.vue'
 
 const router = useRouter()
 const store = usePlanStore()

@@ -81,16 +81,27 @@
     </div>
 
     <!-- 数据导出弹窗 -->
-    <DataExchangeModal v-model:isOpen="showExportModal" />
+    <DataExchangeModal v-model:isOpen="showExportModal" @export-done="handleExportDone" />
+
+    <!-- 导出结果通知弹窗 -->
+    <MorandiModal
+      :show="exportNotification.show"
+      :title="exportNotification.title"
+      :message="exportNotification.message"
+      type="alert"
+      confirm-text="确定"
+      @update:show="exportNotification.show = $event"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, onBeforeUnmount } from 'vue'
+import { ref, reactive, onBeforeUnmount } from 'vue'
 import { usePlanStore } from '../../store/planStore'
 import { useModelStore } from '../../store/modelStore'
 import { useLocationStore } from '../../store/locationStore'
 import DataExchangeModal from '../common/DataExchangeModal.vue'
+import MorandiModal from '../common/MorandiModal.vue'
 
 const planStore = usePlanStore()
 const modelStore = useModelStore()
@@ -104,6 +115,18 @@ const isInvalidFile = ref(false)
 const errorMessage = ref('')
 const dragCounter = ref(0)
 const shakeTimer = ref(null)
+
+const exportNotification = reactive({
+  show: false,
+  title: '',
+  message: ''
+})
+
+const handleExportDone = ({ success, message }) => {
+  exportNotification.show = true
+  exportNotification.title = success ? '导出成功' : '导出失败'
+  exportNotification.message = message
+}
 
 const onDragEnter = (e) => {
   e.preventDefault()

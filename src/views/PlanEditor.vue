@@ -6,6 +6,7 @@ import { useModal } from '../composables/useModal'
 import ModuleManager from '../components/PlanEditor/ModuleManager.vue'
 import Canvas from '../components/PlanEditor/Canvas.vue'
 import PropertyInspector from '../components/PlanEditor/PropertyInspector.vue'
+import MorandiModal from '../components/common/MorandiModal.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -208,53 +209,18 @@ const handleExportJPG = async () => {
     </main>
 
     <!-- 自定义精美弹窗 (Morandi Style Modal) -->
-    <transition name="fade">
-      <div v-if="modal.show" class="fixed inset-0 z-[100] flex items-center justify-center px-4 bg-black/40 backdrop-blur-sm">
-        <div class="bg-morandi-paper w-full max-w-md shadow-2xl p-8 animate-in fade-in zoom-in duration-300 border border-morandi-border rounded-none">
-          <h3 class="font-serif text-xl text-morandi-text mb-2">{{ modal.title }}</h3>
-          <p class="text-[10px] uppercase tracking-widest text-morandi-muted mb-6">
-            {{ modal.type === 'confirm' ? 'Confirmation Required' : 'Action Required' }}
-          </p>
-          
-          <p class="text-xs text-morandi-muted mb-8 leading-relaxed">{{ modal.message }}</p>
-          
-          <!-- Prompt 输入框 (Ghost 极简底线) -->
-          <div v-if="modal.type === 'prompt'" class="mb-8">
-            <input 
-              v-model="modal.inputValue" 
-              type="text" 
-              class="w-full px-1 py-3 border-b border-morandi-border bg-transparent outline-none focus:border-morandi-text text-sm text-morandi-text rounded-none"
-              autofocus
-              @keyup.enter="handleModalConfirm"
-            />
-          </div>
-
-          <div class="flex justify-end gap-3">
-            <button 
-              v-if="modal.type !== 'alert'"
-              @click="closeModal" 
-              class="px-6 py-2 text-[11px] uppercase tracking-widest text-morandi-muted hover:text-morandi-text transition-colors font-medium outline-none"
-            >
-              取消
-            </button>
-            <button 
-              @click="handleModalConfirm" 
-              class="px-6 py-2 bg-morandi-text text-morandi-canvas text-[11px] uppercase tracking-widest rounded-full hover:opacity-90 transition-opacity font-medium outline-none shadow-sm"
-            >
-              {{ modal.type === 'confirm' ? '确定删除' : '确定' }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </transition>
+    <MorandiModal
+      :show="modal.show"
+      :title="modal.title"
+      :message="modal.message"
+      :type="modal.type"
+      :input-value="modal.inputValue"
+      :sub-title="modal.type === 'confirm' ? 'Confirmation Required' : 'Action Required'"
+      :on-confirm="handleModalConfirm"
+      :on-cancel="closeModal"
+      cancel-text="取消"
+      :confirm-text="modal.type === 'confirm' ? '确定删除' : '确定'"
+      @update:show="modal.show = $event"
+    />
   </div>
 </template>
-
-<style scoped>
-.fade-enter-active, .fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-.fade-enter-from, .fade-leave-to {
-  opacity: 0;
-}
-</style>

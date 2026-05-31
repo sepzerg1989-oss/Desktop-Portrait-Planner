@@ -55,23 +55,21 @@
       </button>
     </div>
 
-    <!-- 模特卡片墙 -->
+    <!-- 模特卡片墙 (拍立得相纸风格，外圈透明，内圈不对称白边框，1:1 比例) -->
     <div v-else class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-8">
       <div 
         v-for="model in filteredModels" :key="model.id" 
-        class="group relative cursor-pointer bg-morandi-paper border p-4 pb-8 transition-all duration-500 rounded-none shadow-[0_4px_16px_rgba(0,0,0,0.01),0_16px_48px_rgba(0,0,0,0.03)]"
+        class="group relative cursor-pointer bg-transparent transition-all duration-500"
         :class="[
-          selectedIds.includes(model.id)
-            ? 'border-morandi-border shadow-xl -translate-y-1'
-            : 'border-morandi-border hover:-translate-y-1',
+          selectedIds.includes(model.id) ? 'scale-[1.01] -translate-y-1 z-10' : 'hover:-translate-y-1',
           isManageMode ? 'scale-[0.98]' : ''
         ]"
         @click="handleCardClick(model)"
       >
-        <!-- 精致圆形漂浮复选框 -->
+        <!-- 精致圆形漂浮复选框 (浮于相纸之上) -->
         <div 
           v-if="isManageMode" 
-          class="absolute top-3 left-3 z-10 w-5 h-5 rounded-full flex items-center justify-center transition-all duration-200"
+          class="absolute top-3 left-3 z-20 w-5 h-5 rounded-full flex items-center justify-center transition-all duration-200"
           :class="selectedIds.includes(model.id)
             ? 'bg-morandi-text scale-105 shadow-md border-transparent'
             : 'border border-black/10 bg-morandi-paper'"
@@ -81,20 +79,35 @@
           </svg>
         </div>
 
-        <div class="aspect-square overflow-hidden bg-morandi-canvas/10 mb-4 border border-morandi-border/30 rounded-sm shadow-[inset_0_2px_8px_rgba(0,0,0,0.02)]">
-          <img v-if="model.avatarURL" :src="model.avatarURL" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-          <div v-else class="w-full h-full flex items-center justify-center text-morandi-text/20 bg-gradient-to-br from-morandi-gstart to-morandi-gend text-5xl font-serif">
-            {{ model.name?.charAt(0) || '?' }}
+        <!-- 拍立得相纸主体：内圈白框，四周不对称留白 (p-3 pb-8)，弹性高矮拉满对齐 (h-full flex flex-col) -->
+        <div 
+          class="bg-morandi-paper p-3 pb-8 transition-all duration-500 rounded-none shadow-[0_4px_16px_rgba(0,0,0,0.01),0_16px_48px_rgba(0,0,0,0.03)] h-full flex flex-col"
+          :class="[
+            selectedIds.includes(model.id)
+              ? 'ring-1 ring-morandi-text/20 shadow-xl'
+              : 'hover:shadow-md'
+          ]"
+        >
+          <!-- 1:1 照片底片区 (带微弱描边，禁止挤压 shrink-0) -->
+          <div class="aspect-square overflow-hidden bg-morandi-canvas/10 mb-4 border border-morandi-border/10 rounded-sm shadow-[inset_0_2px_8px_rgba(0,0,0,0.02)] shrink-0">
+            <img v-if="model.avatarURL" :src="model.avatarURL" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+            <div v-else class="w-full h-full flex items-center justify-center text-morandi-text/20 bg-gradient-to-br from-morandi-gstart to-morandi-gend text-5xl font-serif">
+              {{ model.name?.charAt(0) || '?' }}
+            </div>
           </div>
-        </div>
-        <h2 class="text-luxury-body font-sans text-morandi-text text-center mb-1 font-medium group-hover:text-morandi-red transition-colors">{{ model.name }}</h2>
-        <div class="flex justify-center flex-wrap items-center gap-1.5 mt-3 select-none">
-          <template v-for="(tag, idx) in model.tags" :key="tag">
-            <span v-if="idx > 0" class="text-morandi-muted/40 text-[9px] font-sans">·</span>
-            <span class="text-luxury-meta-sm text-morandi-muted">
-              {{ tag }}
-            </span>
-          </template>
+          
+          <!-- 拍立得相纸底边居中参数 (强制贴底对齐 mt-auto) -->
+          <div class="text-center mt-auto select-none">
+            <h2 class="text-luxury-body font-sans text-morandi-text mb-1 font-medium group-hover:text-morandi-red transition-colors">{{ model.name }}</h2>
+            <div class="flex justify-center flex-wrap items-center gap-1.5 mt-3">
+              <template v-for="(tag, idx) in model.tags" :key="tag">
+                <span v-if="idx > 0" class="text-morandi-muted/40 text-[9px] font-sans">·</span>
+                <span class="text-luxury-meta-sm text-morandi-muted font-sans">
+                  {{ tag }}
+                </span>
+              </template>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -187,7 +200,7 @@
     <!-- 全屏大图预览 -->
     <transition name="fade">
       <div v-if="previewUrl" class="fixed inset-0 z-[100] backdrop-blur-md bg-white/10 flex justify-center items-center p-12 cursor-zoom-out" @click="closePreview">
-        <img :src="previewUrl" class="max-w-full max-h-full object-contain shadow-[0_30px_100px_rgba(0,0,0,0.2)] animate-in zoom-in-95 duration-300" @click.stop />
+        <img :src="previewUrl" loading="lazy" class="max-w-full max-h-full object-contain shadow-[0_30px_100px_rgba(0,0,0,0.2)] animate-in zoom-in-95 duration-300" @click.stop />
       </div>
     </transition>
   </div>

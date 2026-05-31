@@ -148,155 +148,38 @@ ipcMain.handle('workspace:selectAndSet', async (event) => {
   return { success: false }
 })
 
-// --- 模特库 CRUD ---
-ipcMain.handle('db:models:getAll', () => {
-  return DatabaseService.getAll('models')
-})
+// ==================== 通用资源库 CRUD 工厂 ====================
+// 为 models, locations, clothing, props, makeup 生成标准 CRUD IPC 处理器
 
-ipcMain.handle('db:models:create', (event, data) => {
-  return DatabaseService.insert('models', data)
-})
+function registerLibraryCrud(tableName) {
+  const name = tableName === 'plans' ? 'plans' : tableName
+  ipcMain.handle(`db:${name}:getAll`, () => DatabaseService.getAll(tableName))
+  ipcMain.handle(`db:${name}:create`, (event, data) => DatabaseService.insert(tableName, data))
+  ipcMain.handle(`db:${name}:update`, (event, id, data) => DatabaseService.update(tableName, id, data))
 
-ipcMain.handle('db:models:update', (event, id, data) => {
-  return DatabaseService.update('models', id, data)
-})
+  ipcMain.handle(`db:${name}:delete`, async (event, id) => {
+    const result = DatabaseService.delete(tableName, id)
+    if (result.success) {
+      await ImageService.deleteEntityFolder(`${tableName}/${id}`)
+    }
+    return result
+  })
 
-ipcMain.handle('db:models:delete', async (event, id) => {
-  const result = DatabaseService.delete('models', id)
-  if (result.success) {
-    await ImageService.deleteEntityFolder(`models/${id}`)
-  }
-  return result
-})
+  ipcMain.handle(`db:${name}:deleteBatch`, async (event, ids) => {
+    const result = DatabaseService.deleteBatch(tableName, ids)
+    if (result.success) {
+      Promise.all(ids.map(id => ImageService.deleteEntityFolder(`${tableName}/${id}`)))
+        .catch(e => console.error(`[main] 批量删除${tableName}图片目录失败:`, e))
+    }
+    return result
+  })
+}
 
-ipcMain.handle('db:models:deleteBatch', async (event, ids) => {
-  const result = DatabaseService.deleteBatch('models', ids)
-  if (result.success) {
-    Promise.all(ids.map(id => ImageService.deleteEntityFolder(`models/${id}`)))
-      .catch(e => console.error('[main] 批量删除模特图片目录失败:', e))
-  }
-  return result
-})
-
-// --- 场地库 CRUD ---
-ipcMain.handle('db:locations:getAll', () => {
-  return DatabaseService.getAll('locations')
-})
-
-ipcMain.handle('db:locations:create', (event, data) => {
-  return DatabaseService.insert('locations', data)
-})
-
-ipcMain.handle('db:locations:update', (event, id, data) => {
-  return DatabaseService.update('locations', id, data)
-})
-
-ipcMain.handle('db:locations:delete', async (event, id) => {
-  const result = DatabaseService.delete('locations', id)
-  if (result.success) {
-    await ImageService.deleteEntityFolder(`locations/${id}`)
-  }
-  return result
-})
-
-ipcMain.handle('db:locations:deleteBatch', async (event, ids) => {
-  const result = DatabaseService.deleteBatch('locations', ids)
-  if (result.success) {
-    Promise.all(ids.map(id => ImageService.deleteEntityFolder(`locations/${id}`)))
-      .catch(e => console.error('[main] 批量删除场地图片目录失败:', e))
-  }
-  return result
-})
-
-// --- 服装库 CRUD (Clothing) ---
-ipcMain.handle('db:clothing:getAll', () => {
-  return DatabaseService.getAll('clothing')
-})
-
-ipcMain.handle('db:clothing:create', (event, data) => {
-  return DatabaseService.insert('clothing', data)
-})
-
-ipcMain.handle('db:clothing:update', (event, id, data) => {
-  return DatabaseService.update('clothing', id, data)
-})
-
-ipcMain.handle('db:clothing:delete', async (event, id) => {
-  const result = DatabaseService.delete('clothing', id)
-  if (result.success) {
-    await ImageService.deleteEntityFolder(`clothing/${id}`)
-  }
-  return result
-})
-
-ipcMain.handle('db:clothing:deleteBatch', async (event, ids) => {
-  const result = DatabaseService.deleteBatch('clothing', ids)
-  if (result.success) {
-    Promise.all(ids.map(id => ImageService.deleteEntityFolder(`clothing/${id}`)))
-      .catch(e => console.error('[main] 批量删除服装图片目录失败:', e))
-  }
-  return result
-})
-
-// --- 道具库 CRUD (Props) ---
-ipcMain.handle('db:props:getAll', () => {
-  return DatabaseService.getAll('props')
-})
-
-ipcMain.handle('db:props:create', (event, data) => {
-  return DatabaseService.insert('props', data)
-})
-
-ipcMain.handle('db:props:update', (event, id, data) => {
-  return DatabaseService.update('props', id, data)
-})
-
-ipcMain.handle('db:props:delete', async (event, id) => {
-  const result = DatabaseService.delete('props', id)
-  if (result.success) {
-    await ImageService.deleteEntityFolder(`props/${id}`)
-  }
-  return result
-})
-
-ipcMain.handle('db:props:deleteBatch', async (event, ids) => {
-  const result = DatabaseService.deleteBatch('props', ids)
-  if (result.success) {
-    Promise.all(ids.map(id => ImageService.deleteEntityFolder(`props/${id}`)))
-      .catch(e => console.error('[main] 批量删除道具图片目录失败:', e))
-  }
-  return result
-})
-
-// --- 妆容库 CRUD (Makeup) ---
-ipcMain.handle('db:makeup:getAll', () => {
-  return DatabaseService.getAll('makeup')
-})
-
-ipcMain.handle('db:makeup:create', (event, data) => {
-  return DatabaseService.insert('makeup', data)
-})
-
-ipcMain.handle('db:makeup:update', (event, id, data) => {
-  return DatabaseService.update('makeup', id, data)
-})
-
-ipcMain.handle('db:makeup:delete', async (event, id) => {
-  const result = DatabaseService.delete('makeup', id)
-  if (result.success) {
-    await ImageService.deleteEntityFolder(`makeup/${id}`)
-  }
-  return result
-})
-
-ipcMain.handle('db:makeup:deleteBatch', async (event, ids) => {
-  const result = DatabaseService.deleteBatch('makeup', ids)
-  if (result.success) {
-    Promise.all(ids.map(id => ImageService.deleteEntityFolder(`makeup/${id}`)))
-      .catch(e => console.error('[main] 批量删除妆容图片目录失败:', e))
-  }
-  return result
-})
+registerLibraryCrud('models')
+registerLibraryCrud('locations')
+registerLibraryCrud('clothing')
+registerLibraryCrud('props')
+registerLibraryCrud('makeup')
 
 // --- 策划案 CRUD ---
 ipcMain.handle('db:plans:getAll', () => {

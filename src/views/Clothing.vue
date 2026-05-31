@@ -14,6 +14,7 @@
           v-model:selectedSort="selectedSort"
           :sortOptions="clothingSortOptions"
           :tags="allTags"
+          :show-region="false"
           @reset="resetFilters"
         />
 
@@ -53,23 +54,17 @@
       </button>
     </div>
 
-    <!-- 服装卡片墙 (博物学图鉴，3:4 比例无白边) -->
-    <div v-else class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-8">
+    <!-- 服装卡片墙 (高级杂志图录风格 Catalog，3:4 比例) -->
+    <div v-else class="grid grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-8">
       <div 
         v-for="clothing in filteredItems" :key="clothing.id" 
-        class="group relative cursor-pointer bg-morandi-paper border border-morandi-border/30 transition-all duration-500 rounded-none overflow-hidden shadow-[0_4px_16px_rgba(0,0,0,0.01)]"
-        :class="[
-          selectedIds.includes(clothing.id)
-            ? 'border-morandi-text/40 shadow-md scale-[1.02]'
-            : 'hover:scale-[1.02] hover:border-morandi-text/20',
-          isManageMode ? 'scale-[0.98]' : ''
-        ]"
+        class="group relative cursor-pointer bg-transparent"
         @click="handleCardClick(clothing)"
       >
-        <!-- 正圆形漂浮复选框 -->
+        <!-- 正圆形漂浮复选框 (浮于图片之上) -->
         <div 
           v-if="isManageMode" 
-          class="absolute top-3 left-3 z-10 w-5 h-5 rounded-full flex items-center justify-center transition-all duration-200"
+          class="absolute top-3 left-3 z-20 w-5 h-5 rounded-full flex items-center justify-center transition-all duration-200"
           :class="selectedIds.includes(clothing.id)
             ? 'bg-morandi-text scale-105 shadow-md border-transparent'
             : 'border border-black/10 bg-morandi-paper'"
@@ -79,27 +74,32 @@
           </svg>
         </div>
 
-        <!-- 3:4 比例竖图区 (满宽贴边) -->
-        <div class="aspect-[3/4] overflow-hidden bg-morandi-canvas/10 border-b border-morandi-border/10">
-          <img v-if="clothing.coverURL" :src="clothing.coverURL" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+        <!-- 3:4 比例竖图区 (带微弱黑色描边与轻量弥散阴影，承载选择态微动效) -->
+        <div 
+          class="aspect-[3/4] overflow-hidden bg-morandi-canvas/10 relative transition-all duration-500 shadow-[0_8px_24px_rgba(0,0,0,0.04)] rounded-none"
+          :class="[
+            selectedIds.includes(clothing.id)
+              ? 'border-2 border-morandi-text ring-1 ring-morandi-text/30 scale-[1.02] z-10'
+              : 'border border-black/5',
+            isManageMode && !selectedIds.includes(clothing.id) ? 'scale-[0.98] opacity-60' : ''
+          ]"
+        >
+          <img v-if="clothing.coverURL" :src="clothing.coverURL" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
           <div v-else class="w-full h-full flex items-center justify-center text-morandi-text/20 bg-gradient-to-br from-morandi-gstart to-morandi-gend text-5xl font-serif">
             {{ clothing.name?.charAt(0) || '?' }}
           </div>
         </div>
 
-        <!-- 文字排版参数 (左对齐，下方留白) -->
-        <div class="p-4 pb-6 space-y-1.5 text-left">
-          <!-- 第一行：名称 / 标签 -->
-          <h2 class="font-serif text-[13px] text-morandi-text font-bold group-hover:text-morandi-red transition-colors duration-300 truncate">
-            {{ clothing.name }}
-            <span v-if="clothing.tags && clothing.tags.length > 0" class="font-sans font-normal text-[9px] text-morandi-muted/80 tracking-wider ml-1">
-              / {{ clothing.tags.join(' · ') }}
-            </span>
+        <!-- 极简裸排文字 (左对齐，用 / 分割，超长则用 ... 截断) -->
+        <div class="mt-4 text-left space-y-1">
+          <!-- 第一行：名称 / 标签 (以 · 分割标签列表，再以 / 与名称分割) -->
+          <h2 class="font-serif text-[13px] text-morandi-text font-bold group-hover:text-morandi-red transition-colors duration-300 truncate" :title="[clothing.name, clothing.tags && clothing.tags.length > 0 ? clothing.tags.join(' · ') : ''].filter(Boolean).join(' / ')">
+            {{ [clothing.name, clothing.tags && clothing.tags.length > 0 ? clothing.tags.join(' · ') : ''].filter(Boolean).join(' / ') }}
           </h2>
 
-          <!-- 第二行：描述 -->
-          <p v-if="clothing.description" class="text-[10px] text-morandi-muted/80 truncate font-sans leading-relaxed">
-            {{ clothing.description }}
+          <!-- 第二行：描述 / 价格 -->
+          <p v-if="clothing.description || clothing.price" class="text-[10px] text-morandi-muted/60 font-sans truncate" :title="[clothing.description, clothing.price ? `￥${clothing.price.replace('￥', '')}` : ''].filter(Boolean).join(' / ')">
+            {{ [clothing.description, clothing.price ? `￥${clothing.price.replace('￥', '')}` : ''].filter(Boolean).join(' / ') }}
           </p>
         </div>
       </div>
@@ -193,7 +193,7 @@
     <!-- 全屏大图预览 -->
     <transition name="fade">
       <div v-if="previewUrl" class="fixed inset-0 z-[100] backdrop-blur-md bg-white/10 flex justify-center items-center p-12 cursor-zoom-out" @click="closePreview">
-        <img :src="previewUrl" class="max-w-full max-h-full object-contain shadow-[0_30px_100px_rgba(0,0,0,0.2)] animate-in zoom-in-95 duration-300" @click.stop />
+        <img :src="previewUrl" loading="lazy" class="max-w-full max-h-full object-contain shadow-[0_30px_100px_rgba(0,0,0,0.2)] animate-in zoom-in-95 duration-300" @click.stop />
       </div>
     </transition>
   </div>
@@ -228,6 +228,7 @@ const {
   openCreateDrawer, confirmNamePrompt, cancelNamePrompt, openViewDrawer,
   executeBatchDeleteAction, executeSingleDeleteAction, closeDrawer,
   preview, closePreview,
+  allTags, filteredItems, isAllSelected,
 } = useLibraryPage({
   store: clothingStore,
   storeItems: () => clothingStore.clothings,

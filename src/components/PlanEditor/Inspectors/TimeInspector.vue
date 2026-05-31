@@ -73,19 +73,12 @@
     <div v-if="formData.showSunTimes" class="space-y-4 pt-2 border-t border-morandi-border/30">
       <div>
         <label class="block text-[10px] uppercase tracking-wider text-morandi-muted mb-2 font-bold">省份 / PROVINCE</label>
-        <div class="relative">
-          <select 
-            v-model="formData.province"
-            @change="onProvinceChange"
-            class="w-full px-1 py-3 border-b border-morandi-border bg-transparent focus:border-morandi-text outline-none text-sm text-morandi-text transition-colors appearance-none rounded-none"
-          >
-            <option value="" disabled class="bg-morandi-panel text-morandi-text">请选择省份</option>
-            <option v-for="prov in provinces" :key="prov" :value="prov" class="bg-morandi-panel text-morandi-text">{{ prov }}</option>
-          </select>
-          <div class="absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none text-morandi-muted text-[10px]">
-            ▼
-          </div>
-        </div>
+        <CustomSelect 
+          v-model="formData.province"
+          @change="onProvinceChange"
+          :options="provinces"
+          placeholder="请选择省份"
+        />
       </div>
 
       <div v-if="formData.province">
@@ -99,19 +92,12 @@
             + 存为常用
           </button>
         </div>
-        <div class="relative">
-          <select 
-            v-model="formData.city"
-            @change="onCityChange"
-            class="w-full px-1 py-3 border-b border-morandi-border bg-transparent focus:border-morandi-text outline-none text-sm text-morandi-text transition-colors appearance-none rounded-none"
-          >
-            <option value="" disabled class="bg-morandi-panel text-morandi-text">请选择城市</option>
-            <option v-for="city in availableCities" :key="city.地市" :value="city.地市" class="bg-morandi-panel text-morandi-text">{{ city.地市 }}</option>
-          </select>
-          <div class="absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none text-morandi-muted text-[10px]">
-            ▼
-          </div>
-        </div>
+        <CustomSelect 
+          v-model="formData.city"
+          @change="onCityChange"
+          :options="cityOptions"
+          placeholder="请选择城市"
+        />
       </div>
     </div>
   </div>
@@ -120,6 +106,7 @@
 <script setup>
 import { computed, ref, onMounted } from 'vue'
 import LocationData from '../../../assets/Location.json'
+import CustomSelect from '../../common/CustomSelect.vue'
 
 const props = defineProps({
   formData: {
@@ -132,6 +119,13 @@ const provinces = Object.keys(LocationData)
 
 const availableCities = computed(() => {
   return props.formData.province ? LocationData[props.formData.province] : []
+})
+
+const cityOptions = computed(() => {
+  return availableCities.value.map(c => ({
+    value: c.地市,
+    label: c.地市
+  }))
 })
 
 const onProvinceChange = () => {

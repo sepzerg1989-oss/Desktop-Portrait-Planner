@@ -74,7 +74,8 @@ export const usePlanStore = defineStore('plan', {
     /** 批量删除策划案 */
     async deletePlansBatch(ids) {
       try {
-        await window.electronAPI.deletePlansBatch(ids)
+        const finalIds = JSON.parse(JSON.stringify(ids))
+        await window.electronAPI.deletePlansBatch(finalIds)
         await this.fetchPlans()
       } catch (e) {
         console.error('[planStore] 批量删除策划案失败:', e)
