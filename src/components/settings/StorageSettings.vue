@@ -7,23 +7,23 @@
       </p>
     </div>
 
-    <div class="bg-morandi-panel p-6 border border-black/5 flex items-center justify-between group">
+    <div class="p-0 py-6 flex items-center justify-between bg-transparent border-none rounded-none group">
       <div class="flex-1 min-w-0 mr-6">
-        <div class="text-[10px] text-morandi-muted uppercase tracking-widest mb-1 font-sans">当前路径</div>
-        <div class="text-xs text-morandi-text truncate font-mono bg-white/80 border border-black/5 px-3 py-1.5 inline-block" :title="currentPath">
+        <div class="text-[10px] text-morandi-muted uppercase tracking-widest mb-2 font-bold font-sans">当前路径 / STORAGE PATH</div>
+        <div class="text-xs text-morandi-text truncate font-mono bg-transparent border-b border-morandi-border py-1.5 block max-w-lg" :title="currentPath">
           {{ currentPath || '未设置' }}
         </div>
       </div>
       <button 
         @click="handleSelectPath"
-        class="shrink-0 px-6 py-2.5 bg-morandi-text text-white text-[10px] uppercase tracking-widest hover:bg-black transition-all active:scale-95"
+        class="shrink-0 px-6 py-2 bg-morandi-text text-morandi-canvas text-[10px] sm:text-[11px] uppercase tracking-widest rounded-full hover:opacity-90 transition-all active:scale-95 outline-none shadow-sm font-medium"
       >
         更改目录
       </button>
     </div>
 
-    <div v-if="showSuccess" class="bg-transparent text-green-700 text-[10px] p-4 border border-green-600/30 animate-fade-in flex items-center font-sans">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <div v-if="showSuccess" class="bg-transparent text-morandi-text text-[10px] p-4 border border-morandi-border animate-fade-in flex items-center font-sans">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-2 text-morandi-red" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
       </svg>
       存储路径更改成功，新设置已即时生效。

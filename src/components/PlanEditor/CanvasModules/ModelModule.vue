@@ -9,11 +9,13 @@
         <div class="mb-4">
           <h3 class="text-[10px] uppercase tracking-[0.3em] text-morandi-muted font-bold">模特 / THE MUSE</h3>
         </div>
-        <h2 class="text-5xl font-serif text-morandi-text mb-6">{{ module.data.name }}</h2>
+        <h2 class="text-5xl font-serif text-morandi-text mb-6 font-medium">{{ module.data.name }}</h2>
         
         <div class="space-y-4 mb-8">
-          <div class="flex flex-wrap gap-2">
-            <span v-for="tag in module.data.tags" :key="tag" class="px-3 py-1 border border-black/5 text-[10px] uppercase tracking-widest text-morandi-text">{{ tag }}</span>
+          <div v-if="module.data.tags && module.data.tags.length > 0" class="text-[10px] text-morandi-muted uppercase tracking-[0.2em] mt-2 select-none">
+            <span v-for="(tag, index) in module.data.tags" :key="tag">
+              {{ tag }}<span v-if="index < module.data.tags.length - 1" class="mx-2">·</span>
+            </span>
           </div>
         </div>
       </div>

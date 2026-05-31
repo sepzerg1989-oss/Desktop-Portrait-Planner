@@ -8,12 +8,17 @@ export default {
     extend: {
       colors: {
         morandi: {
-          canvas: '#E2DED0',
-          panel: '#F5F5F5',
-          blue: '#A1B5C1',
-          oat: '#D9C5B2',
-          green: '#B8C4BB',
-          text: '#333333',
+          canvas: 'var(--color-canvas)',
+          panel: 'var(--color-paper)',  /* 完美向下兼容原先的 panel */
+          paper: 'var(--color-paper)',
+          text: 'var(--color-ink)',
+          red: 'var(--color-primary-red)',
+          green: 'var(--color-primary-green)',
+          blue: 'var(--color-accent-blue)',
+          oat: 'var(--color-accent-oat)',
+          gstart: 'var(--color-gradient-start)',
+          gend: 'var(--color-gradient-end)',
+          border: 'var(--color-border-line)',
           muted: '#999999'
         }
       },

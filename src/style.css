@@ -2,9 +2,111 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ==================== 莫兰迪高奢主题色彩系统 ==================== */
+
+/* 默认主题：暖调白棚 (The Daylight Studio) */
+:root {
+  --color-canvas: #E5E0D8;
+  --color-paper: #FCFBF9;
+  --color-ink: #2C2C2C;
+  --color-primary-red: #A34A4A;
+  --color-primary-green: #8B9D8B;
+  --color-accent-blue: #A1B5C1;
+  --color-accent-oat: #D9C5B2;
+  --color-gradient-start: #FCFBF9;
+  --color-gradient-end: #E5E0D8;
+  --color-border-line: rgba(44, 44, 44, 0.05);
+  --scrollbar-thumb: rgba(0, 0, 0, 0.08);
+}
+
+/* 主题 2：电影暗房 (The Cinematic Darkroom) */
+[data-theme='darkroom'] {
+  --color-canvas: #121212;
+  --color-paper: #1E1E1E;
+  --color-ink: #E5E0D8;
+  --color-primary-red: #C85A5A;
+  --color-primary-green: #6C8E6C;
+  --color-accent-blue: #2C3E50;
+  --color-accent-oat: #3D352E;
+  --color-gradient-start: #1E1E1E;
+  --color-gradient-end: #2D2D2D;
+  --color-border-line: rgba(255, 255, 255, 0.04);
+  --scrollbar-thumb: rgba(255, 255, 255, 0.12);
+}
+[data-theme='darkroom'] input,
+[data-theme='darkroom'] select,
+[data-theme='darkroom'] textarea {
+  color-scheme: dark;
+}
+
+select option {
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+}
+
+/* 主题 3：现代画廊 (The Plaster Gallery) */
+[data-theme='gallery'] {
+  --color-canvas: #F5F5F7;
+  --color-paper: #FFFFFF;
+  --color-ink: #1A1A1A; /* 炭灰，避免纯黑 */
+  --color-primary-red: #A34A58; /* 冷浆果红 */
+  --color-primary-green: #798E79;
+  --color-accent-blue: #8E9CA6;
+  --color-accent-oat: #D2C4B7;
+  --color-gradient-start: #FFFFFF;
+  --color-gradient-end: #E4E4E6;
+  --color-border-line: rgba(26, 26, 26, 0.04);
+  --scrollbar-thumb: rgba(0, 0, 0, 0.08);
+}
+
+/* 主题 4：灰绿鼠尾草 (The Botanist) */
+[data-theme='sage'] {
+  --color-canvas: #D1D5D0;
+  --color-paper: #F4F5F3;
+  --color-ink: #2E362D;
+  --color-primary-red: #963E3E;
+  --color-primary-green: #577557;
+  --color-accent-blue: #7E919C;
+  --color-accent-oat: #C2B09F;
+  --color-gradient-start: #F4F5F3;
+  --color-gradient-end: #D1D5D0;
+  --color-border-line: rgba(46, 54, 45, 0.06);
+  --scrollbar-thumb: rgba(46, 54, 45, 0.12);
+}
+
+/* 主题 5：枯玫瑰 (The Romantic) */
+[data-theme='rose'] {
+  --color-canvas: #D9CECD;
+  --color-paper: #FAF7F6;
+  --color-ink: #4A3C3B;
+  --color-primary-red: #9E4D4C; /* 枯玫瑰古董胭脂红 */
+  --color-primary-green: #738073;
+  --color-accent-blue: #8A98A6;
+  --color-accent-oat: #C4B4B3;
+  --color-gradient-start: #FAF7F6;
+  --color-gradient-end: #D9CECD;
+  --color-border-line: rgba(74, 60, 59, 0.06);
+  --scrollbar-thumb: rgba(74, 60, 59, 0.12);
+}
+
+/* 主题 6：雾霾蓝 (The Melancholy) */
+[data-theme='haze'] {
+  --color-canvas: #C6CDD3;
+  --color-paper: #F2F4F7;
+  --color-ink: #2B323A;
+  --color-primary-red: #8A4E4E;
+  --color-primary-green: #5E7A6E;
+  --color-accent-blue: #6A8090;
+  --color-accent-oat: #B8A99C;
+  --color-gradient-start: #F2F4F7;
+  --color-gradient-end: #C6CDD3;
+  --color-border-line: rgba(43, 50, 58, 0.06);
+  --scrollbar-thumb: rgba(43, 50, 58, 0.12);
+}
+
 @layer base {
   body {
-    @apply bg-morandi-panel text-morandi-text font-sans antialiased;
+    @apply bg-morandi-canvas text-morandi-text font-sans antialiased;
     overscroll-behavior: none;
   }
   
@@ -15,6 +117,14 @@
 
   .font-serif {
     font-variant-numeric: lining-nums;
+  }
+
+  /* ==================== 丝绸般平滑的全局色彩过渡 ==================== */
+  body, div, button, section, aside, h1, h2, h3, h4, p, span, svg, input, textarea, select {
+    transition: background-color 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                color 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                border-color 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
 
@@ -30,20 +140,22 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.05);
+  background: var(--scrollbar-thumb);
   border-radius: 10px;
   border: 1px solid transparent;
   background-clip: padding-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.15);
+  background: var(--scrollbar-thumb);
+  filter: brightness(0.8);
   border-radius: 10px;
 }
 
 /* 针对 Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.08) transparent;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
 }
+
 

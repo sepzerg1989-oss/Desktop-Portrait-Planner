@@ -2,10 +2,10 @@
   <div class="mb-0">
     <!-- 自定义模块/服装/道具模块 -->
     <div v-if="module.type === 'custom' || module.type === 'clothing' || module.type === 'props'">
-      <div class="mb-8">
+      <div class="mb-8 select-none">
         <h3 class="text-xs uppercase tracking-[0.2em] text-morandi-muted mb-2">{{ module.type === 'custom' ? 'Custom' : module.type }}</h3>
-        <h2 class="text-3xl font-serif text-morandi-text mb-4">{{ module.title }}</h2>
-        <p class="text-morandi-text leading-relaxed whitespace-pre-wrap">{{ module.data.description || '暂无描述' }}</p>
+        <h2 class="text-3xl font-serif text-morandi-text mb-4 font-medium">{{ module.title }}</h2>
+        <p class="text-morandi-text/90 leading-relaxed whitespace-pre-wrap font-sans">{{ module.data.description || '暂无描述' }}</p>
       </div>
       
       <!-- 图片区域 -->

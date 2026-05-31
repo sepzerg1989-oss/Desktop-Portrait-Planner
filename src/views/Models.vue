@@ -19,31 +19,24 @@
           @reset="resetFilters"
         />
 
-        <!-- 批量管理 -->
+        <!-- 批量管理（仅在非管理模式下显示，管理模式下由悬浮胶囊栏承载退出功能） -->
         <button 
-          v-if="modelStore.models.length > 0"
-          @click="isManageMode = !isManageMode"
-          :class="[
-            'px-6 py-2 text-xs uppercase tracking-wider transition-colors border',
-            isManageMode 
-              ? 'bg-[#A34A4A] text-white border-transparent' 
-              : 'border-morandi-text text-morandi-text hover:bg-morandi-canvas'
-          ]"
+          v-if="modelStore.models.length > 0 && !isManageMode"
+          @click="isManageMode = true"
+          class="px-6 py-2 text-[11px] uppercase tracking-widest transition-all rounded-full border outline-none font-medium border-morandi-text text-morandi-text hover:bg-morandi-text hover:text-morandi-canvas"
         >
-          {{ isManageMode ? '取消管理' : '批量管理' }}
+          批量管理
         </button>
 
         <button 
           v-if="!isManageMode"
           @click="openCreateDrawer"
-          class="px-6 py-2 bg-morandi-text text-white text-sm uppercase tracking-wider hover:bg-black transition-colors"
+          class="px-6 py-2 bg-morandi-text text-morandi-canvas text-[11px] uppercase tracking-widest rounded-full hover:opacity-90 transition-opacity font-medium outline-none shadow-sm"
         >
           + 新建模特
         </button>
       </div>
     </div>
-
-
 
     <!-- 加载状态 -->
     <div v-if="modelStore.loading" class="flex justify-center items-center py-20">
@@ -56,7 +49,7 @@
       <p class="text-morandi-muted text-xs uppercase tracking-widest mb-6">尚无模特数据 / No Model Data</p>
       <button 
         @click="openCreateDrawer"
-        class="px-8 py-3 bg-morandi-text text-white text-sm uppercase tracking-wider hover:bg-black/80 transition-colors"
+        class="px-8 py-3 bg-morandi-text text-morandi-canvas text-[11px] uppercase tracking-widest rounded-full hover:opacity-90 transition-opacity outline-none font-medium"
       >
         添加第一位模特
       </button>
@@ -66,35 +59,42 @@
     <div v-else class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-8">
       <div 
         v-for="model in filteredModels" :key="model.id" 
-        class="group relative cursor-pointer bg-white border p-4 hover:shadow-xl transition-all duration-300"
+        class="group relative cursor-pointer bg-morandi-paper border p-4 pb-8 transition-all duration-500 rounded-none shadow-[0_4px_16px_rgba(0,0,0,0.01),0_16px_48px_rgba(0,0,0,0.03)]"
         :class="[
-          selectedIds.includes(model.id) ? 'border-[#8B9D8B] bg-[#8B9D8B]/5 shadow-lg' : 'border-black/5',
+          selectedIds.includes(model.id)
+            ? 'border-morandi-border shadow-xl -translate-y-1'
+            : 'border-morandi-border hover:-translate-y-1',
           isManageMode ? 'scale-[0.98]' : ''
         ]"
         @click="handleCardClick(model)"
       >
-        <!-- 批量管理勾选框 -->
+        <!-- 精致圆形漂浮复选框 -->
         <div 
           v-if="isManageMode" 
-          class="absolute top-4 left-4 z-10 w-5 h-5 border rounded flex items-center justify-center transition-colors"
-          :class="selectedIds.includes(model.id) ? 'border-[#8B9D8B] bg-[#8B9D8B]' : 'border-black/20 bg-white'"
+          class="absolute top-3 left-3 z-10 w-5 h-5 rounded-full flex items-center justify-center transition-all duration-200"
+          :class="selectedIds.includes(model.id)
+            ? 'bg-morandi-text scale-105 shadow-md border-transparent'
+            : 'border border-black/10 bg-morandi-paper'"
         >
-          <svg v-if="selectedIds.includes(model.id)" class="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+          <svg v-if="selectedIds.includes(model.id)" class="w-3 h-3 text-morandi-paper" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
             <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
           </svg>
         </div>
 
-        <div class="aspect-square overflow-hidden bg-black/5 mb-4">
+        <div class="aspect-square overflow-hidden bg-morandi-canvas/10 mb-4 border border-morandi-border/30 rounded-sm shadow-[inset_0_2px_8px_rgba(0,0,0,0.02)]">
           <img v-if="model.avatarURL" :src="model.avatarURL" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-          <div v-else class="w-full h-full flex items-center justify-center text-morandi-muted/30 text-5xl font-serif">
+          <div v-else class="w-full h-full flex items-center justify-center text-morandi-text/20 bg-gradient-to-br from-morandi-gstart to-morandi-gend text-5xl font-serif">
             {{ model.name?.charAt(0) || '?' }}
           </div>
         </div>
-        <h2 class="font-sans text-base text-morandi-text text-center mb-1 font-medium">{{ model.name }}</h2>
-        <div class="flex justify-center flex-wrap gap-2 mt-3">
-          <span v-for="tag in model.tags" :key="tag" class="px-2 py-1 text-[10px] uppercase tracking-wider bg-morandi-canvas text-morandi-text">
-            {{ tag }}
-          </span>
+        <h2 class="font-sans text-sm text-morandi-text text-center mb-1 font-medium group-hover:text-morandi-red transition-colors">{{ model.name }}</h2>
+        <div class="flex justify-center flex-wrap items-center gap-1.5 mt-3 select-none">
+          <template v-for="(tag, idx) in model.tags" :key="tag">
+            <span v-if="idx > 0" class="text-morandi-muted/40 text-[9px] font-sans">·</span>
+            <span class="text-[9px] uppercase tracking-widest text-morandi-muted font-sans font-medium">
+              {{ tag }}
+            </span>
+          </template>
         </div>
       </div>
     </div>
@@ -121,7 +121,7 @@
     >
       <template #header-actions v-if="drawerMode === 'view'">
         <div class="flex items-center gap-3">
-          <button @click="switchToEdit" class="px-4 py-1.5 text-xs uppercase tracking-widest border border-morandi-text text-morandi-text hover:bg-morandi-text hover:text-white transition-colors">
+          <button @click="switchToEdit" class="rounded-full px-4 py-1.5 border border-morandi-border hover:bg-morandi-text hover:text-morandi-paper transition-colors text-[10px] tracking-widest font-sans">
             编辑 Edit
           </button>
           <button @click="confirmDelete" class="p-1.5 text-morandi-muted hover:text-red-400 hover:bg-red-50 transition-colors" title="删除模特">
@@ -155,7 +155,7 @@
     <!-- 新建前命名弹窗 -->
     <transition name="fade">
       <div v-if="showNamePrompt" class="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white p-8 shadow-2xl w-[400px]">
+        <div class="bg-morandi-paper p-8 shadow-2xl w-[400px] border border-morandi-border rounded-none">
           <h3 class="text-xl font-serif text-morandi-text mb-2">新建模特</h3>
           <p class="text-[10px] uppercase tracking-widest text-morandi-muted mb-6">Create New Model</p>
           <div class="mb-8">
@@ -163,18 +163,18 @@
             <input 
               v-model="promptName" 
               type="text" 
-              class="w-full px-4 py-3 border border-black/5 focus:border-morandi-blue outline-none text-sm bg-morandi-canvas/30" 
+              class="w-full px-1 py-3 border-b border-morandi-border bg-transparent focus:border-morandi-text outline-none text-sm text-morandi-text rounded-none" 
               placeholder="必填..."
               @keyup.enter="confirmNamePrompt"
             />
           </div>
           <div class="flex justify-end gap-3">
-            <button @click="cancelNamePrompt" class="px-6 py-2 text-xs uppercase tracking-widest text-morandi-muted hover:text-morandi-text transition-colors">
+            <button @click="cancelNamePrompt" class="px-6 py-2 text-[11px] uppercase tracking-widest text-morandi-muted hover:text-morandi-text transition-colors font-medium outline-none">
               取消 / Cancel
             </button>
             <button 
               @click="confirmNamePrompt" 
-              class="px-6 py-2 bg-morandi-text text-white text-xs uppercase tracking-widest hover:bg-black/80 transition-colors disabled:opacity-50"
+              class="px-6 py-2 bg-morandi-text text-morandi-canvas text-[11px] uppercase tracking-widest rounded-full hover:opacity-90 transition-opacity disabled:opacity-50 font-medium outline-none"
               :disabled="!promptName.trim()"
             >
               确认 / Confirm

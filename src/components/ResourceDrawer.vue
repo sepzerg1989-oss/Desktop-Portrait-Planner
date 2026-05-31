@@ -31,10 +31,10 @@
         <!-- 底部操作区 -->
         <div v-if="showFooter" class="px-8 py-4 bg-morandi-canvas border-t border-black/5 flex justify-end space-x-4">
           <slot name="footer">
-            <button @click="close" class="px-6 py-2 text-sm text-morandi-muted hover:text-morandi-text border border-transparent hover:border-black/5 transition-all">
+            <button @click="close" class="rounded-full px-6 py-2 border border-morandi-border/40 text-morandi-muted hover:text-morandi-text hover:border-morandi-text transition-all text-xs tracking-widest font-sans outline-none">
               取消
             </button>
-            <button @click="save" class="px-6 py-2 text-sm text-white bg-morandi-text hover:bg-black/80 transition-colors">
+            <button @click="save" class="rounded-full px-8 py-2 bg-morandi-text text-morandi-canvas hover:opacity-90 transition-all text-xs tracking-widest font-sans outline-none">
               保存修改
             </button>
           </slot>

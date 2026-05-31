@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain, protocol, dialog, Menu } from 'electron'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import fs from 'fs'
+import Store from 'electron-store'
 
 // 主进程服务
 import WorkspaceService from './services/WorkspaceService.js'
@@ -11,14 +12,26 @@ import ExportService from './services/ExportService.js'
 import UpdateService from './services/UpdateService.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const themeStore = new Store({ name: 'theme-config' })
 
 function createWindow() {
+  const savedTheme = themeStore.get('theme', 'default')
+  const themeBgColorMap = {
+    default: '#E5E0D8',
+    darkroom: '#121212',
+    gallery: '#F5F5F7',
+    sage: '#D1D5D0',
+    rose: '#D9CECD',
+    haze: '#C6CDD3'
+  }
+  const initialBgColor = themeBgColorMap[savedTheme] || '#E5E0D8'
+
   const win = new BrowserWindow({
     width: 1440,
     height: 900,
     frame: false, // 彻底移除系统默认边框
     titleBarStyle: 'hidden', // macOS 下隐藏标题栏，但保留控制按钮
-    backgroundColor: '#E2DED0', // 匹配我们的莫兰迪背景色
+    backgroundColor: initialBgColor, // 匹配上次保存的主题底色，防止瞬间闪烁
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
@@ -356,6 +369,23 @@ ipcMain.on('window-toggle-maximize', (event) => {
 ipcMain.on('window-close', (event) => {
   const win = BrowserWindow.fromWebContents(event.sender)
   win.close()
+})
+
+// --- 高奢多主题同步与持久化 ---
+ipcMain.handle('theme:getSaved', () => {
+  return themeStore.get('theme', 'default')
+})
+
+ipcMain.handle('theme:save', (event, themeName) => {
+  themeStore.set('theme', themeName)
+  return { success: true }
+})
+
+ipcMain.on('theme:setBackgroundColor', (event, hexColor) => {
+  const win = BrowserWindow.fromWebContents(event.sender)
+  if (win && !win.isDestroyed()) {
+    win.setBackgroundColor(hexColor)
+  }
 })
 
 // --- 自动与手动更新 ---

@@ -1,5 +1,5 @@
 <template>
-  <div class="h-full bg-white border-r border-black/5 flex flex-col">
+  <div class="h-full bg-morandi-panel flex flex-col">
     <!-- 顶部标题与添加按钮 (固定) -->
     <div class="p-6 border-b border-black/5 shrink-0">
       <div class="mb-8">
@@ -14,7 +14,7 @@
         <div v-if="showAddMenu" class="fixed inset-0 z-10" @click="showAddMenu = false"></div>
 
         <transition name="fade-pop-down">
-          <div v-if="showAddMenu" class="absolute top-full left-0 right-0 bg-white border border-black/5 shadow-2xl p-2 mt-2 space-y-1 z-20">
+          <div v-if="showAddMenu" class="absolute top-full left-0 right-0 bg-morandi-panel border border-morandi-border shadow-2xl p-2 mt-2 space-y-1 z-20">
             <button 
               v-for="opt in addOptions" :key="opt.type"
               @click="addModule(opt.type)"
@@ -30,8 +30,8 @@
           <!-- 主动作：添加 -->
           <button 
             @click="showAddMenu = !showAddMenu"
-            class="flex-1 py-2.5 border border-morandi-text border-r-0 text-morandi-text text-[10px] uppercase tracking-[0.2em] hover:bg-morandi-text hover:text-white transition-all flex items-center justify-center z-20 relative"
-            :class="{ 'bg-morandi-text text-white': showAddMenu }"
+            class="flex-1 py-2.5 border border-morandi-text border-r-0 text-morandi-text text-[10px] uppercase tracking-[0.2em] hover:bg-morandi-text hover:text-morandi-canvas transition-all flex items-center justify-center z-20 relative"
+            :class="{ 'bg-morandi-text text-morandi-canvas': showAddMenu }"
           >
             <span class="flex items-center">
               <span v-if="!showAddMenu" class="text-sm mr-2 leading-none">+</span>
@@ -42,7 +42,7 @@
           <!-- 次动作：另存为模板 -->
           <button 
             @click="handleSaveTemplate"
-            class="px-4 py-2.5 border border-morandi-text text-morandi-text hover:bg-morandi-text hover:text-white transition-all flex items-center justify-center group"
+            class="px-4 py-2.5 border border-morandi-text text-morandi-text hover:bg-morandi-text hover:text-morandi-canvas transition-all flex items-center justify-center group"
             title="将当前策划案存为模板"
           >
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -67,7 +67,7 @@
         <template #item="{ element }">
           <div 
             class="flex items-center p-3 mb-2 cursor-pointer border border-transparent transition-all group relative"
-            :class="[ activeModuleId === element.id ? 'bg-morandi-canvas border-black/5' : 'hover:bg-black/5' ]"
+            :class="[ activeModuleId === element.id ? 'bg-morandi-canvas border-morandi-border' : 'hover:bg-morandi-canvas/30' ]"
             @click="setActive(element.id)"
           >
             <!-- 模块图标 (取代三条杠) -->

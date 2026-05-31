@@ -2,25 +2,25 @@
   <div class="space-y-6 pb-10">
     <div>
       <label class="block text-[10px] uppercase tracking-wider text-morandi-muted mb-2 font-bold">模特姓名 / NAME</label>
-      <input v-model="formData.name" type="text" class="w-full px-4 py-3 bg-white border border-black/5 focus:border-morandi-blue outline-none transition-colors" placeholder="输入模特姓名" />
+      <input v-model="formData.name" type="text" class="w-full px-1 py-3 bg-transparent border-b border-morandi-border/30 focus:border-morandi-text outline-none text-sm text-morandi-text transition-colors rounded-none" placeholder="输入模特姓名" />
     </div>
     <div class="grid grid-cols-2 gap-4">
       <div>
         <label class="block text-[10px] uppercase tracking-wider text-morandi-muted mb-2 font-bold">地区 / REGION</label>
-        <input v-model="formData.region" type="text" class="w-full px-4 py-3 bg-white border border-black/5 focus:border-morandi-blue outline-none transition-colors" placeholder="如: 上海" />
+        <input v-model="formData.region" type="text" class="w-full px-1 py-3 bg-transparent border-b border-morandi-border/30 focus:border-morandi-text outline-none text-sm text-morandi-text transition-colors rounded-none" placeholder="如: 上海" />
       </div>
       <div>
         <label class="block text-[10px] uppercase tracking-wider text-morandi-muted mb-2 font-bold">价格 / PRICE</label>
-        <input v-model="formData.price" type="text" class="w-full px-4 py-3 bg-white border border-black/5 focus:border-morandi-blue outline-none transition-colors" placeholder="如: 1000" />
+        <input v-model="formData.price" type="text" class="w-full px-1 py-3 bg-transparent border-b border-morandi-border/30 focus:border-morandi-text outline-none text-sm text-morandi-text transition-colors rounded-none" placeholder="如: 1000" />
       </div>
     </div>
     <div>
       <label class="block text-[10px] uppercase tracking-wider text-morandi-muted mb-2 font-bold">擅长风格 / STYLES</label>
-      <input v-model="formData.tagsInput" type="text" class="w-full px-4 py-3 bg-white border border-black/5 focus:border-morandi-blue outline-none transition-colors" placeholder="用逗号分隔，如：高级脸, 法式" />
+      <input v-model="formData.tagsInput" type="text" class="w-full px-1 py-3 bg-transparent border-b border-morandi-border/30 focus:border-morandi-text outline-none text-sm text-morandi-text transition-colors rounded-none" placeholder="用逗号分隔，如：高级脸, 法式" />
     </div>
     <div>
       <label class="block text-[10px] uppercase tracking-wider text-morandi-muted mb-2 font-bold">社交账号 / SOCIAL</label>
-      <input v-model="formData.social" type="text" class="w-full px-4 py-3 bg-white border border-black/5 focus:border-morandi-blue outline-none transition-colors" placeholder="微博/小红书等" />
+      <input v-model="formData.social" type="text" class="w-full px-1 py-3 bg-transparent border-b border-morandi-border/30 focus:border-morandi-text outline-none text-sm text-morandi-text transition-colors rounded-none" placeholder="微博/小红书等" />
     </div>
     
     <!-- 分开的图片上传区 -->

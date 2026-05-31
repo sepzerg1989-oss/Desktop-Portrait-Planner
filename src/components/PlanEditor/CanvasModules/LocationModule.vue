@@ -3,7 +3,7 @@
     <div class="flex justify-between items-end mb-8">
       <div>
         <h3 class="text-[10px] uppercase tracking-[0.3em] text-morandi-muted mb-2 font-bold">拍摄场地 / LOCATION</h3>
-        <h2 class="text-3xl font-serif text-morandi-text">{{ module.data.name }}</h2>
+        <h2 class="text-3xl font-serif text-morandi-text font-medium">{{ module.data.name }}</h2>
       </div>
       <p class="text-xs text-morandi-muted italic">{{ module.data.address }}</p>
     </div>

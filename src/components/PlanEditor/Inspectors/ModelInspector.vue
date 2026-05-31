@@ -3,13 +3,13 @@
     <div class="flex gap-2 mb-6">
       <button 
         @click="$emit('toggle-library')"
-        class="flex-1 py-3 bg-morandi-text text-white text-[10px] uppercase tracking-widest hover:bg-black/80 transition-colors"
+        class="flex-1 py-3 bg-morandi-text text-morandi-canvas text-[10px] uppercase tracking-widest rounded-full hover:opacity-90 transition-all outline-none font-medium shadow-sm"
       >
         从素材库导入
       </button>
       <button 
         @click="$emit('save-library')"
-        class="px-4 py-3 border border-morandi-text text-morandi-text text-[10px] uppercase tracking-widest hover:bg-morandi-text hover:text-white transition-colors"
+        class="px-5 py-3 border border-morandi-text text-morandi-text text-[10px] uppercase tracking-widest rounded-full hover:bg-morandi-text hover:text-morandi-canvas transition-all outline-none font-medium"
         title="同步到全局模特库"
       >
         存入素材库
@@ -19,17 +19,17 @@
     <div class="space-y-4">
       <div>
         <label class="block text-[10px] uppercase tracking-wider text-morandi-muted mb-2 font-bold">模特姓名 / NAME</label>
-        <input v-model="formData.name" type="text" class="w-full px-4 py-3 border border-black/5 focus:border-morandi-blue outline-none text-sm bg-morandi-canvas/30" />
+        <input v-model="formData.name" type="text" class="w-full px-1 py-3 border-b border-morandi-border bg-transparent focus:border-morandi-text outline-none text-sm text-morandi-text rounded-none" />
       </div>
 
       <div class="grid grid-cols-2 gap-4">
         <div>
           <label class="block text-[10px] uppercase tracking-wider text-morandi-muted mb-2 font-bold">地区 / REGION</label>
-          <input v-model="formData.region" type="text" class="w-full px-4 py-3 border border-black/5 focus:border-morandi-blue outline-none text-sm bg-morandi-canvas/30" />
+          <input v-model="formData.region" type="text" class="w-full px-1 py-3 border-b border-morandi-border bg-transparent focus:border-morandi-text outline-none text-sm text-morandi-text rounded-none" />
         </div>
         <div>
           <label class="block text-[10px] uppercase tracking-wider text-morandi-muted mb-2 font-bold">价格 / PRICE</label>
-          <input v-model="formData.price" type="text" class="w-full px-4 py-3 border border-black/5 focus:border-morandi-blue outline-none text-sm bg-morandi-canvas/30" />
+          <input v-model="formData.price" type="text" class="w-full px-1 py-3 border-b border-morandi-border bg-transparent focus:border-morandi-text outline-none text-sm text-morandi-text rounded-none" />
         </div>
       </div>
 

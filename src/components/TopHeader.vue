@@ -1,5 +1,5 @@
 <template>
-  <header class="h-16 bg-morandi-canvas flex items-center px-8 sticky top-0 z-50 transition-all">
+  <header class="h-16 bg-morandi-canvas flex items-center px-8 sticky top-0 z-50 border-b border-morandi-border/30 transition-all">
     
     <!-- 左侧 Logo -->
     <div class="flex-1 flex items-center">
@@ -12,31 +12,29 @@
     <nav class="flex-none flex justify-center space-x-10">
       <router-link 
         to="/" 
-        class="text-sm font-medium transition-colors hover:text-morandi-text relative py-2"
+        class="text-xs font-medium transition-colors hover:text-morandi-text relative py-2 tracking-widest"
         :class="[ $route.path === '/' ? 'text-morandi-text' : 'text-morandi-muted' ]"
       >
         策划
-        <span v-if="$route.path === '/'" class="absolute bottom-0 left-0 w-full h-[2px] bg-morandi-blue rounded-full"></span>
+        <span v-if="$route.path === '/'" class="absolute bottom-0 left-0 w-full h-[1.5px] bg-morandi-text"></span>
       </router-link>
-
-
 
       <router-link 
         to="/models" 
-        class="text-sm font-medium transition-colors hover:text-morandi-text relative py-2"
+        class="text-xs font-medium transition-colors hover:text-morandi-text relative py-2 tracking-widest"
         :class="[ $route.path === '/models' ? 'text-morandi-text' : 'text-morandi-muted' ]"
       >
         模特库
-        <span v-if="$route.path === '/models'" class="absolute bottom-0 left-0 w-full h-[2px] bg-morandi-blue rounded-full"></span>
+        <span v-if="$route.path === '/models'" class="absolute bottom-0 left-0 w-full h-[1.5px] bg-morandi-text"></span>
       </router-link>
 
       <router-link 
         to="/locations" 
-        class="text-sm font-medium transition-colors hover:text-morandi-text relative py-2"
+        class="text-xs font-medium transition-colors hover:text-morandi-text relative py-2 tracking-widest"
         :class="[ $route.path === '/locations' ? 'text-morandi-text' : 'text-morandi-muted' ]"
       >
         场地库
-        <span v-if="$route.path === '/locations'" class="absolute bottom-0 left-0 w-full h-[2px] bg-morandi-blue rounded-full"></span>
+        <span v-if="$route.path === '/locations'" class="absolute bottom-0 left-0 w-full h-[1.5px] bg-morandi-text"></span>
       </router-link>
     </nav>
 
@@ -44,7 +42,7 @@
     <div class="flex-1 flex items-center justify-end space-x-4">
       <router-link 
         to="/settings"
-        class="px-4 py-2 text-xs uppercase tracking-wider text-morandi-text border border-morandi-text hover:bg-black/5 transition-colors"
+        class="px-6 py-2 bg-morandi-text text-morandi-canvas text-[11px] uppercase tracking-widest rounded-full hover:opacity-90 transition-opacity font-medium"
       >
         全局设置
       </router-link>

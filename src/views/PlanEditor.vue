@@ -148,14 +148,14 @@ const handleExportJPG = async () => {
         <button 
           v-if="!isEditing"
           @click="toggleEdit" 
-          class="px-8 py-2 bg-morandi-text text-white text-xs uppercase tracking-widest hover:bg-black transition-all"
+          class="rounded-full px-8 py-2 bg-morandi-text text-morandi-canvas text-xs uppercase tracking-widest hover:opacity-90 transition-all outline-none"
         >
           编辑
         </button>
         <button 
           v-else
           @click="finishEditing" 
-          class="px-8 py-2 bg-morandi-blue text-white text-xs uppercase tracking-widest hover:bg-opacity-90 transition-all"
+          class="rounded-full px-8 py-2 bg-morandi-text text-morandi-canvas text-xs uppercase tracking-widest hover:opacity-90 transition-all outline-none"
         >
           完成编辑
         </button>
@@ -178,7 +178,7 @@ const handleExportJPG = async () => {
     <main class="flex-1 flex overflow-hidden">
       <!-- 左侧模块管理 (侧边栏平滑推拉) -->
       <aside 
-        class="bg-white border-r border-black/5 overflow-hidden transition-all duration-500 ease-in-out"
+        class="bg-morandi-panel border-r border-morandi-border overflow-hidden transition-all duration-500 ease-in-out"
         :class="isEditing ? 'w-64 opacity-100' : 'w-0 opacity-0 border-none'"
       >
         <div class="w-64 h-full"> <!-- 增加 h-full 确保内容可滚动 -->
@@ -193,7 +193,7 @@ const handleExportJPG = async () => {
 
       <!-- 右侧属性检查器 (侧边栏平滑推拉) -->
       <aside 
-        class="bg-white border-l border-black/5 overflow-hidden transition-all duration-500 ease-in-out"
+        class="bg-morandi-panel border-l border-morandi-border overflow-hidden transition-all duration-500 ease-in-out"
         :class="isEditing ? 'w-80 opacity-100' : 'w-0 opacity-0 border-none'"
       >
         <div class="w-80 h-full"> <!-- 增加 h-full -->
@@ -205,37 +205,39 @@ const handleExportJPG = async () => {
     <!-- 自定义精美弹窗 (Morandi Style Modal) -->
     <transition name="fade">
       <div v-if="modal.show" class="fixed inset-0 z-[100] flex items-center justify-center px-4 bg-black/40 backdrop-blur-sm">
-        <div class="bg-white w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
-          <div class="p-8">
-            <h3 class="font-serif text-xl text-morandi-text mb-2">{{ modal.title }}</h3>
-            <p class="text-sm text-morandi-muted mb-6 leading-relaxed">{{ modal.message }}</p>
-            
-            <!-- Prompt 输入框 -->
-            <div v-if="modal.type === 'prompt'" class="mb-8">
-              <input 
-                v-model="modal.inputValue" 
-                type="text" 
-                class="w-full px-4 py-3 border border-black/5 bg-morandi-canvas/30 outline-none focus:border-morandi-blue text-sm"
-                autofocus
-                @keyup.enter="handleModalConfirm"
-              />
-            </div>
+        <div class="bg-morandi-paper w-full max-w-md shadow-2xl p-8 animate-in fade-in zoom-in duration-300 border border-morandi-border rounded-none">
+          <h3 class="font-serif text-xl text-morandi-text mb-2">{{ modal.title }}</h3>
+          <p class="text-[10px] uppercase tracking-widest text-morandi-muted mb-6">
+            {{ modal.type === 'confirm' ? 'Confirmation Required' : 'Action Required' }}
+          </p>
+          
+          <p class="text-xs text-morandi-muted mb-8 leading-relaxed">{{ modal.message }}</p>
+          
+          <!-- Prompt 输入框 (Ghost 极简底线) -->
+          <div v-if="modal.type === 'prompt'" class="mb-8">
+            <input 
+              v-model="modal.inputValue" 
+              type="text" 
+              class="w-full px-1 py-3 border-b border-morandi-border bg-transparent outline-none focus:border-morandi-text text-sm text-morandi-text rounded-none"
+              autofocus
+              @keyup.enter="handleModalConfirm"
+            />
+          </div>
 
-            <div class="flex justify-end space-x-4">
-              <button 
-                v-if="modal.type !== 'alert'"
-                @click="closeModal" 
-                class="px-6 py-2.5 text-xs uppercase tracking-widest text-morandi-muted hover:text-morandi-text transition-colors"
-              >
-                取消
-              </button>
-              <button 
-                @click="handleModalConfirm" 
-                class="px-8 py-2.5 bg-morandi-text text-white text-xs uppercase tracking-widest hover:bg-black transition-all shadow-lg"
-              >
-                {{ modal.type === 'confirm' ? '确定删除' : '确定' }}
-              </button>
-            </div>
+          <div class="flex justify-end gap-3">
+            <button 
+              v-if="modal.type !== 'alert'"
+              @click="closeModal" 
+              class="px-6 py-2 text-[11px] uppercase tracking-widest text-morandi-muted hover:text-morandi-text transition-colors font-medium outline-none"
+            >
+              取消
+            </button>
+            <button 
+              @click="handleModalConfirm" 
+              class="px-6 py-2 bg-morandi-text text-morandi-canvas text-[11px] uppercase tracking-widest rounded-full hover:opacity-90 transition-opacity font-medium outline-none shadow-sm"
+            >
+              {{ modal.type === 'confirm' ? '确定删除' : '确定' }}
+            </button>
           </div>
         </div>
       </div>

@@ -77,5 +77,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     minimize: () => ipcRenderer.send('window-minimize'),
     toggleMaximize: () => ipcRenderer.send('window-toggle-maximize'),
     close: () => ipcRenderer.send('window-close')
+  },
+
+  // ==================== 高奢多主题同步与持久化 ====================
+  theme: {
+    getSavedTheme: () => ipcRenderer.invoke('theme:getSaved'),
+    saveTheme: (themeName) => ipcRenderer.invoke('theme:save', themeName),
+    setBackgroundColor: (hexColor) => ipcRenderer.send('theme:setBackgroundColor', hexColor)
   }
 })

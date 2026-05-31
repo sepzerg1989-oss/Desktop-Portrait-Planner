@@ -7,22 +7,25 @@
       </p>
     </div>
 
-    <!-- 导出卡片 -->
-    <div class="bg-morandi-panel p-5 border border-black/5 flex items-center justify-between">
+    <!-- 导出区 (彻底去框裸排) -->
+    <div class="flex items-center justify-between bg-transparent py-4 rounded-none border-none">
       <div class="space-y-1">
         <h3 class="text-xs font-bold text-morandi-text">备份与导出数据</h3>
-        <p class="text-[11px] text-morandi-muted font-sans">选择并打包你的策划案、模特或场地数据，生成备份数据包。</p>
+        <p class="text-[11px] text-morandi-muted font-sans mt-1">选择并打包你的策划案、模特或场地数据，生成备份数据包。</p>
       </div>
       <button 
         @click="showExportModal = true" 
-        class="shrink-0 px-5 py-2 bg-morandi-text text-white text-xs hover:bg-black transition-all"
+        class="shrink-0 px-6 py-2 bg-morandi-text text-morandi-canvas text-[11px] uppercase tracking-widest rounded-full hover:opacity-90 transition-all font-medium outline-none shadow-sm"
       >
         选择并导出
       </button>
     </div>
 
-    <!-- 导入区（拖拽上传 + 点击浏览二合一） -->
-    <div class="space-y-3">
+    <!-- 物理极细下划线分隔 -->
+    <div class="border-b border-morandi-border/30 my-4"></div>
+
+    <!-- 导入区（拖拽上传 + 点击浏览二合一，重塑为实体直角卡纸袋） -->
+    <div class="space-y-3 pt-2">
       <h3 class="text-xs font-bold text-morandi-text">数据包导入</h3>
       
       <div 
@@ -32,18 +35,18 @@
         @drop.prevent="onDrop"
         @click="triggerFileSelect"
         :class="[
-          'relative min-h-[110px] border border-dashed flex flex-col items-center justify-center p-4 text-center cursor-pointer transition-all duration-200 select-none group',
-          isDragActive ? 'border-morandi-text bg-morandi-panel/40 scale-[1.005]' : 'border-black/10 bg-transparent hover:border-morandi-text',
-          isInvalidFile ? 'border-red-400 bg-red-50/40 animate-shake' : '',
+          'relative min-h-[115px] border border-dashed rounded-none flex flex-col items-center justify-center p-6 text-center cursor-pointer transition-all duration-300 select-none group bg-morandi-paper shadow-[inset_0_2px_8px_rgba(0,0,0,0.02)]',
+          isDragActive ? 'border-morandi-text scale-[1.005]' : 'border-morandi-border hover:border-morandi-text',
+          isInvalidFile ? 'border-morandi-red bg-red-50/5 animate-shake' : '',
           isImporting ? 'pointer-events-none opacity-80' : ''
         ]"
       >
         <!-- 正常/拖入悬停状态 -->
         <div v-if="!isImporting && !importSuccess" class="space-y-1 py-3">
           <p v-if="isDragActive" class="text-xs text-morandi-text font-bold">释放以导入数据包</p>
-          <p v-else-if="isInvalidFile" class="text-xs text-red-500 font-bold">{{ errorMessage }}</p>
+          <p v-else-if="isInvalidFile" class="text-xs text-morandi-red font-bold">{{ errorMessage }}</p>
           <p v-else class="text-xs text-morandi-text font-sans">
-            将 <span class="underline font-bold text-morandi-text">.ppexport 备份文件</span> 拖拽至此处，或 <span class="text-morandi-text font-bold">点击选择文件导入</span>
+            将 <span class="border-b border-morandi-text font-bold text-morandi-text pb-0.5">.ppexport 备份文件</span> 拖拽至此处，或 <span class="text-morandi-red font-bold">点击选择文件导入</span>
           </p>
           <p class="text-[9px] text-morandi-muted font-sans tracking-wide mt-1">系统将自动合并数据与图片，不覆盖已有内容</p>
         </div>
@@ -51,7 +54,7 @@
         <!-- 导入中状态 -->
         <div v-if="isImporting" class="space-y-4 flex flex-col items-center">
           <div class="relative flex items-center justify-center">
-            <svg class="animate-spin h-10 w-10 text-morandi-text" fill="none" viewBox="0 0 24 24">
+            <svg class="animate-spin h-8 w-8 text-morandi-text" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
@@ -64,13 +67,13 @@
 
         <!-- 导入成功状态 -->
         <div v-if="importSuccess" class="space-y-3 flex flex-col items-center animate-scale-in">
-          <div class="w-12 h-12 text-green-600 flex items-center justify-center">
+          <div class="w-12 h-12 text-morandi-red flex items-center justify-center">
             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
             </svg>
           </div>
           <div class="space-y-1">
-            <p class="text-xs text-green-600 font-bold tracking-wider">数据包导入成功！</p>
+            <p class="text-xs text-morandi-red font-bold tracking-wider">数据包导入成功！</p>
             <p class="text-[10px] text-morandi-muted font-sans">策划案、模特库与场地库已成功加载，界面已刷新</p>
           </div>
         </div>

@@ -6,13 +6,13 @@
         :value="moduleTitle" 
         @input="$emit('update:title', $event.target.value)"
         type="text" 
-        class="w-full px-4 py-3 border border-black/5 focus:border-morandi-blue outline-none text-sm bg-morandi-canvas/30" 
+        class="w-full px-1 py-3 border-b border-morandi-border bg-transparent focus:border-morandi-text outline-none text-sm text-morandi-text rounded-none" 
         placeholder="输入自定义模块名称..."
       />
     </div>
     <div v-if="moduleType !== 'reference'">
       <label class="block text-[10px] uppercase tracking-wider text-morandi-muted mb-2 font-bold">描述说明 / DESCRIPTION</label>
-      <textarea v-model="formData.description" rows="4" class="w-full px-4 py-3 border border-black/5 focus:border-morandi-blue outline-none text-sm bg-morandi-canvas/30" placeholder="填写详细说明..."></textarea>
+      <textarea v-model="formData.description" rows="4" class="w-full px-1 py-3 border-b border-morandi-border bg-transparent focus:border-morandi-text outline-none text-sm text-morandi-text rounded-none resize-none" placeholder="填写详细说明..."></textarea>
     </div>
     <div>
       <label class="block text-[10px] uppercase tracking-wider text-morandi-muted mb-2 font-bold">

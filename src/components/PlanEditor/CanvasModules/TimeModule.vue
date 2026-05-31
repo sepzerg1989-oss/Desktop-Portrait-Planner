@@ -2,25 +2,25 @@
   <div class="mb-0">
     <h3 class="text-[10px] uppercase tracking-[0.3em] text-morandi-muted mb-8 font-bold text-center">拍摄时间 / SCHEDULE</h3>
     
-    <div v-if="module.data.date || module.data.startTime" class="text-center mb-8">
+    <div v-if="module.data.date || module.data.startTime" class="text-center mb-8 select-none">
       <h2 class="text-6xl font-sans font-medium text-morandi-text tracking-tight mb-4">
         {{ formatDate(module.data.date) }}
       </h2>
       <p class="text-xl text-morandi-text/80 font-sans tracking-[0.1em] flex items-center justify-center gap-4">
-        <span class="w-12 h-px bg-black/10"></span>
+        <span class="w-12 h-px bg-morandi-border/30"></span>
         {{ (module.data.startTime || 'TBD') + (module.data.endTime ? ' - ' + module.data.endTime : '') }}
-        <span class="w-12 h-px bg-black/10"></span>
+        <span class="w-12 h-px bg-morandi-border/30"></span>
       </p>
     </div>
-    <div v-else class="text-center text-morandi-muted italic text-sm mb-10">
+    <div v-else class="text-center text-morandi-muted italic text-sm mb-10 select-none">
       日期未定
     </div>
     
     <!-- 光线时刻表 -->
-    <div v-if="module.data.showSunTimes && module.data.lat" class="mt-4">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-px bg-black/5 border border-black/5">
+    <div v-if="module.data.showSunTimes && module.data.lat" class="mt-4 select-none">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div v-for="(group, idx) in sunTimes" :key="idx" 
-             class="bg-white p-8 text-center hover:bg-morandi-canvas/30 transition-colors">
+             class="bg-transparent py-8 text-center">
           <h4 class="text-xs text-morandi-muted font-bold mb-5 tracking-widest">{{ group.label }}</h4>
           <div class="space-y-2">
             <div v-for="(timeStr, tIdx) in group.times" :key="tIdx" class="text-xl font-sans text-morandi-text [font-variant-numeric:tabular-nums] tracking-tight">
@@ -30,7 +30,7 @@
         </div>
       </div>
     </div>
-    <div v-else-if="module.data.showSunTimes" class="text-center text-sm text-morandi-muted/50 mt-8 italic">
+    <div v-else-if="module.data.showSunTimes" class="text-center text-sm text-morandi-muted/50 mt-8 italic select-none">
       请在右侧选择拍摄城市以计算光线时刻
     </div>
   </div>

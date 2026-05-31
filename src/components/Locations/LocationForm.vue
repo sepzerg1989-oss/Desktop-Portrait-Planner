@@ -2,20 +2,20 @@
   <div class="space-y-8 pb-10">
     <div>
       <label class="block text-[10px] uppercase tracking-wider text-morandi-muted mb-2 font-bold">场地名称 / VENUE</label>
-      <input v-model="formData.name" type="text" class="w-full px-4 py-3 bg-white border border-black/5 focus:border-morandi-blue outline-none transition-colors" placeholder="输入场地名称" />
+      <input v-model="formData.name" type="text" class="w-full px-1 py-3 bg-transparent border-b border-morandi-border/30 focus:border-morandi-text outline-none text-sm text-morandi-text transition-colors rounded-none" placeholder="输入场地名称" />
     </div>
     <div>
       <label class="block text-[10px] uppercase tracking-wider text-morandi-muted mb-2 font-bold">详细地址 / ADDRESS</label>
-      <input v-model="formData.address" type="text" class="w-full px-4 py-3 bg-white border border-black/5 focus:border-morandi-blue outline-none transition-colors" placeholder="输入场地地址" />
+      <input v-model="formData.address" type="text" class="w-full px-1 py-3 bg-transparent border-b border-morandi-border/30 focus:border-morandi-text outline-none text-sm text-morandi-text transition-colors rounded-none" placeholder="输入场地地址" />
     </div>
     <div class="grid grid-cols-2 gap-4">
       <div>
         <label class="block text-[10px] uppercase tracking-wider text-morandi-muted mb-2 font-bold">价格 / PRICE</label>
-        <input v-model="formData.price" type="text" class="w-full px-4 py-3 bg-white border border-black/5 focus:border-morandi-blue outline-none transition-colors" placeholder="如: ￥300/h" />
+        <input v-model="formData.price" type="text" class="w-full px-1 py-3 bg-transparent border-b border-morandi-border/30 focus:border-morandi-text outline-none text-sm text-morandi-text transition-colors rounded-none" placeholder="如: ￥300/h" />
       </div>
       <div>
         <label class="block text-[10px] uppercase tracking-wider text-morandi-muted mb-2 font-bold">分类标签 / TAGS</label>
-        <input v-model="formData.tagsInput" type="text" class="w-full px-4 py-3 bg-white border border-black/5 focus:border-morandi-blue outline-none transition-colors" placeholder="如: 自然光, 北欧" />
+        <input v-model="formData.tagsInput" type="text" class="w-full px-1 py-3 bg-transparent border-b border-morandi-border/30 focus:border-morandi-text outline-none text-sm text-morandi-text transition-colors rounded-none" placeholder="如: 自然光, 北欧" />
       </div>
     </div>
 

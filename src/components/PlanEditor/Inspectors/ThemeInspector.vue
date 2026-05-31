@@ -1,10 +1,10 @@
 <template>
   <div>
     <label class="block text-[10px] uppercase tracking-wider text-morandi-muted mb-2 font-bold">主题名称 / THEME TITLE</label>
-    <input v-model="formData.title" type="text" class="w-full px-4 py-3 border border-black/5 focus:border-morandi-blue outline-none text-sm bg-morandi-canvas/30 mb-4" />
+    <input v-model="formData.title" type="text" class="w-full px-1 py-3 border-b border-morandi-border bg-transparent focus:border-morandi-text outline-none text-sm text-morandi-text mb-4 rounded-none" />
     
     <label class="block text-[10px] uppercase tracking-wider text-morandi-muted mb-2 font-bold">描述说明 / DESCRIPTION</label>
-    <textarea v-model="formData.description" rows="3" class="w-full px-4 py-3 border border-black/5 focus:border-morandi-blue outline-none text-sm bg-morandi-canvas/30 mb-6"></textarea>
+    <textarea v-model="formData.description" rows="3" class="w-full px-1 py-3 border-b border-morandi-border bg-transparent focus:border-morandi-text outline-none text-sm text-morandi-text mb-6 rounded-none resize-none"></textarea>
     
     <label class="block text-[10px] uppercase tracking-wider text-morandi-muted mb-2 font-bold">主题图片 / PHOTOS</label>
     <ImageUploader 

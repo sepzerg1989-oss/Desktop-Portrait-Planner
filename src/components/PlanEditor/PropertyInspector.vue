@@ -1,6 +1,6 @@
 <template>
   <div 
-    class="h-full w-full bg-white border-l border-black/5 flex flex-col relative outline-none" 
+    class="h-full w-full bg-morandi-panel flex flex-col relative outline-none" 
     tabindex="0"
     @click="($event.target.tagName !== 'INPUT' && $event.target.tagName !== 'TEXTAREA' && $event.target.tagName !== 'BUTTON' && $event.target.tagName !== 'SELECT') && $event.currentTarget.focus()"
   >
@@ -73,7 +73,7 @@
     <!-- 快捷命名弹窗 (针对存入素材库) -->
     <transition name="fade">
       <div v-if="promptModal.isOpen" class="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white p-8 shadow-2xl w-[400px]">
+        <div class="bg-morandi-paper border border-morandi-border p-8 shadow-2xl w-[400px] rounded-none">
           <h3 class="text-xl font-serif text-morandi-text mb-2">{{ promptModal.title }}</h3>
           <p class="text-[10px] uppercase tracking-widest text-morandi-muted mb-6">Quick Save</p>
           <div class="mb-8">
@@ -81,19 +81,19 @@
             <input 
               v-model="promptModal.value" 
               type="text" 
-              class="w-full px-4 py-3 border border-black/5 focus:border-morandi-blue outline-none text-sm bg-morandi-canvas/30" 
+              class="w-full px-1 py-3 border-b border-morandi-border bg-transparent focus:border-morandi-text outline-none text-sm text-morandi-text rounded-none" 
               placeholder="必填..."
               @keyup.enter="confirmPrompt"
               autofocus
             />
           </div>
           <div class="flex justify-end gap-3">
-            <button @click="cancelPrompt" class="px-6 py-2 text-xs uppercase tracking-widest text-morandi-muted hover:text-morandi-text transition-colors">
+            <button @click="cancelPrompt" class="px-6 py-2 text-[11px] uppercase tracking-widest text-morandi-muted hover:text-morandi-text transition-colors font-medium outline-none">
               取消 / Cancel
             </button>
             <button 
               @click="confirmPrompt" 
-              class="px-6 py-2 bg-morandi-text text-white text-xs uppercase tracking-widest hover:bg-black/80 transition-colors disabled:opacity-50"
+              class="px-6 py-2 bg-morandi-text text-morandi-canvas text-[11px] uppercase tracking-widest rounded-full hover:opacity-90 transition-opacity disabled:opacity-50 font-medium outline-none shadow-sm"
               :disabled="!promptModal.value.trim()"
             >
               确认 / Confirm

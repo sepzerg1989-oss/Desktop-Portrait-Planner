@@ -1,5 +1,5 @@
 <template>
-  <div ref="filterPanelRef" class="flex flex-wrap items-center gap-3 relative">
+  <div ref="filterPanelRef" class="flex flex-wrap items-center gap-4 relative">
     <!-- 搜索框 -->
     <div class="relative w-[180px]">
       <input 
@@ -7,12 +7,12 @@
         @input="$emit('update:searchQuery', $event.target.value)"
         type="text" 
         placeholder="搜索姓名、标签..." 
-        class="w-full px-3 py-2 border border-black/10 bg-transparent outline-none focus:border-morandi-text text-xs transition-colors font-sans"
+        class="w-full px-1 py-2 border-b border-morandi-border bg-transparent outline-none focus:border-morandi-text text-xs transition-colors font-sans rounded-none"
       />
       <button 
         v-if="searchQuery" 
         @click="$emit('update:searchQuery', '')"
-        class="absolute right-3 top-1/2 -translate-y-1/2 text-morandi-muted hover:text-morandi-text text-sm"
+        class="absolute right-1 top-1/2 -translate-y-1/2 text-morandi-muted hover:text-morandi-text text-sm"
       >
         ×
       </button>
@@ -23,12 +23,12 @@
       <select 
         :value="selectedRegion"
         @change="$emit('update:selectedRegion', $event.target.value)"
-        class="w-full px-3 py-2 border border-black/10 bg-transparent outline-none focus:border-morandi-text text-xs transition-colors font-sans appearance-none cursor-pointer text-morandi-text"
+        class="w-full px-1 py-2 border-b border-morandi-border bg-transparent outline-none focus:border-morandi-text text-xs transition-colors font-sans appearance-none cursor-pointer text-morandi-text rounded-none"
       >
         <option value="">地区: 全部</option>
         <option v-for="r in regions" :key="r" :value="r">{{ r }}</option>
       </select>
-      <div class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-morandi-muted text-[10px]">
+      <div class="absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none text-morandi-muted text-[10px]">
         ▼
       </div>
     </div>
@@ -38,13 +38,13 @@
       <select 
         :value="selectedSort"
         @change="$emit('update:selectedSort', $event.target.value)"
-        class="w-full px-3 py-2 border border-black/10 bg-transparent outline-none focus:border-morandi-text text-xs transition-colors font-sans appearance-none cursor-pointer text-morandi-text"
+        class="w-full px-1 py-2 border-b border-morandi-border bg-transparent outline-none focus:border-morandi-text text-xs transition-colors font-sans appearance-none cursor-pointer text-morandi-text rounded-none"
       >
         <option v-for="opt in sortOptions" :key="opt.value" :value="opt.value">
           {{ opt.label }}
         </option>
       </select>
-      <div class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-morandi-muted text-[10px]">
+      <div class="absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none text-morandi-muted text-[10px]">
         ▼
       </div>
     </div>
@@ -53,8 +53,8 @@
     <button 
       v-if="tags && tags.length > 0"
       @click="isCollapsed = !isCollapsed"
-      :class="['px-3 py-2 border text-[10px] uppercase tracking-widest hover:border-morandi-text transition-all flex items-center gap-1.5',
-        !isCollapsed ? 'border-morandi-text text-morandi-text' : 'border-black/10 text-morandi-muted hover:text-morandi-text'
+      :class="['px-1 py-2 border-b text-[10px] uppercase tracking-widest transition-all flex items-center gap-1.5 rounded-none bg-transparent',
+        !isCollapsed ? 'border-morandi-text text-morandi-text' : 'border-morandi-border text-morandi-muted hover:text-morandi-text hover:border-morandi-text'
       ]"
     >
       <span>标签</span>
@@ -64,27 +64,27 @@
     <!-- 重置按钮 -->
     <button 
       @click="resetAll"
-      :class="['px-3 py-2 text-[10px] uppercase tracking-widest text-[#A34A4A] hover:bg-black/5 active:scale-95 transition-all select-none',
+      :class="['px-1 py-2 text-[10px] uppercase tracking-widest text-morandi-red hover:text-morandi-text active:scale-95 transition-all select-none',
         hasActiveFilters ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
       ]"
     >
       重置 RESET
     </button>
 
-    <!-- 标签下拉面板 (绝对定位悬浮) -->
+    <!-- 标签下拉面板 (绝对定位悬浮，重塑为高奢直角卡纸与幽灵胶囊) -->
     <transition name="fade">
-      <div v-if="!isCollapsed && tags && tags.length > 0" class="absolute top-full left-0 mt-2 w-[320px] bg-[#F9F9F9] border border-black/10 p-4 shadow-xl z-50">
-        <div class="text-[10px] text-morandi-muted uppercase tracking-widest mb-3 select-none">按常用标签筛选：</div>
-        <div class="flex flex-wrap gap-2 max-h-[200px] overflow-y-auto pr-2 scroll-thin">
+      <div v-if="!isCollapsed && tags && tags.length > 0" class="absolute top-full left-0 mt-2 w-[320px] bg-morandi-paper border border-morandi-border p-5 shadow-[0_16px_40px_rgba(0,0,0,0.04)] z-50 rounded-none">
+        <div class="text-[10px] text-morandi-muted tracking-[0.2em] mb-4 select-none">按常用标签筛选：</div>
+        <div class="flex flex-wrap gap-2.5 max-h-[200px] overflow-y-auto pr-2 scroll-thin">
           <button 
             v-for="tag in tags" 
             :key="tag"
             @click="toggleTag(tag)"
             :class="[
-              'px-3 py-1 text-[10px] tracking-wider transition-all duration-300 border',
+              'px-4 py-1.5 rounded-full border text-xs tracking-wider transition-all duration-300 outline-none',
               selectedTags.includes(tag)
-                ? 'bg-morandi-text text-white border-transparent'
-                : 'bg-transparent border-black/10 text-morandi-text hover:border-morandi-text'
+                ? 'bg-morandi-text text-morandi-paper border-transparent shadow-[0_2px_8px_rgba(0,0,0,0.03)]'
+                : 'bg-transparent border-morandi-text/10 text-morandi-muted hover:text-morandi-text hover:bg-morandi-text/5'
             ]"
           >
             {{ tag }}
