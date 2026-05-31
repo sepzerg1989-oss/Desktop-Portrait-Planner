@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { usePlanStore } from '../store/planStore'
 import { useModal } from '../composables/useModal'
@@ -35,14 +35,19 @@ const autoSave = debounce(() => {
 }, 2000)
 
 watch(
-  () => [JSON.stringify(store.modules), store.planTitle],
+  () => store.modules,
   (newVal, oldVal) => {
-    if (isEditing.value && newVal[0] !== oldVal?.[0]) {
+    if (isEditing.value && newVal !== oldVal) {
       autoSave.call()
     }
-  }
+  },
+  { deep: true }
 )
 // ------------------------------------------------------
+
+onBeforeUnmount(() => {
+  autoSave.cancel()
+})
 
 // 弹窗状态管理（复用 composable）
 const { modal, showModal, closeModal, handleModalConfirm } = useModal()

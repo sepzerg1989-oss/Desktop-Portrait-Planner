@@ -21,6 +21,7 @@ export const useMakeupStore = defineStore('makeup', {
         }))
       } catch (e) {
         console.error('[makeupStore] 获取妆容列表失败:', e)
+        throw e
       } finally {
         this.loading = false
       }
@@ -73,6 +74,7 @@ export const useMakeupStore = defineStore('makeup', {
         await this.fetchAll()
       } catch (e) {
         console.error('[makeupStore] 删除妆容失败:', e)
+        throw e
       }
     },
 
@@ -83,6 +85,7 @@ export const useMakeupStore = defineStore('makeup', {
         await this.fetchAll()
       } catch (e) {
         console.error('[makeupStore] 批量删除妆容失败:', e)
+        throw e
       }
     }
   }

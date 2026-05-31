@@ -58,9 +58,15 @@ class ImageService {
       throw new Error('工作区尚未初始化')
     }
 
-    // 确保目标目录存在 (支持嵌套目录，如 'plans/123')
-    const categoryParts = category.split(/[\\\/]/)
+    const categoryParts = this._sanitizeCategory(category)
+    if (!categoryParts) {
+      throw new Error('无效的资源分类路径')
+    }
+
     const targetDir = path.join(this.workspacePath, 'images', ...categoryParts)
+    if (!this._isPathWithinWorkspace(targetDir)) {
+      throw new Error('拒绝写入非工作区目录')
+    }
     if (!fs.existsSync(targetDir)) {
       fs.mkdirSync(targetDir, { recursive: true })
     }
@@ -139,7 +145,7 @@ class ImageService {
 
   _sanitizeCategory(category) {
     if (!category) return null
-    const parts = category.split(/[\\\/]/).filter(p => p && p !== '..' && !p.includes(':'))
+    const parts = category.split(/[\\\/]/).filter(p => p && !p.includes('..') && !p.includes(':') && !/^[~]/.test(p))
     if (parts.length === 0) return null
     return parts
   }

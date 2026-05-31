@@ -21,6 +21,7 @@ export const useClothingStore = defineStore('clothing', {
         }))
       } catch (e) {
         console.error('[clothingStore] 获取服装搭配列表失败:', e)
+        throw e
       } finally {
         this.loading = false
       }
@@ -75,6 +76,7 @@ export const useClothingStore = defineStore('clothing', {
         await this.fetchAll()
       } catch (e) {
         console.error('[clothingStore] 删除服装搭配失败:', e)
+        throw e
       }
     },
 
@@ -85,6 +87,7 @@ export const useClothingStore = defineStore('clothing', {
         await this.fetchAll()
       } catch (e) {
         console.error('[clothingStore] 批量删除服装搭配失败:', e)
+        throw e
       }
     }
   }

@@ -159,6 +159,7 @@ import { useLocationStore } from '../../store/locationStore'
 import { useClothingStore } from '../../store/clothingStore'
 import { usePropsStore } from '../../store/propsStore'
 import { useMakeupStore } from '../../store/makeupStore'
+import { sanitize } from '../../utils/helpers'
 
 import ThemeInspector from './Inspectors/ThemeInspector.vue'
 import ModelInspector from './Inspectors/ModelInspector.vue'
@@ -191,10 +192,6 @@ const showLocationLibrary = ref(false)
 const showClothingLibrary = ref(false)
 const showPropsLibrary = ref(false)
 const showMakeupLibrary = ref(false)
-
-const sanitize = (name) => {
-  return (name || '').replace(/[\\\/:\*\?"<>\|]/g, '_').trim() || 'unnamed'
-}
 
 // 图片存放目录
 const category = computed(() => `plans/${sanitize(store.planTitle)}_${store.planId}`)

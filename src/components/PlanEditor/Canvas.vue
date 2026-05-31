@@ -67,7 +67,7 @@
 </template>
 
 <script setup>
-import { watch } from 'vue'
+import { watch, onBeforeUnmount } from 'vue'
 import { usePlanStore } from '../../store/planStore'
 import html2canvas from 'html2canvas'
 
@@ -162,5 +162,9 @@ const exportToImage = async () => {
 
 defineExpose({
   exportToImage
+})
+
+onBeforeUnmount(() => {
+  if (saveTimeout) clearTimeout(saveTimeout)
 })
 </script>

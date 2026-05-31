@@ -86,7 +86,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onBeforeUnmount } from 'vue'
 import { usePlanStore } from '../../store/planStore'
 import { useModelStore } from '../../store/modelStore'
 import { useLocationStore } from '../../store/locationStore'
@@ -204,6 +204,10 @@ const executeImport = async (filePath = null) => {
     isImporting.value = false
   }
 }
+
+onBeforeUnmount(() => {
+  if (shakeTimer.value) clearTimeout(shakeTimer.value)
+})
 </script>
 
 <style scoped>

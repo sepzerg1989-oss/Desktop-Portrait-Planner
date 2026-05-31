@@ -116,7 +116,7 @@ export function useImageUpload() {
    * 删除图片
    */
   const deleteImage = async (path) => {
-    if (path && path.includes(':')) { // 简单判断是绝对路径
+    if (path && /^([a-zA-Z]:[\\/]|\/)/.test(path)) {
       await window.electronAPI.deleteImageFile(path)
     }
   }

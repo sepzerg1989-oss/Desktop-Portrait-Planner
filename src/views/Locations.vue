@@ -139,7 +139,7 @@
       </template>
 
       <!-- 浏览模式 -->
-      <LocationView v-if="drawerMode === 'view'" :location="currentLoc" @preview="previewImage" />
+      <LocationView v-if="drawerMode === 'view'" :location="currentLoc" @preview="preview" />
 
       <!-- 编辑模式 -->
       <LocationForm v-else :form-data="formData" :category="category" />
@@ -168,7 +168,7 @@
               type="text" 
               class="w-full px-1 py-3 border-b border-morandi-border bg-transparent focus:border-morandi-text outline-none text-sm text-morandi-text rounded-none" 
               placeholder="必填..."
-              @keyup.enter="confirmNamePrompt"
+              @keyup.enter="confirmNamePromptWithForm"
             />
           </div>
           <div class="flex justify-end gap-3">
@@ -176,7 +176,7 @@
               取消 / Cancel
             </button>
             <button 
-              @click="confirmNamePrompt" 
+              @click="confirmNamePromptWithForm" 
               class="px-6 py-2 bg-morandi-text text-morandi-canvas text-[11px] uppercase tracking-widest rounded-full hover:opacity-90 transition-opacity disabled:opacity-50 font-medium outline-none"
               :disabled="!promptName.trim()"
             >
@@ -189,7 +189,7 @@
 
     <!-- 全屏预览 -->
     <transition name="fade">
-      <div v-if="previewUrl" class="fixed inset-0 z-[100] bg-white/95 flex items-center justify-center p-10 cursor-zoom-out" @click="previewUrl = null">
+      <div v-if="previewUrl" class="fixed inset-0 z-[100] bg-white/95 flex items-center justify-center p-10 cursor-zoom-out" @click="closePreview">
         <img :src="previewUrl" class="max-w-full max-h-full shadow-2xl object-contain" />
       </div>
     </transition>
@@ -205,27 +205,12 @@ import LocationForm from '../components/Locations/LocationForm.vue'
 import FilterPanel from '../components/common/FilterPanel.vue'
 import BatchActionBar from '../components/common/BatchActionBar.vue'
 import { useLocationStore } from '../store/locationStore'
+import { useLibraryPage } from '../composables/useLibraryPage'
+import { sanitize } from '../utils/helpers'
 
 const locationStore = useLocationStore()
-const isDrawerOpen = ref(false)
-const drawerMode = ref('view') // 'view' | 'edit'
-const editingId = ref(null)
-const previewUrl = ref(null)
 
-const isConfirmOpen = ref(false)
-const confirmMessage = ref('')
-const showNamePrompt = ref(false)
-const promptName = ref('')
-const tempId = ref(null) // 用于暂存未保存场地的文件目录 ID
-const initialFolderName = ref('') // 会话开始时的文件夹名称
-
-// 筛选与批量状态
-const searchQuery = ref('')
 const selectedRegion = ref('')
-const selectedTags = ref([])
-const isManageMode = ref(false)
-const selectedIds = ref([])
-const selectedSort = ref('recently_added')
 
 const locationSortOptions = [
   { value: 'recently_added', label: '最近添加' },
@@ -234,7 +219,6 @@ const locationSortOptions = [
   { value: 'price_desc', label: '价格降序' }
 ]
 
-// 从场地地址中智能解析地区 (前2-3字城市)
 const regions = computed(() => {
   const all = locationStore.locations.map(loc => {
     const addr = loc.address || ''
@@ -244,85 +228,36 @@ const regions = computed(() => {
   return [...new Set(all)]
 })
 
-// 从场地中提取所有标签
-const allTags = computed(() => {
-  const tags = locationStore.locations.flatMap(l => l.tags || []).filter(Boolean)
-  return [...new Set(tags)]
+const {
+  isDrawerOpen, drawerMode, editingId, tempId, previewUrl, initialFolderName,
+  searchQuery, selectedTags, isManageMode, selectedIds, selectedSort,
+  filteredItems: baseFiltered, isAllSelected,
+  isConfirmOpen, confirmMessage, showNamePrompt, promptName,
+  resetFilters: baseResetFilters, handleCardClick, toggleAll, executeBatchDelete, cancelManageMode,
+  openCreateDrawer, confirmNamePrompt, cancelNamePrompt, openViewDrawer,
+  executeBatchDeleteAction, executeSingleDeleteAction, closeDrawer,
+  preview, closePreview,
+} = useLibraryPage({
+  store: locationStore,
+  storeItems: () => locationStore.locations,
+  entityLabel: '场地',
+  sortOptions: locationSortOptions,
+  folderPrefix: 'new_location_',
+  categoryPath: 'locations',
+  onRefresh: () => refreshImages(),
 })
 
-// 辅助函数：从混合文本中智能抓取数值用于价格精准排序，无数值者归为最底端
-const parseNumericPrice = (priceStr) => {
-  if (!priceStr) return 0
-  const match = String(priceStr).match(/(\d+(\.\d+)?)/)
-  return match ? parseFloat(match[1]) : 0
-}
-
-// 实时响应式过滤与智能排序
 const filteredLocations = computed(() => {
-  // 1. 过滤
-  let list = locationStore.locations.filter(loc => {
-    const matchesSearch = !searchQuery.value.trim() ||
-      loc.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      loc.address.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      loc.tags.some(t => t.toLowerCase().includes(searchQuery.value.toLowerCase()))
-      
+  return baseFiltered.value.filter(loc => {
     const matchesRegion = !selectedRegion.value || loc.address.includes(selectedRegion.value)
-    
-    const matchesTags = selectedTags.value.length === 0 ||
-      selectedTags.value.every(t => loc.tags.includes(t))
-      
-    return matchesSearch && matchesRegion && matchesTags
+    return matchesRegion
   })
-
-  // 2. 排序
-  list.sort((a, b) => {
-    if (selectedSort.value === 'recently_added') {
-      const timeA = new Date(a.created_at).getTime()
-      const timeB = new Date(b.created_at).getTime()
-      return timeB - timeA
-    } else if (selectedSort.value === 'name_pinyin') {
-      return (a.name || '').localeCompare(b.name || '', 'zh-CN')
-    } else if (selectedSort.value === 'price_asc') {
-      const pA = parseNumericPrice(a.price)
-      const pB = parseNumericPrice(b.price)
-      if (pA === 0 && pB > 0) return 1
-      if (pB === 0 && pA > 0) return -1
-      return pA - pB
-    } else if (selectedSort.value === 'price_desc') {
-      const pA = parseNumericPrice(a.price)
-      const pB = parseNumericPrice(b.price)
-      if (pA === 0 && pB > 0) return 1
-      if (pB === 0 && pA > 0) return -1
-      return pB - pA
-    }
-    return 0
-  })
-
-  return list
 })
 
-// 判断是否已全部选中当前过滤场地
-const isAllSelected = computed(() => {
-  if (filteredLocations.value.length === 0) return false
-  return filteredLocations.value.every(l => selectedIds.value.includes(l.id))
-})
-
-const sanitize = (name) => {
-  return (name || '').replace(/[\\\/:\*\?"<>\|]/g, '_').trim() || 'unnamed'
+const resetFilters = () => {
+  baseResetFilters()
+  selectedRegion.value = ''
 }
-
-const getFolderName = () => {
-  if (initialFolderName.value && !initialFolderName.value.startsWith('new_location_')) {
-    return initialFolderName.value
-  }
-  const base = editingId.value || tempId.value
-  const name = sanitize(formData.name)
-  const newName = name === 'unnamed' ? `new_location_${base}` : `${name}_${base}`
-  initialFolderName.value = newName
-  return newName
-}
-
-const category = computed(() => `locations/${getFolderName()}`)
 
 const formData = reactive({
   name: '',
@@ -342,6 +277,17 @@ const currentLoc = computed(() => {
 const drawerTitle = computed(() => {
   if (drawerMode.value === 'view') return '场地详情'
   return editingId.value ? '编辑场地' : '新建场地'
+})
+
+const category = computed(() => {
+  if (initialFolderName.value && !initialFolderName.value.startsWith('new_location_')) {
+    return `locations/${initialFolderName.value}`
+  }
+  const base = editingId.value || tempId.value
+  const name = sanitize(formData.name)
+  const folder = name === 'unnamed' ? `new_location_${base}` : `${name}_${base}`
+  initialFolderName.value = folder
+  return `locations/${folder}`
 })
 
 const refreshImages = async () => {
@@ -370,71 +316,6 @@ onMounted(async () => {
   await refreshImages()
 })
 
-const resetFilters = () => {
-  searchQuery.value = ''
-  selectedRegion.value = ''
-  selectedTags.value = []
-  selectedSort.value = 'recently_added'
-}
-
-// 拦截式卡片点击逻辑 (方案 A)
-const handleCardClick = (loc) => {
-  if (isManageMode.value) {
-    const idx = selectedIds.value.indexOf(loc.id)
-    if (idx === -1) {
-      selectedIds.value.push(loc.id)
-    } else {
-      selectedIds.value.splice(idx, 1)
-    }
-  } else {
-    openViewDrawer(loc)
-  }
-}
-
-// 全选当前过滤场地
-const toggleAll = () => {
-  if (isAllSelected.value) {
-    selectedIds.value = selectedIds.value.filter(id => 
-      !filteredLocations.value.some(l => l.id === id)
-    )
-  } else {
-    filteredLocations.value.forEach(loc => {
-      if (!selectedIds.value.includes(loc.id)) {
-        selectedIds.value.push(loc.id)
-      }
-    })
-  }
-}
-
-// 触发批量删除确认
-const executeBatchDelete = () => {
-  if (selectedIds.value.length === 0) return
-  confirmMessage.value = `确定要批量删除选中的 ${selectedIds.value.length} 个场地吗？此操作将永久物理删除所有选定场地的照片与图片，且无法撤销！`
-  isConfirmOpen.value = true
-}
-
-const executeDelete = async () => {
-  if (isManageMode.value) {
-    // 批量删除
-    await locationStore.removeBatch(selectedIds.value)
-    selectedIds.value = []
-    isManageMode.value = false
-    await refreshImages()
-    isConfirmOpen.value = false
-  } else if (currentLoc.value) {
-    // 单个删除
-    await locationStore.remove(currentLoc.value.id)
-    await refreshImages()
-    isConfirmOpen.value = false
-    isDrawerOpen.value = false
-  }
-}
-
-const cancelManageMode = () => {
-  isManageMode.value = false
-  selectedIds.value = []
-}
-
 const resetForm = () => {
   formData.name = ''
   formData.address = ''
@@ -445,32 +326,17 @@ const resetForm = () => {
   formData.images = []
 }
 
-const openCreateDrawer = () => {
-  promptName.value = ''
-  showNamePrompt.value = true
-}
-
-const confirmNamePrompt = () => {
-  if (!promptName.value.trim()) return
-  drawerMode.value = 'edit'
-  editingId.value = null
-  tempId.value = Date.now()
-  initialFolderName.value = `${sanitize(promptName.value)}_${tempId.value}`
-  resetForm()
+const confirmNamePromptWithForm = () => {
+  confirmNamePrompt(resetForm)
   formData.name = promptName.value.trim()
-  showNamePrompt.value = false
-  isDrawerOpen.value = true
 }
 
-const cancelNamePrompt = () => {
-  showNamePrompt.value = false
-}
-
-const openViewDrawer = (loc) => {
-  editingId.value = loc.id
-  initialFolderName.value = `${sanitize(loc.name)}_${loc.id}`
-  drawerMode.value = 'view'
-  isDrawerOpen.value = true
+const executeDelete = async () => {
+  if (isManageMode.value) {
+    await executeBatchDeleteAction()
+  } else if (currentLoc.value) {
+    await executeSingleDeleteAction(currentLoc.value)
+  }
 }
 
 const switchToEdit = async () => {
@@ -491,26 +357,19 @@ const switchToEdit = async () => {
   }
 }
 
-const closeDrawer = async () => {
-  if (drawerMode.value === 'edit' && !editingId.value && tempId.value) {
-    await window.electronAPI.cleanupTempFolder(`locations/${initialFolderName.value}`)
-  }
-  isDrawerOpen.value = false
-}
-
-const previewImage = (url) => {
-  previewUrl.value = url
-}
-
 const confirmDelete = async () => {
   if (!currentLoc.value) return
   confirmMessage.value = `确定要从场地库中删除 "${currentLoc.value.name}" 吗？此操作不可撤销。`
   isConfirmOpen.value = true
 }
 
+const handleCloseDrawer = () => {
+  closeDrawer()
+}
+
 const handleSave = async () => {
   if (drawerMode.value === 'view') {
-    closeDrawer()
+    handleCloseDrawer()
     return
   }
 

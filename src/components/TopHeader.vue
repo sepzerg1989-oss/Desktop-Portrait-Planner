@@ -149,7 +149,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 const route = useRoute()
@@ -159,6 +159,10 @@ const isMegaOpen = ref(false)
 const activeItem = ref('models')
 
 let leaveTimer = null
+
+onBeforeUnmount(() => {
+  if (leaveTimer) clearTimeout(leaveTimer)
+})
 
 const openMega = () => {
   if (leaveTimer) {

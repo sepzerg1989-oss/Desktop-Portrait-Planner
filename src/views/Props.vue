@@ -56,7 +56,7 @@
     <!-- 道具卡片墙 (博物学图鉴，1:1 正方形比例无白边) -->
     <div v-else class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-8">
       <div 
-        v-for="prop in filteredProps" :key="prop.id" 
+        v-for="prop in filteredItems" :key="prop.id" 
         class="group relative cursor-pointer bg-morandi-paper border border-morandi-border/30 transition-all duration-500 rounded-none overflow-hidden shadow-[0_4px_16px_rgba(0,0,0,0.01)]"
         :class="[
           selectedIds.includes(prop.id)
@@ -122,7 +122,7 @@
       width="w-[500px]" 
       :show-footer="drawerMode !== 'view'"
       :close-on-click-outside="drawerMode !== 'edit'"
-      @close="closeDrawer" 
+      @close="handleCloseDrawer" 
       @save="handleSave"
     >
       <template #header-actions v-if="drawerMode === 'view'">
@@ -139,7 +139,7 @@
       </template>
 
       <!-- 浏览模式 -->
-      <PropsView v-if="drawerMode === 'view'" :prop="currentProp" @preview="previewImage" />
+      <PropsView v-if="drawerMode === 'view'" :prop="currentProp" @preview="preview" />
 
       <!-- 编辑模式 -->
       <PropsForm v-else-if="drawerMode === 'edit'" :form-data="formData" :category="category" />
@@ -171,7 +171,7 @@
               type="text" 
               class="w-full px-1 py-3 border-b border-morandi-border bg-transparent focus:border-morandi-text outline-none text-sm text-morandi-text rounded-none" 
               placeholder="必填..."
-              @keyup.enter="confirmNamePrompt"
+              @keyup.enter="confirmNamePromptWithForm"
             />
           </div>
           <div class="flex justify-end gap-3">
@@ -179,7 +179,7 @@
               取消 / Cancel
             </button>
             <button 
-              @click="confirmNamePrompt" 
+              @click="confirmNamePromptWithForm" 
               class="px-6 py-2 bg-morandi-text text-morandi-canvas text-[11px] uppercase tracking-widest rounded-full hover:opacity-90 transition-opacity disabled:opacity-50 font-medium outline-none"
               :disabled="!promptName.trim()"
             >
@@ -200,7 +200,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive, computed } from 'vue'
+import { onMounted, reactive, computed } from 'vue'
 import ResourceDrawer from '../components/ResourceDrawer.vue'
 import ConfirmModal from '../components/ConfirmModal.vue'
 import PropsView from '../components/Props/PropsView.vue'
@@ -208,21 +208,10 @@ import PropsForm from '../components/Props/PropsForm.vue'
 import FilterPanel from '../components/common/FilterPanel.vue'
 import BatchActionBar from '../components/common/BatchActionBar.vue'
 import { usePropsStore } from '../store/propsStore'
+import { useLibraryPage } from '../composables/useLibraryPage'
+import { sanitize } from '../utils/helpers'
 
 const propsStore = usePropsStore()
-const isDrawerOpen = ref(false)
-const drawerMode = ref('view') // 'view' or 'edit'
-const editingId = ref(null)
-const tempId = ref(null)
-const initialFolderName = ref('')
-const previewUrl = ref(null)
-
-// 筛选及批量状态
-const searchQuery = ref('')
-const selectedTags = ref([])
-const isManageMode = ref(false)
-const selectedIds = ref([])
-const selectedSort = ref('recently_added')
 
 const propsSortOptions = [
   { value: 'recently_added', label: '最近添加' },
@@ -231,83 +220,32 @@ const propsSortOptions = [
   { value: 'price_desc', label: '价格降序' }
 ]
 
-const allTags = computed(() => {
-  const tags = propsStore.propsList.flatMap(p => p.tags || []).filter(Boolean)
-  return [...new Set(tags)]
+const {
+  isDrawerOpen, drawerMode, editingId, tempId, previewUrl, initialFolderName,
+  searchQuery, selectedTags, isManageMode, selectedIds, selectedSort,
+  isConfirmOpen, confirmMessage, showNamePrompt, promptName,
+  resetFilters, handleCardClick, toggleAll, executeBatchDelete, cancelManageMode,
+  openCreateDrawer, confirmNamePrompt, cancelNamePrompt, openViewDrawer,
+  executeBatchDeleteAction, executeSingleDeleteAction, closeDrawer,
+  preview, closePreview,
+} = useLibraryPage({
+  store: propsStore,
+  storeItems: () => propsStore.propsList,
+  entityLabel: '道具',
+  sortOptions: propsSortOptions,
+  folderPrefix: 'new_prop_',
+  categoryPath: 'props',
+  onRefresh: () => refreshImages(),
 })
 
-const parseNumericPrice = (priceStr) => {
-  if (!priceStr) return 0
-  const match = String(priceStr).match(/(\d+(\.\d+)?)/)
-  return match ? parseFloat(match[1]) : 0
-}
-
-const filteredProps = computed(() => {
-  let list = propsStore.propsList.filter(p => {
-    const matchesSearch = !searchQuery.value.trim() || 
-      p.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      p.description.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      p.tags.some(t => t.toLowerCase().includes(searchQuery.value.toLowerCase()))
-    
-    const matchesTags = selectedTags.value.length === 0 || 
-      selectedTags.value.every(t => p.tags.includes(t))
-      
-    return matchesSearch && matchesTags
-  })
-
-  list.sort((a, b) => {
-    if (selectedSort.value === 'recently_added') {
-      const timeA = new Date(a.created_at).getTime()
-      const timeB = new Date(b.created_at).getTime()
-      return timeB - timeA
-    } else if (selectedSort.value === 'name_pinyin') {
-      return (a.name || '').localeCompare(b.name || '', 'zh-CN')
-    } else if (selectedSort.value === 'price_asc') {
-      const pA = parseNumericPrice(a.price)
-      const pB = parseNumericPrice(b.price)
-      if (pA === 0 && pB > 0) return 1
-      if (pB === 0 && pA > 0) return -1
-      return pA - pB
-    } else if (selectedSort.value === 'price_desc') {
-      const pA = parseNumericPrice(a.price)
-      const pB = parseNumericPrice(b.price)
-      if (pA === 0 && pB > 0) return 1
-      if (pB === 0 && pA > 0) return -1
-      return pB - pA
-    }
-    return 0
-  })
-
-  return list
+const formData = reactive({
+  name: '',
+  description: '',
+  tagsInput: '',
+  link: '',
+  price: '',
+  images: []
 })
-
-const isAllSelected = computed(() => {
-  if (filteredProps.value.length === 0) return false
-  return filteredProps.value.every(p => selectedIds.value.includes(p.id))
-})
-
-const sanitize = (name) => {
-  return (name || '').replace(/[\\\/:\*\?"<>\|]/g, '_').trim() || 'unnamed'
-}
-
-const getFolderName = () => {
-  if (initialFolderName.value && !initialFolderName.value.startsWith('new_prop_')) {
-    return initialFolderName.value
-  }
-  const base = editingId.value || tempId.value
-  const name = sanitize(formData.name)
-  const newName = name === 'unnamed' ? `new_prop_${base}` : `${name}_${base}`
-  initialFolderName.value = newName
-  return newName
-}
-
-const category = computed(() => `props/${getFolderName()}`)
-
-// 弹出与确认状态
-const isConfirmOpen = ref(false)
-const confirmMessage = ref('')
-const showNamePrompt = ref(false)
-const promptName = ref('')
 
 const currentProp = computed(() => {
   if (!editingId.value) return null
@@ -319,13 +257,15 @@ const drawerTitle = computed(() => {
   return editingId.value ? '编辑道具' : '新建道具'
 })
 
-const formData = reactive({
-  name: '',
-  description: '',
-  tagsInput: '',
-  link: '',
-  price: '',
-  images: []
+const category = computed(() => {
+  if (initialFolderName.value && !initialFolderName.value.startsWith('new_prop_')) {
+    return `props/${initialFolderName.value}`
+  }
+  const base = editingId.value || tempId.value
+  const name = sanitize(formData.name)
+  const folder = name === 'unnamed' ? `new_prop_${base}` : `${name}_${base}`
+  initialFolderName.value = folder
+  return `props/${folder}`
 })
 
 const refreshImages = async () => {
@@ -352,65 +292,6 @@ onMounted(async () => {
   await refreshImages()
 })
 
-const resetFilters = () => {
-  searchQuery.value = ''
-  selectedTags.value = []
-  selectedSort.value = 'recently_added'
-}
-
-const handleCardClick = (prop) => {
-  if (isManageMode.value) {
-    const idx = selectedIds.value.indexOf(prop.id)
-    if (idx === -1) {
-      selectedIds.value.push(prop.id)
-    } else {
-      selectedIds.value.splice(idx, 1)
-    }
-  } else {
-    openViewDrawer(prop)
-  }
-}
-
-const toggleAll = () => {
-  if (isAllSelected.value) {
-    selectedIds.value = selectedIds.value.filter(id => 
-      !filteredProps.value.some(p => p.id === id)
-    )
-  } else {
-    filteredProps.value.forEach(prop => {
-      if (!selectedIds.value.includes(prop.id)) {
-        selectedIds.value.push(prop.id)
-      }
-    })
-  }
-}
-
-const executeBatchDelete = () => {
-  if (selectedIds.value.length === 0) return
-  confirmMessage.value = `确定要批量删除选中的 ${selectedIds.value.length} 件道具吗？此操作将永久物理删除所有选定道具相册，且无法撤销！`
-  isConfirmOpen.value = true
-}
-
-const executeDelete = async () => {
-  if (isManageMode.value) {
-    await propsStore.removeBatch(selectedIds.value)
-    selectedIds.value = []
-    isManageMode.value = false
-    await refreshImages()
-    isConfirmOpen.value = false
-  } else if (currentProp.value) {
-    await propsStore.remove(currentProp.value.id)
-    await refreshImages()
-    isConfirmOpen.value = false
-    isDrawerOpen.value = false
-  }
-}
-
-const cancelManageMode = () => {
-  isManageMode.value = false
-  selectedIds.value = []
-}
-
 const resetForm = () => {
   formData.name = ''
   formData.description = ''
@@ -430,32 +311,17 @@ const fillFormFromProp = async (prop) => {
   formData.images = JSON.parse(JSON.stringify(prop.images || []))
 }
 
-const openCreateDrawer = () => {
-  promptName.value = ''
-  showNamePrompt.value = true
-}
-
-const confirmNamePrompt = () => {
-  if (!promptName.value.trim()) return
-  drawerMode.value = 'edit'
-  editingId.value = null
-  tempId.value = Date.now()
-  initialFolderName.value = `${sanitize(promptName.value)}_${tempId.value}`
-  resetForm()
+const confirmNamePromptWithForm = () => {
+  confirmNamePrompt(resetForm)
   formData.name = promptName.value.trim()
-  showNamePrompt.value = false
-  isDrawerOpen.value = true
 }
 
-const cancelNamePrompt = () => {
-  showNamePrompt.value = false
-}
-
-const openViewDrawer = async (prop) => {
-  editingId.value = prop.id
-  initialFolderName.value = `${sanitize(prop.name)}_${prop.id}`
-  drawerMode.value = 'view'
-  isDrawerOpen.value = true
+const executeDelete = async () => {
+  if (isManageMode.value) {
+    await executeBatchDeleteAction()
+  } else if (currentProp.value) {
+    await executeSingleDeleteAction(currentProp.value)
+  }
 }
 
 const switchToEdit = async () => {
@@ -471,24 +337,13 @@ const confirmDelete = async () => {
   isConfirmOpen.value = true
 }
 
-const closeDrawer = async () => {
-  if (drawerMode.value === 'edit' && !editingId.value && tempId.value) {
-    await window.electronAPI.cleanupTempFolder(`props/${initialFolderName.value}`)
-  }
-  isDrawerOpen.value = false
-}
-
-const previewImage = (url) => {
-  previewUrl.value = url
-}
-
-const closePreview = () => {
-  previewUrl.value = null
+const handleCloseDrawer = () => {
+  closeDrawer()
 }
 
 const handleSave = async () => {
   if (drawerMode.value === 'view') {
-    closeDrawer()
+    handleCloseDrawer()
     return
   }
 

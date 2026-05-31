@@ -56,7 +56,7 @@
     <!-- 妆容卡片墙 (富士拍立得 mini 相纸风格) -->
     <div v-else class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-8">
       <div 
-        v-for="makeup in filteredMakeups" :key="makeup.id" 
+        v-for="makeup in filteredItems" :key="makeup.id" 
         class="group relative cursor-pointer bg-morandi-paper border border-morandi-border/30 p-3 pb-8 transition-all duration-500 rounded-none shadow-[0_4px_16px_rgba(0,0,0,0.02),0_20px_50px_rgba(0,0,0,0.05)]"
         :class="[
           selectedIds.includes(makeup.id)
@@ -121,7 +121,7 @@
       width="w-[500px]" 
       :show-footer="drawerMode !== 'view'"
       :close-on-click-outside="drawerMode !== 'edit'"
-      @close="closeDrawer" 
+      @close="handleCloseDrawer" 
       @save="handleSave"
     >
       <template #header-actions v-if="drawerMode === 'view'">
@@ -138,7 +138,7 @@
       </template>
 
       <!-- 浏览模式 -->
-      <MakeupView v-if="drawerMode === 'view'" :makeup="currentMakeup" @preview="previewImage" />
+      <MakeupView v-if="drawerMode === 'view'" :makeup="currentMakeup" @preview="preview" />
 
       <!-- 编辑模式 -->
       <MakeupForm v-else-if="drawerMode === 'edit'" :form-data="formData" :category="category" />
@@ -170,7 +170,7 @@
               type="text" 
               class="w-full px-1 py-3 border-b border-morandi-border bg-transparent focus:border-morandi-text outline-none text-sm text-morandi-text rounded-none" 
               placeholder="必填..."
-              @keyup.enter="confirmNamePrompt"
+              @keyup.enter="confirmNamePromptWithForm"
             />
           </div>
           <div class="flex justify-end gap-3">
@@ -178,7 +178,7 @@
               取消 / Cancel
             </button>
             <button 
-              @click="confirmNamePrompt" 
+              @click="confirmNamePromptWithForm" 
               class="px-6 py-2 bg-morandi-text text-morandi-canvas text-[11px] uppercase tracking-widest rounded-full hover:opacity-90 transition-opacity disabled:opacity-50 font-medium outline-none"
               :disabled="!promptName.trim()"
             >
@@ -199,7 +199,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive, computed } from 'vue'
+import { onMounted, reactive, computed } from 'vue'
 import ResourceDrawer from '../components/ResourceDrawer.vue'
 import ConfirmModal from '../components/ConfirmModal.vue'
 import MakeupView from '../components/Makeup/MakeupView.vue'
@@ -207,86 +207,40 @@ import MakeupForm from '../components/Makeup/MakeupForm.vue'
 import FilterPanel from '../components/common/FilterPanel.vue'
 import BatchActionBar from '../components/common/BatchActionBar.vue'
 import { useMakeupStore } from '../store/makeupStore'
+import { useLibraryPage } from '../composables/useLibraryPage'
+import { sanitize } from '../utils/helpers'
 
 const makeupStore = useMakeupStore()
-const isDrawerOpen = ref(false)
-const drawerMode = ref('view') // 'view' or 'edit'
-const editingId = ref(null)
-const tempId = ref(null)
-const initialFolderName = ref('')
-const previewUrl = ref(null)
-
-// 筛选及批量状态
-const searchQuery = ref('')
-const selectedTags = ref([])
-const isManageMode = ref(false)
-const selectedIds = ref([])
-const selectedSort = ref('recently_added')
 
 const makeupSortOptions = [
   { value: 'recently_added', label: '最近添加' },
   { value: 'name_pinyin', label: '名称排序' }
 ]
 
-const allTags = computed(() => {
-  const tags = makeupStore.makeups.flatMap(m => m.tags || []).filter(Boolean)
-  return [...new Set(tags)]
+const {
+  isDrawerOpen, drawerMode, editingId, tempId, previewUrl, initialFolderName,
+  searchQuery, selectedTags, isManageMode, selectedIds, selectedSort,
+  isConfirmOpen, confirmMessage, showNamePrompt, promptName,
+  resetFilters, handleCardClick, toggleAll, executeBatchDelete, cancelManageMode,
+  openCreateDrawer, confirmNamePrompt, cancelNamePrompt, openViewDrawer,
+  executeBatchDeleteAction, executeSingleDeleteAction, closeDrawer,
+  preview, closePreview,
+} = useLibraryPage({
+  store: makeupStore,
+  storeItems: () => makeupStore.makeups,
+  entityLabel: '妆容',
+  sortOptions: makeupSortOptions,
+  folderPrefix: 'new_makeup_',
+  categoryPath: 'makeup',
+  onRefresh: () => refreshImages(),
 })
 
-const filteredMakeups = computed(() => {
-  let list = makeupStore.makeups.filter(m => {
-    const matchesSearch = !searchQuery.value.trim() || 
-      m.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      m.description.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      m.tags.some(t => t.toLowerCase().includes(searchQuery.value.toLowerCase()))
-    
-    const matchesTags = selectedTags.value.length === 0 || 
-      selectedTags.value.every(t => m.tags.includes(t))
-      
-    return matchesSearch && matchesTags
-  })
-
-  list.sort((a, b) => {
-    if (selectedSort.value === 'recently_added') {
-      const timeA = new Date(a.created_at).getTime()
-      const timeB = new Date(b.created_at).getTime()
-      return timeB - timeA
-    } else if (selectedSort.value === 'name_pinyin') {
-      return (a.name || '').localeCompare(b.name || '', 'zh-CN')
-    }
-    return 0
-  })
-
-  return list
+const formData = reactive({
+  name: '',
+  description: '',
+  tagsInput: '',
+  images: []
 })
-
-const isAllSelected = computed(() => {
-  if (filteredMakeups.value.length === 0) return false
-  return filteredMakeups.value.every(m => selectedIds.value.includes(m.id))
-})
-
-const sanitize = (name) => {
-  return (name || '').replace(/[\\\/:\*\?"<>\|]/g, '_').trim() || 'unnamed'
-}
-
-const getFolderName = () => {
-  if (initialFolderName.value && !initialFolderName.value.startsWith('new_makeup_')) {
-    return initialFolderName.value
-  }
-  const base = editingId.value || tempId.value
-  const name = sanitize(formData.name)
-  const newName = name === 'unnamed' ? `new_makeup_${base}` : `${name}_${base}`
-  initialFolderName.value = newName
-  return newName
-}
-
-const category = computed(() => `makeup/${getFolderName()}`)
-
-// 弹出与确认状态
-const isConfirmOpen = ref(false)
-const confirmMessage = ref('')
-const showNamePrompt = ref(false)
-const promptName = ref('')
 
 const currentMakeup = computed(() => {
   if (!editingId.value) return null
@@ -298,12 +252,14 @@ const drawerTitle = computed(() => {
   return editingId.value ? '编辑妆容' : '新建妆容'
 })
 
-const formData = reactive({
-  name: '',
-  description: '',
-  tagsInput: '',
-  images: []
-})
+const category = computed(() => `makeup/${(() => {
+  if (initialFolderName.value && !initialFolderName.value.startsWith('new_makeup_')) {
+    return initialFolderName.value
+  }
+  const base = editingId.value || tempId.value
+  const name = sanitize(formData.name)
+  return name === 'unnamed' ? `new_makeup_${base}` : `${name}_${base}`
+})()}`)
 
 const refreshImages = async () => {
   await Promise.all(makeupStore.makeups.map(async (item) => {
@@ -329,65 +285,6 @@ onMounted(async () => {
   await refreshImages()
 })
 
-const resetFilters = () => {
-  searchQuery.value = ''
-  selectedTags.value = []
-  selectedSort.value = 'recently_added'
-}
-
-const handleCardClick = (makeup) => {
-  if (isManageMode.value) {
-    const idx = selectedIds.value.indexOf(makeup.id)
-    if (idx === -1) {
-      selectedIds.value.push(makeup.id)
-    } else {
-      selectedIds.value.splice(idx, 1)
-    }
-  } else {
-    openViewDrawer(makeup)
-  }
-}
-
-const toggleAll = () => {
-  if (isAllSelected.value) {
-    selectedIds.value = selectedIds.value.filter(id => 
-      !filteredMakeups.value.some(m => m.id === id)
-    )
-  } else {
-    filteredMakeups.value.forEach(makeup => {
-      if (!selectedIds.value.includes(makeup.id)) {
-        selectedIds.value.push(makeup.id)
-      }
-    })
-  }
-}
-
-const executeBatchDelete = () => {
-  if (selectedIds.value.length === 0) return
-  confirmMessage.value = `确定要批量删除选中的 ${selectedIds.value.length} 款妆容吗？此操作将永久物理删除所有选定妆容相册，且无法撤销！`
-  isConfirmOpen.value = true
-}
-
-const executeDelete = async () => {
-  if (isManageMode.value) {
-    await makeupStore.removeBatch(selectedIds.value)
-    selectedIds.value = []
-    isManageMode.value = false
-    await refreshImages()
-    isConfirmOpen.value = false
-  } else if (currentMakeup.value) {
-    await makeupStore.remove(currentMakeup.value.id)
-    await refreshImages()
-    isConfirmOpen.value = false
-    isDrawerOpen.value = false
-  }
-}
-
-const cancelManageMode = () => {
-  isManageMode.value = false
-  selectedIds.value = []
-}
-
 const resetForm = () => {
   formData.name = ''
   formData.description = ''
@@ -403,32 +300,17 @@ const fillFormFromMakeup = async (makeup) => {
   formData.images = JSON.parse(JSON.stringify(makeup.images || []))
 }
 
-const openCreateDrawer = () => {
-  promptName.value = ''
-  showNamePrompt.value = true
-}
-
-const confirmNamePrompt = () => {
-  if (!promptName.value.trim()) return
-  drawerMode.value = 'edit'
-  editingId.value = null
-  tempId.value = Date.now()
-  initialFolderName.value = `${sanitize(promptName.value)}_${tempId.value}`
-  resetForm()
+const confirmNamePromptWithForm = () => {
+  confirmNamePrompt(resetForm)
   formData.name = promptName.value.trim()
-  showNamePrompt.value = false
-  isDrawerOpen.value = true
 }
 
-const cancelNamePrompt = () => {
-  showNamePrompt.value = false
-}
-
-const openViewDrawer = async (makeup) => {
-  editingId.value = makeup.id
-  initialFolderName.value = `${sanitize(makeup.name)}_${makeup.id}`
-  drawerMode.value = 'view'
-  isDrawerOpen.value = true
+const executeDelete = async () => {
+  if (isManageMode.value) {
+    await executeBatchDeleteAction()
+  } else if (currentMakeup.value) {
+    await executeSingleDeleteAction(currentMakeup.value)
+  }
 }
 
 const switchToEdit = async () => {
@@ -444,24 +326,13 @@ const confirmDelete = async () => {
   isConfirmOpen.value = true
 }
 
-const closeDrawer = async () => {
-  if (drawerMode.value === 'edit' && !editingId.value && tempId.value) {
-    await window.electronAPI.cleanupTempFolder(`makeup/${initialFolderName.value}`)
-  }
-  isDrawerOpen.value = false
-}
-
-const previewImage = (url) => {
-  previewUrl.value = url
-}
-
-const closePreview = () => {
-  previewUrl.value = null
+const handleCloseDrawer = () => {
+  closeDrawer()
 }
 
 const handleSave = async () => {
   if (drawerMode.value === 'view') {
-    closeDrawer()
+    handleCloseDrawer()
     return
   }
 

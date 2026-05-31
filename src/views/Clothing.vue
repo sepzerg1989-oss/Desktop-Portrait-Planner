@@ -56,7 +56,7 @@
     <!-- 服装卡片墙 (博物学图鉴，3:4 比例无白边) -->
     <div v-else class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-8">
       <div 
-        v-for="clothing in filteredClothings" :key="clothing.id" 
+        v-for="clothing in filteredItems" :key="clothing.id" 
         class="group relative cursor-pointer bg-morandi-paper border border-morandi-border/30 transition-all duration-500 rounded-none overflow-hidden shadow-[0_4px_16px_rgba(0,0,0,0.01)]"
         :class="[
           selectedIds.includes(clothing.id)
@@ -122,7 +122,7 @@
       width="w-[500px]" 
       :show-footer="drawerMode !== 'view'"
       :close-on-click-outside="drawerMode !== 'edit'"
-      @close="closeDrawer" 
+      @close="handleCloseDrawer" 
       @save="handleSave"
     >
       <template #header-actions v-if="drawerMode === 'view'">
@@ -139,7 +139,7 @@
       </template>
 
       <!-- 浏览模式 -->
-      <ClothingView v-if="drawerMode === 'view'" :clothing="currentClothing" @preview="previewImage" />
+      <ClothingView v-if="drawerMode === 'view'" :clothing="currentClothing" @preview="preview" />
 
       <!-- 编辑模式 -->
       <ClothingForm v-else-if="drawerMode === 'edit'" :form-data="formData" :category="category" />
@@ -171,7 +171,7 @@
               type="text" 
               class="w-full px-1 py-3 border-b border-morandi-border bg-transparent focus:border-morandi-text outline-none text-sm text-morandi-text rounded-none" 
               placeholder="必填..."
-              @keyup.enter="confirmNamePrompt"
+              @keyup.enter="confirmNamePromptWithForm"
             />
           </div>
           <div class="flex justify-end gap-3">
@@ -179,7 +179,7 @@
               取消 / Cancel
             </button>
             <button 
-              @click="confirmNamePrompt" 
+              @click="confirmNamePromptWithForm" 
               class="px-6 py-2 bg-morandi-text text-morandi-canvas text-[11px] uppercase tracking-widest rounded-full hover:opacity-90 transition-opacity disabled:opacity-50 font-medium outline-none"
               :disabled="!promptName.trim()"
             >
@@ -200,7 +200,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive, computed } from 'vue'
+import { onMounted, reactive, computed } from 'vue'
 import ResourceDrawer from '../components/ResourceDrawer.vue'
 import ConfirmModal from '../components/ConfirmModal.vue'
 import ClothingView from '../components/Clothing/ClothingView.vue'
@@ -208,21 +208,10 @@ import ClothingForm from '../components/Clothing/ClothingForm.vue'
 import FilterPanel from '../components/common/FilterPanel.vue'
 import BatchActionBar from '../components/common/BatchActionBar.vue'
 import { useClothingStore } from '../store/clothingStore'
+import { useLibraryPage } from '../composables/useLibraryPage'
+import { sanitize } from '../utils/helpers'
 
 const clothingStore = useClothingStore()
-const isDrawerOpen = ref(false)
-const drawerMode = ref('view') // 'view' or 'edit'
-const editingId = ref(null)
-const tempId = ref(null) // 未保存实体临时 ID
-const initialFolderName = ref('') // 会话级文件夹名称
-const previewUrl = ref(null)
-
-// 筛选及批量状态
-const searchQuery = ref('')
-const selectedTags = ref([])
-const isManageMode = ref(false)
-const selectedIds = ref([])
-const selectedSort = ref('recently_added')
 
 const clothingSortOptions = [
   { value: 'recently_added', label: '最近添加' },
@@ -231,96 +220,22 @@ const clothingSortOptions = [
   { value: 'price_desc', label: '价格降序' }
 ]
 
-// 自动提取所有服装标签
-const allTags = computed(() => {
-  const tags = clothingStore.clothings.flatMap(c => c.tags || []).filter(Boolean)
-  return [...new Set(tags)]
-})
-
-// 辅助价格数值化排序解析
-const parseNumericPrice = (priceStr) => {
-  if (!priceStr) return 0
-  const match = String(priceStr).match(/(\d+(\.\d+)?)/)
-  return match ? parseFloat(match[1]) : 0
-}
-
-// 实时响应式多分类检索过滤
-const filteredClothings = computed(() => {
-  let list = clothingStore.clothings.filter(c => {
-    const matchesSearch = !searchQuery.value.trim() || 
-      c.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      c.description.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      c.tags.some(t => t.toLowerCase().includes(searchQuery.value.toLowerCase()))
-    
-    const matchesTags = selectedTags.value.length === 0 || 
-      selectedTags.value.every(t => c.tags.includes(t))
-      
-    return matchesSearch && matchesTags
-  })
-
-  // 排序
-  list.sort((a, b) => {
-    if (selectedSort.value === 'recently_added') {
-      const timeA = new Date(a.created_at).getTime()
-      const timeB = new Date(b.created_at).getTime()
-      return timeB - timeA
-    } else if (selectedSort.value === 'name_pinyin') {
-      return (a.name || '').localeCompare(b.name || '', 'zh-CN')
-    } else if (selectedSort.value === 'price_asc') {
-      const pA = parseNumericPrice(a.price)
-      const pB = parseNumericPrice(b.price)
-      if (pA === 0 && pB > 0) return 1
-      if (pB === 0 && pA > 0) return -1
-      return pA - pB
-    } else if (selectedSort.value === 'price_desc') {
-      const pA = parseNumericPrice(a.price)
-      const pB = parseNumericPrice(b.price)
-      if (pA === 0 && pB > 0) return 1
-      if (pB === 0 && pA > 0) return -1
-      return pB - pA
-    }
-    return 0
-  })
-
-  return list
-})
-
-const isAllSelected = computed(() => {
-  if (filteredClothings.value.length === 0) return false
-  return filteredClothings.value.every(c => selectedIds.value.includes(c.id))
-})
-
-const sanitize = (name) => {
-  return (name || '').replace(/[\\\/:\*\?"<>\|]/g, '_').trim() || 'unnamed'
-}
-
-const getFolderName = () => {
-  if (initialFolderName.value && !initialFolderName.value.startsWith('new_clothing_')) {
-    return initialFolderName.value
-  }
-  const base = editingId.value || tempId.value
-  const name = sanitize(formData.name)
-  const newName = name === 'unnamed' ? `new_clothing_${base}` : `${name}_${base}`
-  initialFolderName.value = newName
-  return newName
-}
-
-const category = computed(() => `clothing/${getFolderName()}`)
-
-// 弹出与确认状态
-const isConfirmOpen = ref(false)
-const confirmMessage = ref('')
-const showNamePrompt = ref(false)
-const promptName = ref('')
-
-const currentClothing = computed(() => {
-  if (!editingId.value) return null
-  return clothingStore.clothings.find(c => c.id === editingId.value)
-})
-
-const drawerTitle = computed(() => {
-  if (drawerMode.value === 'view') return '搭配档案'
-  return editingId.value ? '编辑搭配' : '新建搭配'
+const {
+  isDrawerOpen, drawerMode, editingId, tempId, previewUrl, initialFolderName,
+  searchQuery, selectedTags, isManageMode, selectedIds, selectedSort,
+  isConfirmOpen, confirmMessage, showNamePrompt, promptName,
+  resetFilters, handleCardClick, toggleAll, executeBatchDelete, cancelManageMode,
+  openCreateDrawer, confirmNamePrompt, cancelNamePrompt, openViewDrawer,
+  executeBatchDeleteAction, executeSingleDeleteAction, closeDrawer,
+  preview, closePreview,
+} = useLibraryPage({
+  store: clothingStore,
+  storeItems: () => clothingStore.clothings,
+  entityLabel: '搭配',
+  sortOptions: clothingSortOptions,
+  folderPrefix: 'new_clothing_',
+  categoryPath: 'clothing',
+  onRefresh: () => refreshImages(),
 })
 
 const formData = reactive({
@@ -332,7 +247,27 @@ const formData = reactive({
   images: []
 })
 
-// 默认首图路径映射 (化繁为简的核心)
+const currentClothing = computed(() => {
+  if (!editingId.value) return null
+  return clothingStore.clothings.find(c => c.id === editingId.value)
+})
+
+const drawerTitle = computed(() => {
+  if (drawerMode.value === 'view') return '搭配档案'
+  return editingId.value ? '编辑搭配' : '新建搭配'
+})
+
+const category = computed(() => {
+  if (initialFolderName.value && !initialFolderName.value.startsWith('new_clothing_')) {
+    return `clothing/${initialFolderName.value}`
+  }
+  const base = editingId.value || tempId.value
+  const name = sanitize(formData.name)
+  const folder = name === 'unnamed' ? `new_clothing_${base}` : `${name}_${base}`
+  initialFolderName.value = folder
+  return `clothing/${folder}`
+})
+
 const refreshImages = async () => {
   await Promise.all(clothingStore.clothings.map(async (item) => {
     if (item.images && item.images.length > 0) {
@@ -342,7 +277,6 @@ const refreshImages = async () => {
     } else {
       item.coverURL = ''
     }
-    // 同步图册的所有 URL，以便在详情中能够直接渲染
     if (item.images) {
       for (const img of item.images) {
         if (img && typeof img === 'object') {
@@ -357,65 +291,6 @@ onMounted(async () => {
   await clothingStore.fetchAll()
   await refreshImages()
 })
-
-const resetFilters = () => {
-  searchQuery.value = ''
-  selectedTags.value = []
-  selectedSort.value = 'recently_added'
-}
-
-const handleCardClick = (clothing) => {
-  if (isManageMode.value) {
-    const idx = selectedIds.value.indexOf(clothing.id)
-    if (idx === -1) {
-      selectedIds.value.push(clothing.id)
-    } else {
-      selectedIds.value.splice(idx, 1)
-    }
-  } else {
-    openViewDrawer(clothing)
-  }
-}
-
-const toggleAll = () => {
-  if (isAllSelected.value) {
-    selectedIds.value = selectedIds.value.filter(id => 
-      !filteredClothings.value.some(c => c.id === id)
-    )
-  } else {
-    filteredClothings.value.forEach(clothing => {
-      if (!selectedIds.value.includes(clothing.id)) {
-        selectedIds.value.push(clothing.id)
-      }
-    })
-  }
-}
-
-const executeBatchDelete = () => {
-  if (selectedIds.value.length === 0) return
-  confirmMessage.value = `确定要批量删除选中的 ${selectedIds.value.length} 件搭配吗？此操作将永久物理删除所有选定搭配相册，且无法撤销！`
-  isConfirmOpen.value = true
-}
-
-const executeDelete = async () => {
-  if (isManageMode.value) {
-    await clothingStore.removeBatch(selectedIds.value)
-    selectedIds.value = []
-    isManageMode.value = false
-    await refreshImages()
-    isConfirmOpen.value = false
-  } else if (currentClothing.value) {
-    await clothingStore.remove(currentClothing.value.id)
-    await refreshImages()
-    isConfirmOpen.value = false
-    isDrawerOpen.value = false
-  }
-}
-
-const cancelManageMode = () => {
-  isManageMode.value = false
-  selectedIds.value = []
-}
 
 const resetForm = () => {
   formData.name = ''
@@ -436,32 +311,17 @@ const fillFormFromClothing = async (clothing) => {
   formData.images = JSON.parse(JSON.stringify(clothing.images || []))
 }
 
-const openCreateDrawer = () => {
-  promptName.value = ''
-  showNamePrompt.value = true
-}
-
-const confirmNamePrompt = () => {
-  if (!promptName.value.trim()) return
-  drawerMode.value = 'edit'
-  editingId.value = null
-  tempId.value = Date.now()
-  initialFolderName.value = `${sanitize(promptName.value)}_${tempId.value}`
-  resetForm()
+const confirmNamePromptWithForm = () => {
+  confirmNamePrompt(resetForm)
   formData.name = promptName.value.trim()
-  showNamePrompt.value = false
-  isDrawerOpen.value = true
 }
 
-const cancelNamePrompt = () => {
-  showNamePrompt.value = false
-}
-
-const openViewDrawer = async (clothing) => {
-  editingId.value = clothing.id
-  initialFolderName.value = `${sanitize(clothing.name)}_${clothing.id}`
-  drawerMode.value = 'view'
-  isDrawerOpen.value = true
+const executeDelete = async () => {
+  if (isManageMode.value) {
+    await executeBatchDeleteAction()
+  } else if (currentClothing.value) {
+    await executeSingleDeleteAction(currentClothing.value)
+  }
 }
 
 const switchToEdit = async () => {
@@ -477,24 +337,13 @@ const confirmDelete = async () => {
   isConfirmOpen.value = true
 }
 
-const closeDrawer = async () => {
-  if (drawerMode.value === 'edit' && !editingId.value && tempId.value) {
-    await window.electronAPI.cleanupTempFolder(`clothing/${initialFolderName.value}`)
-  }
-  isDrawerOpen.value = false
-}
-
-const previewImage = (url) => {
-  previewUrl.value = url
-}
-
-const closePreview = () => {
-  previewUrl.value = null
+const handleCloseDrawer = () => {
+  closeDrawer()
 }
 
 const handleSave = async () => {
   if (drawerMode.value === 'view') {
-    closeDrawer()
+    handleCloseDrawer()
     return
   }
 

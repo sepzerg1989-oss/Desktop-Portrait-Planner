@@ -21,6 +21,7 @@ export const usePropsStore = defineStore('props', {
         }))
       } catch (e) {
         console.error('[propsStore] 获取道具列表失败:', e)
+        throw e
       } finally {
         this.loading = false
       }
@@ -75,6 +76,7 @@ export const usePropsStore = defineStore('props', {
         await this.fetchAll()
       } catch (e) {
         console.error('[propsStore] 删除道具失败:', e)
+        throw e
       }
     },
 
@@ -85,6 +87,7 @@ export const usePropsStore = defineStore('props', {
         await this.fetchAll()
       } catch (e) {
         console.error('[propsStore] 批量删除道具失败:', e)
+        throw e
       }
     }
   }

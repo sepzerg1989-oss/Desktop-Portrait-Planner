@@ -116,7 +116,7 @@
       width="w-[500px]" 
       :show-footer="drawerMode !== 'view'"
       :close-on-click-outside="drawerMode !== 'edit'"
-      @close="closeDrawer" 
+      @close="handleCloseDrawer" 
       @save="handleSave"
     >
       <template #header-actions v-if="drawerMode === 'view'">
@@ -133,7 +133,7 @@
       </template>
 
       <!-- 浏览模式 -->
-      <ModelView v-if="drawerMode === 'view'" :model="currentModel" @preview="previewImage" />
+      <ModelView v-if="drawerMode === 'view'" :model="currentModel" @preview="preview" />
 
       <!-- 编辑模式 -->
       <ModelForm v-else-if="drawerMode === 'edit'" :form-data="formData" :category="category" />
@@ -165,7 +165,7 @@
               type="text" 
               class="w-full px-1 py-3 border-b border-morandi-border bg-transparent focus:border-morandi-text outline-none text-sm text-morandi-text rounded-none" 
               placeholder="必填..."
-              @keyup.enter="confirmNamePrompt"
+              @keyup.enter="confirmNamePromptWithForm"
             />
           </div>
           <div class="flex justify-end gap-3">
@@ -173,7 +173,7 @@
               取消 / Cancel
             </button>
             <button 
-              @click="confirmNamePrompt" 
+              @click="confirmNamePromptWithForm" 
               class="px-6 py-2 bg-morandi-text text-morandi-canvas text-[11px] uppercase tracking-widest rounded-full hover:opacity-90 transition-opacity disabled:opacity-50 font-medium outline-none"
               :disabled="!promptName.trim()"
             >
@@ -202,22 +202,12 @@ import ModelForm from '../components/Models/ModelForm.vue'
 import FilterPanel from '../components/common/FilterPanel.vue'
 import BatchActionBar from '../components/common/BatchActionBar.vue'
 import { useModelStore } from '../store/modelStore'
+import { useLibraryPage } from '../composables/useLibraryPage'
+import { sanitize } from '../utils/helpers'
 
 const modelStore = useModelStore()
-const isDrawerOpen = ref(false)
-const drawerMode = ref('view') // 'view' or 'edit'
-const editingId = ref(null)
-const tempId = ref(null) // 用于暂存未保存模特的文件目录 ID
-const initialFolderName = ref('') // 会话开始时的文件夹名称
-const previewUrl = ref(null)
 
-// 筛选与批量状态
-const searchQuery = ref('')
 const selectedRegion = ref('')
-const selectedTags = ref([])
-const isManageMode = ref(false)
-const selectedIds = ref([])
-const selectedSort = ref('recently_added')
 
 const modelSortOptions = [
   { value: 'recently_added', label: '最近添加' },
@@ -226,107 +216,45 @@ const modelSortOptions = [
   { value: 'price_desc', label: '价格降序' }
 ]
 
-// 从数据中自动提取地区
 const regions = computed(() => {
   const all = modelStore.models.map(m => m.region).filter(Boolean)
   return [...new Set(all)]
 })
 
-// 从数据中自动提取所有标签
-const allTags = computed(() => {
-  const tags = modelStore.models.flatMap(m => m.tags || []).filter(Boolean)
-  return [...new Set(tags)]
+const {
+  isDrawerOpen, drawerMode, editingId, tempId, previewUrl, initialFolderName,
+  searchQuery, selectedTags, isManageMode, selectedIds, selectedSort,
+  allTags, filteredItems: baseFiltered, isAllSelected,
+  isConfirmOpen, confirmMessage, showNamePrompt, promptName,
+  resetFilters: baseResetFilters, handleCardClick, toggleAll, executeBatchDelete, cancelManageMode,
+  openCreateDrawer, confirmNamePrompt, cancelNamePrompt, openViewDrawer,
+  executeBatchDeleteAction, executeSingleDeleteAction, closeDrawer,
+  preview, closePreview,
+} = useLibraryPage({
+  store: modelStore,
+  storeItems: () => modelStore.models,
+  entityLabel: '模特',
+  sortOptions: modelSortOptions,
+  folderPrefix: 'new_model_',
+  categoryPath: 'models',
+  onRefresh: () => refreshImages(),
 })
 
-// 辅助函数：从混合文本中智能抓取数值用于价格精准排序，无数值者归为最底端
-const parseNumericPrice = (priceStr) => {
-  if (!priceStr) return 0
-  const match = String(priceStr).match(/(\d+(\.\d+)?)/)
-  return match ? parseFloat(match[1]) : 0
-}
-
-// 实时响应式多维检索与智能排序
 const filteredModels = computed(() => {
-  // 1. 过滤
-  let list = modelStore.models.filter(m => {
-    const matchesSearch = !searchQuery.value.trim() || 
-      m.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      m.tags.some(t => t.toLowerCase().includes(searchQuery.value.toLowerCase())) ||
-      (m.social && m.social.toLowerCase().includes(searchQuery.value.toLowerCase()))
-    
-    const matchesRegion = !selectedRegion.value || m.region === selectedRegion.value
-    
-    const matchesTags = selectedTags.value.length === 0 || 
-      selectedTags.value.every(t => m.tags.includes(t))
-      
-    return matchesSearch && matchesRegion && matchesTags
-  })
-
-  // 2. 排序
-  list.sort((a, b) => {
-    if (selectedSort.value === 'recently_added') {
-      const timeA = new Date(a.created_at).getTime()
-      const timeB = new Date(b.created_at).getTime()
-      return timeB - timeA
-    } else if (selectedSort.value === 'name_pinyin') {
-      return (a.name || '').localeCompare(b.name || '', 'zh-CN')
-    } else if (selectedSort.value === 'price_asc') {
-      const pA = parseNumericPrice(a.price)
-      const pB = parseNumericPrice(b.price)
-      if (pA === 0 && pB > 0) return 1
-      if (pB === 0 && pA > 0) return -1
-      return pA - pB
-    } else if (selectedSort.value === 'price_desc') {
-      const pA = parseNumericPrice(a.price)
-      const pB = parseNumericPrice(b.price)
-      if (pA === 0 && pB > 0) return 1
-      if (pB === 0 && pA > 0) return -1
-      return pB - pA
+  return baseFiltered.value.filter(m => {
+    if (!searchQuery.value.trim()) {
+      const matchesRegion = !selectedRegion.value || m.region === selectedRegion.value
+      return matchesRegion
     }
-    return 0
+    const matchesRegion = !selectedRegion.value || m.region === selectedRegion.value
+    return matchesRegion
   })
-
-  return list
 })
 
-// 判断是否已全部选中当前过滤出的模特
-const isAllSelected = computed(() => {
-  if (filteredModels.value.length === 0) return false
-  return filteredModels.value.every(m => selectedIds.value.includes(m.id))
-})
-
-const sanitize = (name) => {
-  return (name || '').replace(/[\\\/:\*\?"<>\|]/g, '_').trim() || 'unnamed'
+const resetFilters = () => {
+  baseResetFilters()
+  selectedRegion.value = ''
 }
-
-const getFolderName = () => {
-  if (initialFolderName.value && !initialFolderName.value.startsWith('new_model_')) {
-    return initialFolderName.value
-  }
-  const base = editingId.value || tempId.value
-  const name = sanitize(formData.name)
-  const newName = name === 'unnamed' ? `new_model_${base}` : `${name}_${base}`
-  initialFolderName.value = newName
-  return newName
-}
-
-const category = computed(() => `models/${getFolderName()}`)
-
-// 弹窗状态
-const isConfirmOpen = ref(false)
-const confirmMessage = ref('')
-const showNamePrompt = ref(false)
-const promptName = ref('')
-
-const currentModel = computed(() => {
-  if (!editingId.value) return null
-  return modelStore.models.find(m => m.id === editingId.value)
-})
-
-const drawerTitle = computed(() => {
-  if (drawerMode.value === 'view') return '模特资料'
-  return editingId.value ? '编辑模特' : '新建模特'
-})
 
 const formData = reactive({
   name: '',
@@ -339,6 +267,27 @@ const formData = reactive({
   model_card_path: '',
   modelCardPreview: '',
   images: []
+})
+
+const currentModel = computed(() => {
+  if (!editingId.value) return null
+  return modelStore.models.find(m => m.id === editingId.value)
+})
+
+const drawerTitle = computed(() => {
+  if (drawerMode.value === 'view') return '模特资料'
+  return editingId.value ? '编辑模特' : '新建模特'
+})
+
+const category = computed(() => {
+  if (initialFolderName.value && !initialFolderName.value.startsWith('new_model_')) {
+    return `models/${initialFolderName.value}`
+  }
+  const base = editingId.value || tempId.value
+  const name = sanitize(formData.name)
+  const folder = name === 'unnamed' ? `new_model_${base}` : `${name}_${base}`
+  initialFolderName.value = folder
+  return `models/${folder}`
 })
 
 const refreshImages = async () => {
@@ -356,71 +305,6 @@ onMounted(async () => {
   await modelStore.fetchAll()
   await refreshImages()
 })
-
-const resetFilters = () => {
-  searchQuery.value = ''
-  selectedRegion.value = ''
-  selectedTags.value = []
-  selectedSort.value = 'recently_added'
-}
-
-// 拦截式卡片点击逻辑 (方案 A)
-const handleCardClick = (model) => {
-  if (isManageMode.value) {
-    const idx = selectedIds.value.indexOf(model.id)
-    if (idx === -1) {
-      selectedIds.value.push(model.id)
-    } else {
-      selectedIds.value.splice(idx, 1)
-    }
-  } else {
-    openViewDrawer(model)
-  }
-}
-
-// 全选当前过滤模特
-const toggleAll = () => {
-  if (isAllSelected.value) {
-    selectedIds.value = selectedIds.value.filter(id => 
-      !filteredModels.value.some(m => m.id === id)
-    )
-  } else {
-    filteredModels.value.forEach(model => {
-      if (!selectedIds.value.includes(model.id)) {
-        selectedIds.value.push(model.id)
-      }
-    })
-  }
-}
-
-// 执行批量删除
-const executeBatchDelete = () => {
-  if (selectedIds.value.length === 0) return
-  confirmMessage.value = `确定要批量删除选中的 ${selectedIds.value.length} 名模特吗？此操作将永久物理删除所有选定模特的作品集及图片，且无法撤销！`
-  isConfirmOpen.value = true
-}
-
-const executeDelete = async () => {
-  if (isManageMode.value) {
-    // 执行批量删除
-    await modelStore.removeBatch(selectedIds.value)
-    selectedIds.value = []
-    isManageMode.value = false
-    await refreshImages()
-    isConfirmOpen.value = false
-  } else if (currentModel.value) {
-    // 执行单条删除
-    await modelStore.remove(currentModel.value.id)
-    await refreshImages()
-    isConfirmOpen.value = false
-    isDrawerOpen.value = false
-  }
-}
-
-const cancelManageMode = () => {
-  isManageMode.value = false
-  selectedIds.value = []
-}
 
 const resetForm = () => {
   formData.name = ''
@@ -449,32 +333,17 @@ const fillFormFromModel = async (model) => {
   formData.images = JSON.parse(JSON.stringify(model.images || []))
 }
 
-const openCreateDrawer = () => {
-  promptName.value = ''
-  showNamePrompt.value = true
-}
-
-const confirmNamePrompt = () => {
-  if (!promptName.value.trim()) return
-  drawerMode.value = 'edit'
-  editingId.value = null
-  tempId.value = Date.now()
-  initialFolderName.value = `${sanitize(promptName.value)}_${tempId.value}`
-  resetForm()
+const confirmNamePromptWithForm = () => {
+  confirmNamePrompt(resetForm)
   formData.name = promptName.value.trim()
-  showNamePrompt.value = false
-  isDrawerOpen.value = true
 }
 
-const cancelNamePrompt = () => {
-  showNamePrompt.value = false
-}
-
-const openViewDrawer = async (model) => {
-  editingId.value = model.id
-  initialFolderName.value = `${sanitize(model.name)}_${model.id}`
-  drawerMode.value = 'view'
-  isDrawerOpen.value = true
+const executeDelete = async () => {
+  if (isManageMode.value) {
+    await executeBatchDeleteAction()
+  } else if (currentModel.value) {
+    await executeSingleDeleteAction(currentModel.value)
+  }
 }
 
 const switchToEdit = async () => {
@@ -490,24 +359,13 @@ const confirmDelete = async () => {
   isConfirmOpen.value = true
 }
 
-const closeDrawer = async () => {
-  if (drawerMode.value === 'edit' && !editingId.value && tempId.value) {
-    await window.electronAPI.cleanupTempFolder(`models/${initialFolderName.value}`)
-  }
-  isDrawerOpen.value = false
-}
-
-const previewImage = (url) => {
-  previewUrl.value = url
-}
-
-const closePreview = () => {
-  previewUrl.value = null
+const handleCloseDrawer = () => {
+  closeDrawer()
 }
 
 const handleSave = async () => {
   if (drawerMode.value === 'view') {
-    closeDrawer()
+    handleCloseDrawer()
     return
   }
 

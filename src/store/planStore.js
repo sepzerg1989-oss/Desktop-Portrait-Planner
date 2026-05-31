@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { sanitize } from '../utils/helpers'
 
 /**
  * 策划案状态管理 — 核心三栏联动数据中心
@@ -29,6 +30,7 @@ export const usePlanStore = defineStore('plan', {
         this.plans = await window.electronAPI.getPlans()
       } catch (e) {
         console.error('[planStore] 获取策划案列表失败:', e)
+        throw e
       } finally {
         this.loading = false
       }
@@ -42,6 +44,7 @@ export const usePlanStore = defineStore('plan', {
         return record
       } catch (e) {
         console.error('[planStore] 新建策划案失败:', e)
+        throw e
       }
     },
 
@@ -53,6 +56,7 @@ export const usePlanStore = defineStore('plan', {
         return record
       } catch (e) {
         console.error('[planStore] 从模板新建失败:', e)
+        throw e
       }
     },
 
@@ -63,6 +67,7 @@ export const usePlanStore = defineStore('plan', {
         await this.fetchPlans()
       } catch (e) {
         console.error('[planStore] 删除策划案失败:', e)
+        throw e
       }
     },
 
@@ -73,6 +78,7 @@ export const usePlanStore = defineStore('plan', {
         await this.fetchPlans()
       } catch (e) {
         console.error('[planStore] 批量删除策划案失败:', e)
+        throw e
       }
     },
 
@@ -86,7 +92,6 @@ export const usePlanStore = defineStore('plan', {
           this.planId = record.id
           this.planTitle = record.title
           
-          const sanitize = (name) => (name || '').replace(/[\\\/:\*\?"<>\|]/g, '_').trim() || 'unnamed'
           this.initialFolderName = `${sanitize(record.title)}_${record.id}`
 
           this.modules = typeof record.modules_json === 'string'
@@ -96,6 +101,7 @@ export const usePlanStore = defineStore('plan', {
         }
       } catch (e) {
         console.error('[planStore] 加载策划案失败:', e)
+        throw e
       }
     },
 
@@ -107,10 +113,10 @@ export const usePlanStore = defineStore('plan', {
           title: this.planTitle,
           modules_json: JSON.stringify(this.modules),
         })
-        // 同时刷新列表（大厅可能需要最新封面/标题）
         await this.fetchPlans()
       } catch (e) {
         console.error('[planStore] 保存策划案失败:', e)
+        throw e
       }
     },
 
@@ -219,6 +225,7 @@ export const usePlanStore = defineStore('plan', {
         await this.fetchTemplates()
       } catch (e) {
         console.error('[planStore] 保存模板失败:', e)
+        throw e
       }
     },
 
@@ -228,6 +235,7 @@ export const usePlanStore = defineStore('plan', {
         this.templates = await window.electronAPI.getTemplates()
       } catch (e) {
         console.error('[planStore] 获取模板列表失败:', e)
+        throw e
       }
     },
 
@@ -238,6 +246,7 @@ export const usePlanStore = defineStore('plan', {
         await this.fetchTemplates()
       } catch (e) {
         console.error('[planStore] 删除模板失败:', e)
+        throw e
       }
     },
   },

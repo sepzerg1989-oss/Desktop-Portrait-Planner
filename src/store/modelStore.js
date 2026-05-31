@@ -22,6 +22,7 @@ export const useModelStore = defineStore('model', {
         }))
       } catch (e) {
         console.error('[modelStore] 获取模特列表失败:', e)
+        throw e
       } finally {
         this.loading = false
       }
@@ -84,6 +85,7 @@ export const useModelStore = defineStore('model', {
         await this.fetchAll()
       } catch (e) {
         console.error('[modelStore] 删除模特失败:', e)
+        throw e
       }
     },
 
@@ -94,6 +96,7 @@ export const useModelStore = defineStore('model', {
         await this.fetchAll()
       } catch (e) {
         console.error('[modelStore] 批量删除模特失败:', e)
+        throw e
       }
     },
   },

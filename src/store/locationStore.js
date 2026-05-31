@@ -22,6 +22,7 @@ export const useLocationStore = defineStore('location', {
         }))
       } catch (e) {
         console.error('[locationStore] 获取场地列表失败:', e)
+        throw e
       } finally {
         this.loading = false
       }
@@ -79,6 +80,7 @@ export const useLocationStore = defineStore('location', {
         await this.fetchAll()
       } catch (e) {
         console.error('[locationStore] 删除场地失败:', e)
+        throw e
       }
     },
 
@@ -89,6 +91,7 @@ export const useLocationStore = defineStore('location', {
         await this.fetchAll()
       } catch (e) {
         console.error('[locationStore] 批量删除场地失败:', e)
+        throw e
       }
     },
   },
