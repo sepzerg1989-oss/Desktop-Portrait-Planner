@@ -33,6 +33,24 @@
           @dragstart="onDragStart" @dragover="onDragOver" @drop="onDrop" @dragend="onDragEnd" @remove-image="removeImage"
         />
 
+        <ClothingModule 
+          v-else-if="module.type === 'clothing'"
+          :module="module" :is-editing="isEditing" :dragging-idx="draggingIdx" :dragged-module-id="draggedModuleId"
+          @dragstart="onDragStart" @dragover="onDragOver" @drop="onDrop" @dragend="onDragEnd" @remove-image="removeImage"
+        />
+
+        <PropsModule 
+          v-else-if="module.type === 'props'"
+          :module="module" :is-editing="isEditing" :dragging-idx="draggingIdx" :dragged-module-id="draggedModuleId"
+          @dragstart="onDragStart" @dragover="onDragOver" @drop="onDrop" @dragend="onDragEnd" @remove-image="removeImage"
+        />
+
+        <MakeupModule 
+          v-else-if="module.type === 'makeup'"
+          :module="module" :is-editing="isEditing" :dragging-idx="draggingIdx" :dragged-module-id="draggedModuleId"
+          @dragstart="onDragStart" @dragover="onDragOver" @drop="onDrop" @dragend="onDragEnd" @remove-image="removeImage"
+        />
+
         <TimeModule 
           v-else-if="module.type === 'shoot_time'"
           :module="module"
@@ -57,6 +75,9 @@ import html2canvas from 'html2canvas'
 import ThemeModule from './CanvasModules/ThemeModule.vue'
 import ModelModule from './CanvasModules/ModelModule.vue'
 import LocationModule from './CanvasModules/LocationModule.vue'
+import ClothingModule from './CanvasModules/ClothingModule.vue'
+import PropsModule from './CanvasModules/PropsModule.vue'
+import MakeupModule from './CanvasModules/MakeupModule.vue'
 import TimeModule from './CanvasModules/TimeModule.vue'
 import GenericModule from './CanvasModules/GenericModule.vue'
 
@@ -86,7 +107,23 @@ const { draggingIdx, draggedModuleId, onDragStart, onDragOver, onDrop, onDragEnd
 
 const removeImage = (module, index) => {
   if (!props.isEditing) return
-  module.data.images.splice(index, 1)
+  if (index && typeof index === 'object') {
+    const { itemIndex, imgIndex } = index
+    if (module.data.items && module.data.items[itemIndex]) {
+      const item = module.data.items[itemIndex]
+      const imagesCount = item.images ? item.images.length : 0
+      
+      if (imagesCount <= 1) {
+        // 如果是最后一张图片或无图片占位，直接删除整个服装/道具子素材项
+        module.data.items.splice(itemIndex, 1)
+      } else {
+        // 否则只删除该子项下的特定图片
+        item.images.splice(imgIndex, 1)
+      }
+    }
+  } else {
+    module.data.images.splice(index, 1)
+  }
   triggerAutoSave()
 }
 

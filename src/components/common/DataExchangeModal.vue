@@ -8,7 +8,7 @@
           <h2 class="text-xl font-serif text-morandi-text">导出数据包</h2>
           <p class="text-[10px] uppercase tracking-widest text-morandi-muted mt-1.5">Export Backup Package / Share</p>
           <p class="text-xs text-morandi-muted mt-2 leading-relaxed max-w-xl font-sans">
-            选择您需要分享的策划案、模特或场地，系统将自动打包所有相关图片和配置，并生成本地数据包。
+            选择您需要分享的策划案、模特、场地或新增搭配、道具、妆容，系统将自动打包所有相关图片和配置，并生成本地数据包。
           </p>
         </div>
         <button @click="close" class="text-morandi-muted hover:text-morandi-text transition-colors p-2 hover:bg-morandi-text/5 rounded-full outline-none">
@@ -19,10 +19,10 @@
       </div>
 
       <!-- Tabs (打字机裸排元标签风) -->
-      <div class="flex px-8 border-b border-morandi-border bg-transparent gap-2">
+      <div class="flex px-8 border-b border-morandi-border bg-transparent gap-1 overflow-x-auto scrollbar-none">
         <button v-for="tab in tabs" :key="tab.id"
                 @click="activeTab = tab.id"
-                class="px-4 py-3 text-xs uppercase tracking-widest transition-all duration-300 border-b-2 font-medium outline-none"
+                class="px-3.5 py-3 text-xs uppercase tracking-widest transition-all duration-300 border-b-2 font-medium outline-none shrink-0"
                 :class="activeTab === tab.id ? 'border-morandi-text text-morandi-text' : 'border-transparent text-morandi-muted hover:text-morandi-text'">
           {{ tab.label }}
           <span class="ml-1.5 text-[10px] text-morandi-muted font-sans font-normal">
@@ -90,7 +90,7 @@
 
             <!-- Item Preview (Polaroid 微缩感相纸封) -->
             <div class="flex items-center flex-1 min-w-0 pr-2">
-              <div class="w-12 h-12 bg-morandi-canvas/30 shrink-0 mr-3 overflow-hidden rounded-sm border border-morandi-border/30 shadow-[inset_0_1px_3px_rgba(0,0,0,0.01)]">
+              <div class="w-12 h-12 bg-morandi-canvas/30 shrink-0 mr-3 overflow-hidden rounded-sm border border-morandi-border/30 shadow-[inset_0_1px_3px_rgba(0,0,0,0.01)] relative">
                 <img v-if="getCover(activeTab, item)" :src="getCover(activeTab, item)" class="w-full h-full object-cover">
                 <div v-else class="w-full h-full flex items-center justify-center text-morandi-text/20 bg-gradient-to-br from-morandi-gstart to-morandi-gend text-sm font-serif">
                    {{ getName(activeTab, item)?.charAt(0) || '?' }}
@@ -133,6 +133,9 @@ import { ref, computed, watch, reactive } from 'vue'
 import { usePlanStore } from '../../store/planStore'
 import { useModelStore } from '../../store/modelStore'
 import { useLocationStore } from '../../store/locationStore'
+import { useClothingStore } from '../../store/clothingStore'
+import { usePropsStore } from '../../store/propsStore'
+import { useMakeupStore } from '../../store/makeupStore'
 
 const props = defineProps({
   isOpen: { type: Boolean, default: false }
@@ -143,27 +146,35 @@ const emit = defineEmits(['update:isOpen', 'success'])
 const planStore = usePlanStore()
 const modelStore = useModelStore()
 const locationStore = useLocationStore()
+const clothingStore = useClothingStore()
+const propsStore = usePropsStore()
+const makeupStore = useMakeupStore()
 
 const tabs = [
   { id: 'plans', label: '策划方案' },
   { id: 'models', label: '模特库' },
-  { id: 'locations', label: '场地库' }
+  { id: 'locations', label: '场地库' },
+  { id: 'clothing', label: '服装搭配' },
+  { id: 'props', label: '道具中心' },
+  { id: 'makeup', label: '妆容造型' }
 ]
 
 const activeTab = ref('plans')
 const isExporting = ref(false)
 
-// 使用 reactive 对象映射，确保在列表循环中的完美绝对响应式
+// 选中状态集合
 const selections = reactive({
-  plans: {}, // { [id]: boolean }
+  plans: {},
   models: {},
-  locations: {}
+  locations: {},
+  clothing: {},
+  props: {},
+  makeup: {}
 })
 
-// 极简模糊搜索框绑定值
 const searchQuery = ref('')
 
-// 基于分类和搜索词做实时响应式筛选列表
+// 实时响应式多分类模糊检索过滤
 const filteredList = computed(() => {
   const list = getList(activeTab.value)
   if (!searchQuery.value.trim()) return list
@@ -179,6 +190,11 @@ const filteredList = computed(() => {
     if (activeTab.value === 'locations') {
       return item.name?.toLowerCase().includes(query) || 
         item.address?.toLowerCase().includes(query) ||
+        item.tags?.some(t => t.toLowerCase().includes(query))
+    }
+    if (activeTab.value === 'clothing' || activeTab.value === 'props' || activeTab.value === 'makeup') {
+      return item.name?.toLowerCase().includes(query) || 
+        item.description?.toLowerCase().includes(query) ||
         item.tags?.some(t => t.toLowerCase().includes(query))
     }
     return false
@@ -197,10 +213,16 @@ watch(() => props.isOpen, async (newVal) => {
     selections.plans = {}
     selections.models = {}
     selections.locations = {}
+    selections.clothing = {}
+    selections.props = {}
+    selections.makeup = {}
     await Promise.all([
       planStore.fetchPlans(),
       modelStore.fetchAll(),
-      locationStore.fetchAll()
+      locationStore.fetchAll(),
+      clothingStore.fetchAll(),
+      propsStore.fetchAll(),
+      makeupStore.fetchAll()
     ])
   }
 })
@@ -209,6 +231,9 @@ const getList = (tabId) => {
   if (tabId === 'plans') return planStore.plans
   if (tabId === 'models') return modelStore.models
   if (tabId === 'locations') return locationStore.locations
+  if (tabId === 'clothing') return clothingStore.clothings
+  if (tabId === 'props') return propsStore.propsList
+  if (tabId === 'makeup') return makeupStore.makeups
   return []
 }
 
@@ -237,6 +262,11 @@ const getCover = (tabId, item) => {
     path = item.avatar_path
   } else if (tabId === 'locations') {
     path = item.cover_path
+  } else if (tabId === 'clothing' || tabId === 'props' || tabId === 'makeup') {
+    if (item.images && item.images.length > 0) {
+      const firstImg = item.images[0]
+      path = typeof firstImg === 'string' ? firstImg : (firstImg.path || firstImg.url)
+    }
   }
   
   if (!path) return ''
@@ -248,6 +278,9 @@ const getName = (tabId, item) => {
   if (tabId === 'plans') return item.title || '未命名'
   if (tabId === 'models') return item.name || '未命名'
   if (tabId === 'locations') return item.name || '未命名'
+  if (tabId === 'clothing') return item.name || '未命名'
+  if (tabId === 'props') return item.name || '未命名'
+  if (tabId === 'makeup') return item.name || '未命名'
   return ''
 }
 
@@ -263,12 +296,20 @@ const selectedCounts = computed(() => {
   return {
     plans: Object.values(selections.plans).filter(Boolean).length,
     models: Object.values(selections.models).filter(Boolean).length,
-    locations: Object.values(selections.locations).filter(Boolean).length
+    locations: Object.values(selections.locations).filter(Boolean).length,
+    clothing: Object.values(selections.clothing).filter(Boolean).length,
+    props: Object.values(selections.props).filter(Boolean).length,
+    makeup: Object.values(selections.makeup).filter(Boolean).length
   }
 })
 
 const totalSelected = computed(() => {
-  return selectedCounts.value.plans + selectedCounts.value.models + selectedCounts.value.locations
+  return selectedCounts.value.plans + 
+    selectedCounts.value.models + 
+    selectedCounts.value.locations +
+    selectedCounts.value.clothing + 
+    selectedCounts.value.props + 
+    selectedCounts.value.makeup
 })
 
 const isAllSelected = computed(() => {
@@ -302,7 +343,10 @@ const handleExport = async () => {
     const ids = {
       planIds: Object.keys(selections.plans).filter(id => selections.plans[id]).map(Number),
       modelIds: Object.keys(selections.models).filter(id => selections.models[id]).map(Number),
-      locationIds: Object.keys(selections.locations).filter(id => selections.locations[id]).map(Number)
+      locationIds: Object.keys(selections.locations).filter(id => selections.locations[id]).map(Number),
+      clothingIds: Object.keys(selections.clothing).filter(id => selections.clothing[id]).map(Number),
+      propsIds: Object.keys(selections.props).filter(id => selections.props[id]).map(Number),
+      makeupIds: Object.keys(selections.makeup).filter(id => selections.makeup[id]).map(Number)
     }
     
     const res = await window.electronAPI.exportData(ids)

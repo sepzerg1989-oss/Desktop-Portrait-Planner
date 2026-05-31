@@ -2,8 +2,8 @@
   <div class="h-full overflow-y-auto px-12 py-10">
     <div class="flex flex-col md:flex-row justify-between items-stretch md:items-end gap-6 mb-12">
       <div>
-        <h1 class="text-luxury-title-lg text-morandi-text/90 mb-2">我的策划</h1>
-        <p class="text-luxury-meta-sm text-morandi-muted">All Plans / Moodboards</p>
+        <h1 class="text-luxury-title-lg text-morandi-text/90 mb-2">光影笺案</h1>
+        <p class="text-luxury-meta-sm text-morandi-muted">收录创作预案，留存独属拍摄构思</p>
       </div>
       <div class="flex flex-wrap items-center gap-4">
         <!-- 搜索策划案 -->

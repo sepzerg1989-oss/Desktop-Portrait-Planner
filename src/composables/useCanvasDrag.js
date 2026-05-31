@@ -39,13 +39,39 @@ export function useCanvasDrag(triggerAutoSave) {
       if (sourceIndex < index && mouseY < midY) return
     }
     
-    const images = [...sourceModule.data.images]
-    const [removed] = images.splice(sourceIndex, 1)
-    images.splice(index, 0, removed)
-    
-    sourceModule.data.images = images
-    draggedInfo.value.index = index
-    draggingIdx.value = index
+    if (sourceModule.type === 'clothing' || sourceModule.type === 'props') {
+      const items = sourceModule.data.items
+      if (items && items.length > 0) {
+        // 先构建当前的展平图片列表以映射真实子项
+        const flatList = []
+        items.forEach((item, itemIdx) => {
+          if (item.images) {
+            item.images.forEach((img, imgIdx) => {
+              flatList.push({ item, itemIdx, imgIdx, img })
+            })
+          }
+        })
+        
+        const sourceFlat = flatList[sourceIndex]
+        const targetFlat = flatList[index]
+        
+        if (sourceFlat && targetFlat) {
+          const [removed] = sourceFlat.item.images.splice(sourceFlat.imgIdx, 1)
+          targetFlat.item.images.splice(targetFlat.imgIdx, 0, removed)
+          
+          draggedInfo.value.index = index
+          draggingIdx.value = index
+        }
+      }
+    } else {
+      const images = [...sourceModule.data.images]
+      const [removed] = images.splice(sourceIndex, 1)
+      images.splice(index, 0, removed)
+      
+      sourceModule.data.images = images
+      draggedInfo.value.index = index
+      draggingIdx.value = index
+    }
   }
 
   const onDrop = (e, targetModule, targetIndex) => {

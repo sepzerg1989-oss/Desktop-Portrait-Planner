@@ -70,6 +70,40 @@ class DatabaseService {
         structure_json TEXT DEFAULT '[]',
         created_at TEXT DEFAULT (datetime('now','localtime'))
       );
+
+      -- 服装库表 (Clothing)
+      CREATE TABLE IF NOT EXISTS clothing (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        description TEXT DEFAULT '',
+        tags TEXT DEFAULT '[]',
+        link TEXT DEFAULT '',
+        price TEXT DEFAULT '',
+        images_json TEXT DEFAULT '[]',
+        created_at TEXT DEFAULT (datetime('now','localtime'))
+      );
+
+      -- 道具库表 (Props)
+      CREATE TABLE IF NOT EXISTS props (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        description TEXT DEFAULT '',
+        tags TEXT DEFAULT '[]',
+        link TEXT DEFAULT '',
+        price TEXT DEFAULT '',
+        images_json TEXT DEFAULT '[]',
+        created_at TEXT DEFAULT (datetime('now','localtime'))
+      );
+
+      -- 妆容库表 (Makeup)
+      CREATE TABLE IF NOT EXISTS makeup (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        description TEXT DEFAULT '',
+        tags TEXT DEFAULT '[]',
+        images_json TEXT DEFAULT '[]',
+        created_at TEXT DEFAULT (datetime('now','localtime'))
+      );
     `)
 
     // 数据库迁移逻辑：尝试为老数据库的 models 表增加新字段
@@ -82,13 +116,16 @@ class DatabaseService {
   // ==================== 通用 CRUD ====================
 
   /** 允许操作的表白名单 — 防御性校验 */
-  static VALID_TABLES = ['plans', 'models', 'locations', 'templates']
+  static VALID_TABLES = ['plans', 'models', 'locations', 'templates', 'clothing', 'props', 'makeup']
 
   static VALID_COLUMNS = {
     plans: ['id', 'title', 'cover_path', 'modules_json', 'created_at', 'updated_at'],
     models: ['id', 'name', 'tags', 'avatar_path', 'model_card_path', 'social', 'region', 'price', 'images_json', 'created_at'],
     locations: ['id', 'name', 'address', 'price', 'tags', 'cover_path', 'images_json', 'created_at'],
     templates: ['id', 'name', 'structure_json', 'created_at'],
+    clothing: ['id', 'name', 'description', 'tags', 'link', 'price', 'images_json', 'created_at'],
+    props: ['id', 'name', 'description', 'tags', 'link', 'price', 'images_json', 'created_at'],
+    makeup: ['id', 'name', 'description', 'tags', 'images_json', 'created_at']
   }
 
   _validateTable(table) {

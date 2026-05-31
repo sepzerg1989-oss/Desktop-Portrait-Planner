@@ -9,6 +9,9 @@ const routes = [
   { path: '/editor', name: 'PlanEditor', component: PlanEditor },
   { path: '/models', name: 'Models', component: Models },
   { path: '/locations', name: 'Locations', component: Locations },
+  { path: '/clothing', name: 'Clothing', component: () => import('../views/Clothing.vue') },
+  { path: '/props', name: 'Props', component: () => import('../views/Props.vue') },
+  { path: '/makeup', name: 'Makeup', component: () => import('../views/Makeup.vue') },
   { path: '/settings', name: 'Settings', component: () => import('../views/Settings.vue') },
 ]
 

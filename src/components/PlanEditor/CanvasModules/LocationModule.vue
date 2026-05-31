@@ -19,7 +19,7 @@
         @dragend="$emit('dragend')"
       >
         <img :src="module.data.images[0].url || module.data.images[0]" draggable="false" class="w-full h-auto object-contain transition-all" :class="{ 'opacity-40 scale-[0.98] blur-[2px]': draggingIdx === 0 && draggedModuleId === module.id }" loading="lazy" />
-        <button v-if="isEditing" @click.stop="$emit('remove-image', module, 0)" class="absolute top-4 right-4 w-8 h-8 bg-red-500/80 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-sm z-20 shadow-md hover:bg-red-600" title="删除图片">×</button>
+        <button v-if="isEditing" @click.stop="$emit('remove-image', module, 0)" class="absolute top-4 right-4 w-6 h-6 bg-morandi-text/80 hover:bg-morandi-red text-morandi-canvas opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center text-xs z-20 shadow-md outline-none rounded-none" title="删除图片">×</button>
       </div>
       
       <!-- 其它图：等分行高三列布局 -->
@@ -38,7 +38,7 @@
             @dragend="$emit('dragend')"
           >
             <img :src="img.url || img" draggable="false" class="w-full h-auto block transition-all" :class="{ 'opacity-40 scale-95': draggingIdx === (rowIdx * 3 + imgIdx + 1) && draggedModuleId === module.id }" loading="lazy" />
-            <button v-if="isEditing" @click.stop="$emit('remove-image', module, rowIdx * 3 + imgIdx + 1)" class="absolute top-2 right-2 w-6 h-6 bg-red-500/80 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs z-20 shadow-md hover:bg-red-600" title="删除图片">×</button>
+            <button v-if="isEditing" @click.stop="$emit('remove-image', module, rowIdx * 3 + imgIdx + 1)" class="absolute top-2 right-2 w-5 h-5 bg-morandi-text/80 hover:bg-morandi-red text-morandi-canvas opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center text-[10px] z-20 shadow-md outline-none rounded-none" title="删除图片">×</button>
           </div>
           <div v-if="row.length < 3" :style="{ flex: `${3 - row.length} 1 0%` }" class="invisible"></div>
         </div>

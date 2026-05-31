@@ -17,6 +17,27 @@ contextBridge.exposeInMainWorld('electronAPI', {
   deleteLocation: (id) => ipcRenderer.invoke('db:locations:delete', id),
   deleteLocationsBatch: (ids) => ipcRenderer.invoke('db:locations:deleteBatch', ids),
 
+  // ==================== 服装库 CRUD ====================
+  getClothings: () => ipcRenderer.invoke('db:clothing:getAll'),
+  createClothing: (data) => ipcRenderer.invoke('db:clothing:create', data),
+  updateClothing: (id, data) => ipcRenderer.invoke('db:clothing:update', id, data),
+  deleteClothing: (id) => ipcRenderer.invoke('db:clothing:delete', id),
+  deleteClothingsBatch: (ids) => ipcRenderer.invoke('db:clothing:deleteBatch', ids),
+
+  // ==================== 道具库 CRUD ====================
+  getProps: () => ipcRenderer.invoke('db:props:getAll'),
+  createProp: (data) => ipcRenderer.invoke('db:props:create', data),
+  updateProp: (id, data) => ipcRenderer.invoke('db:props:update', id, data),
+  deleteProp: (id) => ipcRenderer.invoke('db:props:delete', id),
+  deletePropsBatch: (ids) => ipcRenderer.invoke('db:props:deleteBatch', ids),
+
+  // ==================== 妆容库 CRUD ====================
+  getMakeups: () => ipcRenderer.invoke('db:makeup:getAll'),
+  createMakeup: (data) => ipcRenderer.invoke('db:makeup:create', data),
+  updateMakeup: (id, data) => ipcRenderer.invoke('db:makeup:update', id, data),
+  deleteMakeup: (id) => ipcRenderer.invoke('db:makeup:delete', id),
+  deleteMakeupsBatch: (ids) => ipcRenderer.invoke('db:makeup:deleteBatch', ids),
+
   // ==================== 策划案 CRUD ====================
   getPlans: () => ipcRenderer.invoke('db:plans:getAll'),
   createPlan: (title) => ipcRenderer.invoke('db:plans:create', title),

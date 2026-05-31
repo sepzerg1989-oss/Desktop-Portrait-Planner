@@ -19,7 +19,7 @@ class ExportService {
         version: "1.0",
         type: "portraitplanner-export",
         timestamp: new Date().toISOString(),
-        data: { plans: [], models: [], locations: [] },
+        data: { plans: [], models: [], locations: [], clothing: [], props: [], makeup: [] },
         images: {} // 结构 { absolutePath: base64 }
       }
 
@@ -47,6 +47,13 @@ class ExportService {
               if (m.data?.images) m.data.images.forEach(img => addImage(img.path));
               if (m.data?.avatar) addImage(m.data.avatar);
               if (m.data?.modelCard) addImage(m.data.modelCard);
+              if (m.data?.items) {
+                m.data.items.forEach(item => {
+                  if (item.images) {
+                    item.images.forEach(img => addImage(img.path));
+                  }
+                });
+              }
             });
           }
         }
@@ -74,6 +81,42 @@ class ExportService {
             exportData.data.locations.push(loc);
             if (loc.cover_path) addImage(loc.cover_path);
             const images = JSON.parse(loc.images_json || '[]');
+            images.forEach(img => addImage(img.path));
+          }
+        }
+      }
+
+      // 导出服装 (Clothing)
+      if (ids.clothingIds && Array.isArray(ids.clothingIds)) {
+        for (const id of ids.clothingIds) {
+          const item = DatabaseService.getById('clothing', id);
+          if (item) {
+            exportData.data.clothing.push(item);
+            const images = JSON.parse(item.images_json || '[]');
+            images.forEach(img => addImage(img.path));
+          }
+        }
+      }
+
+      // 导出道具 (Props)
+      if (ids.propsIds && Array.isArray(ids.propsIds)) {
+        for (const id of ids.propsIds) {
+          const item = DatabaseService.getById('props', id);
+          if (item) {
+            exportData.data.props.push(item);
+            const images = JSON.parse(item.images_json || '[]');
+            images.forEach(img => addImage(img.path));
+          }
+        }
+      }
+
+      // 导出妆容 (Makeup)
+      if (ids.makeupIds && Array.isArray(ids.makeupIds)) {
+        for (const id of ids.makeupIds) {
+          const item = DatabaseService.getById('makeup', id);
+          if (item) {
+            exportData.data.makeup.push(item);
+            const images = JSON.parse(item.images_json || '[]');
             images.forEach(img => addImage(img.path));
           }
         }
@@ -201,10 +244,71 @@ class ExportService {
             if (m.data?.images) m.data.images.forEach(img => img.path = replacePath(img.path));
             if (m.data?.avatar) m.data.avatar = replacePath(m.data.avatar);
             if (m.data?.modelCard) m.data.modelCard = replacePath(m.data.modelCard);
+            if (m.data?.items) {
+              m.data.items.forEach(item => {
+                if (item.images) {
+                  item.images.forEach(img => img.path = replacePath(img.path));
+                }
+              });
+            }
           });
           newPlan.modules_json = JSON.stringify(modules);
 
           DatabaseService.insert('plans', newPlan);
+        }
+      }
+
+      // 5. 插入服装记录 (Clothing)
+      if (exportData.data.clothing) {
+        for (const item of exportData.data.clothing) {
+          const newItem = {};
+          DatabaseService.constructor.VALID_COLUMNS.clothing.forEach(key => {
+            if (key !== 'id' && item[key] !== undefined) newItem[key] = item[key];
+          });
+          
+          const images = JSON.parse(newItem.images_json || '[]');
+          images.forEach(img => {
+            if (img) img.path = replacePath(img.path);
+          });
+          newItem.images_json = JSON.stringify(images);
+
+          DatabaseService.insert('clothing', newItem);
+        }
+      }
+
+      // 6. 插入道具记录 (Props)
+      if (exportData.data.props) {
+        for (const item of exportData.data.props) {
+          const newItem = {};
+          DatabaseService.constructor.VALID_COLUMNS.props.forEach(key => {
+            if (key !== 'id' && item[key] !== undefined) newItem[key] = item[key];
+          });
+          
+          const images = JSON.parse(newItem.images_json || '[]');
+          images.forEach(img => {
+            if (img) img.path = replacePath(img.path);
+          });
+          newItem.images_json = JSON.stringify(images);
+
+          DatabaseService.insert('props', newItem);
+        }
+      }
+
+      // 7. 插入妆容记录 (Makeup)
+      if (exportData.data.makeup) {
+        for (const item of exportData.data.makeup) {
+          const newItem = {};
+          DatabaseService.constructor.VALID_COLUMNS.makeup.forEach(key => {
+            if (key !== 'id' && item[key] !== undefined) newItem[key] = item[key];
+          });
+          
+          const images = JSON.parse(newItem.images_json || '[]');
+          images.forEach(img => {
+            if (img) img.path = replacePath(img.path);
+          });
+          newItem.images_json = JSON.stringify(images);
+
+          DatabaseService.insert('makeup', newItem);
         }
       }
 

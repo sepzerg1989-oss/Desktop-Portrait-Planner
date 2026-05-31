@@ -143,16 +143,48 @@ export const usePlanStore = defineStore('plan', {
       }
     },
 
+
     addModule(type) {
       const id = 'm' + Date.now()
       const typeMap = {
         theme: { title: '拍摄主题', data: { title: '', description: '', images: [] } },
         model: { title: '拍摄模特', data: { name: '', avatar: '', tags: [] } },
         location: { title: '拍摄场地', data: { name: '', address: '', images: [] } },
+        makeup: { title: '拍摄妆容', data: { name: '', description: '', tags: [], images: [] } },
+        clothing: { 
+          title: '模特服装', 
+          data: { 
+            items: [
+              {
+                id: 'item-init',
+                name: '',
+                description: '',
+                tags: [],
+                price: '',
+                link: '',
+                images: []
+              }
+            ]
+          } 
+        },
+        props: { 
+          title: '拍摄道具', 
+          data: { 
+            items: [
+              {
+                id: 'item-init',
+                name: '',
+                description: '',
+                tags: [],
+                price: '',
+                link: '',
+                images: []
+              }
+            ]
+          } 
+        },
         reference: { title: '参考样片', data: { images: [] } },
         shoot_time: { title: '拍摄日期', data: { date: '', startTime: '', endTime: '', showSunTimes: false, province: '', city: '', lat: null, lng: null } },
-        clothing: { title: '模特服装', data: { description: '', images: [] } },
-        props: { title: '拍摄道具', data: { description: '', images: [] } },
         custom: { title: '自定义模块', data: { description: '', images: [] } }
       }
 
