@@ -4,7 +4,7 @@
       
       <!-- 动态渲染所有模块 -->
       <div 
-        v-for="module in store.modules" 
+        v-for="module in renderedModules" 
         :key="module.id"
         :id="'module-' + module.id"
         class="group transition-all duration-500 py-16 pl-6 border-l-2 border-transparent border-t border-morandi-border/30 first:border-t-0 first:pt-0"
@@ -67,7 +67,7 @@
 </template>
 
 <script setup>
-import { watch, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { usePlanStore } from '../../store/planStore'
 import html2canvas from 'html2canvas'
 
@@ -92,6 +92,16 @@ const props = defineProps({
 })
 
 const store = usePlanStore()
+
+// 导出时临时过滤需要呈现的模块 ID 列表
+const exportingModuleIds = ref(null)
+
+const renderedModules = computed(() => {
+  if (exportingModuleIds.value) {
+    return store.modules.filter(m => exportingModuleIds.value.includes(m.id))
+  }
+  return store.modules
+})
 
 // 借用防抖触发保存机制
 let saveTimeout = null
@@ -137,15 +147,22 @@ watch(() => store.activeModuleId, (newId) => {
 
 /**
  * 导出画布为高清长图
+ * @param {Array<string>} selectedModuleIds - 用户勾选导出的模块 ID 列表
  */
-const exportToImage = async () => {
+const exportToImage = async (selectedModuleIds) => {
   const element = document.getElementById('export-canvas')
   if (!element) return false
 
   try {
     const oldActiveId = store.activeModuleId
     store.setActiveModule(null)
-    await new Promise(resolve => setTimeout(resolve, 50))
+    
+    if (selectedModuleIds && Array.isArray(selectedModuleIds)) {
+      exportingModuleIds.value = selectedModuleIds
+    }
+    
+    // 给 DOM 重新过滤渲染留出足够的重绘时间
+    await new Promise(resolve => setTimeout(resolve, 100))
 
     const canvas = await html2canvas(element, {
       scale: 2,
@@ -153,9 +170,16 @@ const exportToImage = async () => {
       backgroundColor: null
     })
 
+    // 恢复原来的所有模块渲染
+    exportingModuleIds.value = null
     store.setActiveModule(oldActiveId)
+    
+    // 恢复原有的 DOM 结构
+    await new Promise(resolve => setTimeout(resolve, 50))
+
     return canvas.toDataURL("image/jpeg", 0.9)
   } catch (error) {
+    exportingModuleIds.value = null
     return null
   }
 }

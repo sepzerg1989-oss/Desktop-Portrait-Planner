@@ -7,12 +7,14 @@ import ModuleManager from '../components/PlanEditor/ModuleManager.vue'
 import Canvas from '../components/PlanEditor/Canvas.vue'
 import PropertyInspector from '../components/PlanEditor/PropertyInspector.vue'
 import MorandiModal from '../components/common/MorandiModal.vue'
+import ExportModuleModal from '../components/PlanEditor/ExportModuleModal.vue'
 
 const router = useRouter()
 const route = useRoute()
 const store = usePlanStore()
 const isEditing = ref(false)
 const canvasRef = ref(null)
+const showExportModal = ref(false)
 
 // -------------------- 自动保存逻辑 --------------------
 function debounce(fn, delay) {
@@ -112,13 +114,24 @@ const handleDelete = () => {
   })
 }
 
-/** 导出长图 */
-const handleExportJPG = async () => {
+/** 导出长图 - 触发模块选择弹窗 */
+const handleExportJPG = () => {
   if (!canvasRef.value) return
+  // 如果当前没有任何模块，直接提示无需选择
+  if (store.modules.length === 0) {
+    showModal({ title: '导出提示', message: '当前策划案中还没有任何模块，无法导出长图。', type: 'alert' })
+    return
+  }
+  showExportModal.value = true
+}
+
+/** 执行实际的过滤与图片生成导出 */
+const executeExport = async (selectedModuleIds) => {
+  showExportModal.value = false
   
   showModal({ title: '正在导出', message: '正在生成高清长图，请稍候...', type: 'alert' })
   
-  const dataUrl = await canvasRef.value.exportToImage()
+  const dataUrl = await canvasRef.value.exportToImage(selectedModuleIds)
   if (!dataUrl) {
     showModal({ title: '导出失败', message: '未能生成长图，请重试。', type: 'alert' })
     return
@@ -221,6 +234,13 @@ const handleExportJPG = async () => {
       cancel-text="取消"
       :confirm-text="modal.type === 'confirm' ? '确定删除' : '确定'"
       @update:show="modal.show = $event"
+    />
+
+    <!-- 选择导出模块弹窗 -->
+    <ExportModuleModal
+      v-model:show="showExportModal"
+      :modules="store.modules"
+      @confirm="executeExport"
     />
   </div>
 </template>

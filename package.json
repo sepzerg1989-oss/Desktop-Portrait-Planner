@@ -1,7 +1,7 @@
 {
   "name": "portraitplanner",
   "private": true,
-  "version": "1.3.2",
+  "version": "1.5.0",
   "type": "module",
   "main": "dist-electron/main.js",
   "scripts": {
