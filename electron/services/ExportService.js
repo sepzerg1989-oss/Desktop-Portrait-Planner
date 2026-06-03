@@ -199,7 +199,7 @@ class ExportService {
           for (const model of exportData.data.models) {
             const newModel = {};
             DatabaseService.constructor.VALID_COLUMNS.models.forEach(key => {
-              if (key !== 'id' && model[key] !== undefined) newModel[key] = model[key];
+              if (key !== 'id' && key !== 'created_at' && model[key] !== undefined) newModel[key] = model[key];
             });
             
             newModel.avatar_path = replacePath(newModel.avatar_path);
@@ -217,7 +217,7 @@ class ExportService {
           for (const loc of exportData.data.locations) {
             const newLoc = {};
             DatabaseService.constructor.VALID_COLUMNS.locations.forEach(key => {
-              if (key !== 'id' && loc[key] !== undefined) newLoc[key] = loc[key];
+              if (key !== 'id' && key !== 'created_at' && loc[key] !== undefined) newLoc[key] = loc[key];
             });
             
             newLoc.cover_path = replacePath(newLoc.cover_path);
@@ -234,7 +234,7 @@ class ExportService {
           for (const plan of exportData.data.plans) {
             const newPlan = {};
             DatabaseService.constructor.VALID_COLUMNS.plans.forEach(key => {
-              if (key !== 'id' && plan[key] !== undefined) newPlan[key] = plan[key];
+              if (key !== 'id' && key !== 'created_at' && key !== 'updated_at' && plan[key] !== undefined) newPlan[key] = plan[key];
             });
             
             newPlan.cover_path = replacePath(newPlan.cover_path);
@@ -262,7 +262,7 @@ class ExportService {
           for (const item of exportData.data.clothing) {
             const newItem = {};
             DatabaseService.constructor.VALID_COLUMNS.clothing.forEach(key => {
-              if (key !== 'id' && item[key] !== undefined) newItem[key] = item[key];
+              if (key !== 'id' && key !== 'created_at' && item[key] !== undefined) newItem[key] = item[key];
             });
             
             const images = JSON.parse(newItem.images_json || '[]');
@@ -279,7 +279,7 @@ class ExportService {
           for (const item of exportData.data.props) {
             const newItem = {};
             DatabaseService.constructor.VALID_COLUMNS.props.forEach(key => {
-              if (key !== 'id' && item[key] !== undefined) newItem[key] = item[key];
+              if (key !== 'id' && key !== 'created_at' && item[key] !== undefined) newItem[key] = item[key];
             });
             
             const images = JSON.parse(newItem.images_json || '[]');
@@ -296,7 +296,7 @@ class ExportService {
           for (const item of exportData.data.makeup) {
             const newItem = {};
             DatabaseService.constructor.VALID_COLUMNS.makeup.forEach(key => {
-              if (key !== 'id' && item[key] !== undefined) newItem[key] = item[key];
+              if (key !== 'id' && key !== 'created_at' && item[key] !== undefined) newItem[key] = item[key];
             });
             
             const images = JSON.parse(newItem.images_json || '[]');
