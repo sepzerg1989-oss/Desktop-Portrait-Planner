@@ -198,7 +198,7 @@ class ExportService {
         if (exportData.data.models) {
           for (const model of exportData.data.models) {
             const newModel = {};
-            DatabaseService.VALID_COLUMNS.models.forEach(key => {
+            DatabaseService.constructor.VALID_COLUMNS.models.forEach(key => {
               if (key !== 'id' && model[key] !== undefined) newModel[key] = model[key];
             });
             
@@ -216,7 +216,7 @@ class ExportService {
         if (exportData.data.locations) {
           for (const loc of exportData.data.locations) {
             const newLoc = {};
-            DatabaseService.VALID_COLUMNS.locations.forEach(key => {
+            DatabaseService.constructor.VALID_COLUMNS.locations.forEach(key => {
               if (key !== 'id' && loc[key] !== undefined) newLoc[key] = loc[key];
             });
             
@@ -233,7 +233,7 @@ class ExportService {
         if (exportData.data.plans) {
           for (const plan of exportData.data.plans) {
             const newPlan = {};
-            DatabaseService.VALID_COLUMNS.plans.forEach(key => {
+            DatabaseService.constructor.VALID_COLUMNS.plans.forEach(key => {
               if (key !== 'id' && plan[key] !== undefined) newPlan[key] = plan[key];
             });
             
@@ -261,7 +261,7 @@ class ExportService {
         if (exportData.data.clothing) {
           for (const item of exportData.data.clothing) {
             const newItem = {};
-            DatabaseService.VALID_COLUMNS.clothing.forEach(key => {
+            DatabaseService.constructor.VALID_COLUMNS.clothing.forEach(key => {
               if (key !== 'id' && item[key] !== undefined) newItem[key] = item[key];
             });
             
@@ -278,7 +278,7 @@ class ExportService {
         if (exportData.data.props) {
           for (const item of exportData.data.props) {
             const newItem = {};
-            DatabaseService.VALID_COLUMNS.props.forEach(key => {
+            DatabaseService.constructor.VALID_COLUMNS.props.forEach(key => {
               if (key !== 'id' && item[key] !== undefined) newItem[key] = item[key];
             });
             
@@ -295,7 +295,7 @@ class ExportService {
         if (exportData.data.makeup) {
           for (const item of exportData.data.makeup) {
             const newItem = {};
-            DatabaseService.VALID_COLUMNS.makeup.forEach(key => {
+            DatabaseService.constructor.VALID_COLUMNS.makeup.forEach(key => {
               if (key !== 'id' && item[key] !== undefined) newItem[key] = item[key];
             });
             
