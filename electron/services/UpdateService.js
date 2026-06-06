@@ -1,7 +1,6 @@
 import { app, BrowserWindow, shell, net } from 'electron'
 import fs from 'fs'
 import path from 'path'
-import { spawn } from 'child_process'
 import Store from 'electron-store'
 
 // ==================== 配置项 ====================
@@ -36,7 +35,7 @@ class UpdateService {
    * 获取检测更新配置文件 update.json 的国内加速镜像路径
    */
   getUpdateConfigMirrorUrl() {
-    return `https://raw.gitmirror.com/${GITHUB_OWNER}/${GITHUB_REPO}/main/update.json`
+    return `https://gh-proxy.com/https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/main/update.json`
   }
 
   /**
@@ -102,52 +101,53 @@ class UpdateService {
 
   /**
    * 从云端获取最新 update.json 的配置内容
-   * 优先从国内镜像加速通道获取，若失败则自动回退至 GitHub 原生通道
+   * 多通道按优先级依次获取，防范国内部分镜像域名失效或污染
    */
   async fetchLatestVersion() {
-    const mirrorUrl = this.getUpdateConfigMirrorUrl()
-    const rawUrl = this.getUpdateConfigUrl()
+    const urlsToTry = [
+      `https://gh-proxy.com/https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/main/update.json`,
+      `https://ghproxy.net/https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/main/update.json`,
+      this.getUpdateConfigUrl() // 官方直连通道作为最终兜底
+    ]
 
-    // 优先尝试国内镜像站
-    try {
-      console.log(`[UpdateService] 尝试从国内镜像站获取更新配置: ${mirrorUrl}`)
-      const response = await net.fetch(mirrorUrl, { method: 'GET', redirect: 'follow' })
-      if (response.ok) {
-        const body = await response.text()
-        return JSON.parse(body)
+    for (const url of urlsToTry) {
+      try {
+        console.log(`[UpdateService] 正在尝试获取更新配置: ${url}`)
+        const response = await net.fetch(url, { method: 'GET', redirect: 'follow' })
+        if (response.ok) {
+          const body = await response.text()
+          return JSON.parse(body)
+        }
+        console.warn(`[UpdateService] 加载地址返回状态码异常: ${url} -> ${response.status}`)
+      } catch (err) {
+        console.warn(`[UpdateService] 加载地址失败: ${url}，错误信息: ${err.message}`)
       }
-      console.warn(`[UpdateService] 镜像站返回异常状态码: ${response.status}，将尝试直连 GitHub`)
-    } catch (err) {
-      console.warn('[UpdateService] 镜像站获取更新配置失败，将尝试直连 GitHub Raw:', err.message)
     }
 
-    // 回退到 GitHub Raw 直连
-    console.log(`[UpdateService] 尝试直连 GitHub Raw 获取更新配置: ${rawUrl}`)
-    const response = await net.fetch(rawUrl, { method: 'GET', redirect: 'follow' })
-    if (!response.ok) {
-      throw new Error(`状态码异常: ${response.status}`)
-    }
-    const body = await response.text()
-    try {
-      return JSON.parse(body)
-    } catch (e) {
-      throw new Error('解析更新 JSON 失败')
-    }
+    throw new Error('所有更新配置通道均获取失败')
   }
 
   /**
    * 执行流式网络下载（支持国内镜像加速与自动降级重试）
-   * 优先使用 mirror.ghproxy.com 加速下载，若失败则自动回退至 GitHub 原地址直连下载
+   * 优先使用国内代理加速下载，若失败则自动回退至 GitHub 原地址直连下载
    */
   async downloadPackage(downloadUrl, win) {
     if (this.isDownloading) throw new Error('已有下载任务进行中')
     this.isDownloading = true
+    this.cancelRequested = false
 
     const urlsToTry = [downloadUrl]
     // 若为 GitHub 官方 Release 链接，则优先在其前面加入国内镜像代理
     if (downloadUrl.includes('github.com')) {
-      const mirrorUrl = `https://mirror.ghproxy.com/${downloadUrl}`
-      urlsToTry.unshift(mirrorUrl)
+      // 增加多个公认国内 GitHub 下载代理，按顺序重试，做多通道降级容灾
+      const proxies = [
+        'https://gh-proxy.com/',
+        'https://ghproxy.net/',
+        'https://ghproxy.homeboyc.cn/'
+      ]
+      proxies.reverse().forEach(proxy => {
+        urlsToTry.unshift(`${proxy}${downloadUrl}`)
+      })
     }
 
     const ext = process.platform === 'darwin' ? '.dmg' : '.exe'
@@ -172,6 +172,9 @@ class UpdateService {
 
         const reader = response.body.getReader()
         while (true) {
+          if (this.cancelRequested) {
+            throw new Error('USER_CANCELLED')
+          }
           const { done, value } = await reader.read()
           if (done) break
 
@@ -197,11 +200,24 @@ class UpdateService {
         if (fs.existsSync(tempPath)) {
           try { fs.unlinkSync(tempPath) } catch (_) {}
         }
+        if (err.message === 'USER_CANCELLED') {
+          break
+        }
       }
     }
 
     this.isDownloading = false
     throw lastError || new Error('所有下载通道均失败')
+  }
+
+  /**
+   * 用户请求取消当前的下载
+   */
+  cancelDownload() {
+    if (this.isDownloading) {
+      this.cancelRequested = true
+      console.log('[UpdateService] 用户请求取消更新下载。')
+    }
   }
 
   /**
@@ -212,17 +228,12 @@ class UpdateService {
       const packagePath = await this.downloadPackage(downloadUrl, win)
       console.log('[UpdateService] 安装包下载完成:', packagePath)
 
-      if (process.platform === 'win32') {
-        // Windows: 执行 exe 静默/交互安装，拉起后退出本应用以防被锁死占用
-        const child = spawn(packagePath, {
-          detached: true,
-          stdio: 'ignore'
-        })
-        child.unref()
-        app.quit()
-      } else if (process.platform === 'darwin') {
-        // macOS: 使用 shell.openPath 挂载打开 DMG 安装包，随后立即退出应用
-        await shell.openPath(packagePath)
+      if (process.platform === 'win32' || process.platform === 'darwin') {
+        // Windows/macOS: 使用 shell.openPath 启动安装程序（Windows 下支持触发 UAC 提权），随后退出应用
+        const errorMsg = await shell.openPath(packagePath)
+        if (errorMsg) {
+          throw new Error(`无法启动安装包: ${errorMsg}`)
+        }
         app.quit()
       }
       return { success: true }

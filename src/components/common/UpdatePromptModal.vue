@@ -66,6 +66,15 @@
           <p v-else class="text-[10px] uppercase tracking-wider text-morandi-muted mt-3 font-sans leading-relaxed">
             更新包下载完成后，将自动为您执行安装升级。
           </p>
+          
+          <div class="flex justify-end mt-6">
+            <button 
+              @click="cancelDownload" 
+              class="px-6 py-2 border border-morandi-text text-morandi-text hover:bg-morandi-text hover:text-morandi-canvas text-[11px] uppercase tracking-widest rounded-full transition-all outline-none font-medium"
+            >
+              {{ downloadError ? '关闭 / Close' : '取消下载 / Cancel' }}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -127,9 +136,37 @@ const startUpdate = async () => {
       throw new Error('未检测到更新接口')
     }
   } catch (err) {
-    isDownloading.value = false
-    downloadError.value = err.message
+    if (err.message !== 'USER_CANCELLED') {
+      isDownloading.value = true
+      downloadError.value = err.message
+    } else {
+      isDownloading.value = false
+      progress.value = 0
+    }
   }
+}
+
+const cancelDownload = async () => {
+  if (downloadError.value) {
+    isOpen.value = false
+    isDownloading.value = false
+    progress.value = 0
+    downloadError.value = null
+    return
+  }
+
+  try {
+    if (window.electronAPI && window.electronAPI.cancelDownload) {
+      await window.electronAPI.cancelDownload()
+    }
+  } catch (err) {
+    console.error('取消下载失败:', err)
+  }
+  
+  isDownloading.value = false
+  progress.value = 0
+  downloadError.value = null
+  isOpen.value = false
 }
 
 onMounted(() => {

@@ -55,6 +55,19 @@
       <div class="bg-morandi-canvas/30 p-4 border border-morandi-border/40 text-xs text-morandi-text leading-relaxed whitespace-pre-line font-sans rounded-none">
         {{ updateInfo.changelog }}
       </div>
+
+      <!-- 备用下载通道 (百度网盘) -->
+      <div class="bg-morandi-canvas/5 p-3 border border-dashed border-morandi-border text-[11px] text-morandi-text leading-relaxed select-text">
+        <span class="text-[9px] uppercase tracking-widest text-morandi-muted block mb-1 font-semibold">备用网盘下载 / Backup Link：</span>
+        <p class="text-morandi-muted text-[10px] mb-1.5 leading-snug">
+          本项目使用 GitHub 镜像站自动更新，若遇到网络问题无法下载更新包，可手动复制以下网盘地址前往浏览器下载最新的版本：
+        </p>
+        <div class="bg-morandi-canvas/10 p-2 border border-morandi-border font-mono select-text break-all text-[10px]">
+          链接：https://pan.baidu.com/s/1jDNYUUlCc4eWCK0vygJyyw?pwd=5acq<br/>
+          提取码：5acq
+        </div>
+      </div>
+
       <button 
         @click="startUpdate"
         class="w-full py-2.5 bg-morandi-text text-morandi-canvas text-[11px] uppercase tracking-widest rounded-full hover:opacity-90 transition-all font-medium outline-none shadow-sm"
@@ -81,6 +94,15 @@
       <p class="text-[9px] text-morandi-muted font-sans tracking-wide">
         正在为您流式下载升级安装包。下载完成后软件将自动关闭并进行安装。
       </p>
+
+      <div class="flex justify-end mt-4">
+        <button 
+          @click="cancelDownload" 
+          class="px-6 py-2 border border-morandi-text text-morandi-text hover:bg-morandi-text hover:text-morandi-canvas text-[11px] uppercase tracking-widest rounded-full transition-all outline-none font-medium"
+        >
+          {{ downloadError ? '关闭 / Close' : '取消下载 / Cancel' }}
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -167,9 +189,35 @@ const startUpdate = async () => {
       throw new Error('未检测到更新接口')
     }
   } catch (err) {
-    isDownloading.value = false
-    downloadError.value = err.message
+    if (err.message !== 'USER_CANCELLED') {
+      isDownloading.value = true
+      downloadError.value = err.message
+    } else {
+      isDownloading.value = false
+      downloadProgress.value = 0
+    }
   }
+}
+
+const cancelDownload = async () => {
+  if (downloadError.value) {
+    isDownloading.value = false
+    downloadProgress.value = 0
+    downloadError.value = null
+    return
+  }
+
+  try {
+    if (window.electronAPI && window.electronAPI.cancelDownload) {
+      await window.electronAPI.cancelDownload()
+    }
+  } catch (err) {
+    console.error('取消下载失败:', err)
+  }
+  
+  isDownloading.value = false
+  downloadProgress.value = 0
+  downloadError.value = null
 }
 
 onMounted(() => {

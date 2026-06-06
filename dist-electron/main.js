@@ -6,8 +6,7 @@ import d from "electron-store";
 import f from "better-sqlite3";
 import p from "sharp";
 import m from "crypto";
-import { spawn as h } from "child_process";
-var g = new class e {
+var h = new class e {
 	constructor() {
 		this.db = null;
 	}
@@ -218,7 +217,7 @@ var g = new class e {
 			e();
 		})();
 	}
-}(), _ = new class {
+}(), g = new class {
 	constructor() {
 		this.workspacePath = null, this.MAX_SIZE_BYTES = 300 * 1024, this.queue = [], this.runningCount = 0, this.MAX_CONCURRENCY = 5;
 	}
@@ -409,7 +408,7 @@ var g = new class e {
 			};
 		}
 	}
-}(), v = new class {
+}(), _ = new class {
 	constructor() {
 		this.store = new d({ name: "workspace-config" }), this.currentPath = null;
 	}
@@ -433,7 +432,7 @@ var g = new class e {
 			c.join(e, "exports")
 		];
 		for (let e of t) u.existsSync(e) || u.mkdirSync(e, { recursive: !0 });
-		g.init(e), _.setWorkspace(e), this.currentPath = e, this.store.set("workspacePath", e);
+		h.init(e), g.setWorkspace(e), this.currentPath = e, this.store.set("workspacePath", e);
 	}
 	async tryRestore() {
 		let e = this.getSavedPath();
@@ -446,7 +445,7 @@ var g = new class e {
 		let e = c.join(n.getPath("documents"), "PortraitPlanner");
 		return await this.initWorkspace(e), e;
 	}
-}(), y = (e) => (e || "").replace(/[\\\/:*?"<>|]/g, "_").trim() || "unnamed", b = new class {
+}(), v = (e) => (e || "").replace(/[\\\/:*?"<>|]/g, "_").trim() || "unnamed", y = new class {
 	async exportData(e, t) {
 		try {
 			let n = {
@@ -470,7 +469,7 @@ var g = new class e {
 				}
 			};
 			if (e.planIds && Array.isArray(e.planIds)) for (let t of e.planIds) {
-				let e = g.getById("plans", t);
+				let e = h.getById("plans", t);
 				e && (n.data.plans.push(e), e.cover_path && i(e.cover_path), JSON.parse(e.modules_json || "[]").forEach((e) => {
 					e.data?.images && e.data.images.forEach((e) => i(e.path)), e.data?.avatar && i(e.data.avatar), e.data?.modelCard && i(e.data.modelCard), e.data?.items && e.data.items.forEach((e) => {
 						e.images && e.images.forEach((e) => i(e.path));
@@ -478,23 +477,23 @@ var g = new class e {
 				}));
 			}
 			if (e.modelIds && Array.isArray(e.modelIds)) for (let t of e.modelIds) {
-				let e = g.getById("models", t);
+				let e = h.getById("models", t);
 				e && (n.data.models.push(e), e.avatar_path && i(e.avatar_path), e.model_card_path && i(e.model_card_path), JSON.parse(e.images_json || "[]").forEach((e) => i(e.path)));
 			}
 			if (e.locationIds && Array.isArray(e.locationIds)) for (let t of e.locationIds) {
-				let e = g.getById("locations", t);
+				let e = h.getById("locations", t);
 				e && (n.data.locations.push(e), e.cover_path && i(e.cover_path), JSON.parse(e.images_json || "[]").forEach((e) => i(e.path)));
 			}
 			if (e.clothingIds && Array.isArray(e.clothingIds)) for (let t of e.clothingIds) {
-				let e = g.getById("clothing", t);
+				let e = h.getById("clothing", t);
 				e && (n.data.clothing.push(e), JSON.parse(e.images_json || "[]").forEach((e) => i(e.path)));
 			}
 			if (e.propsIds && Array.isArray(e.propsIds)) for (let t of e.propsIds) {
-				let e = g.getById("props", t);
+				let e = h.getById("props", t);
 				e && (n.data.props.push(e), JSON.parse(e.images_json || "[]").forEach((e) => i(e.path)));
 			}
 			if (e.makeupIds && Array.isArray(e.makeupIds)) for (let t of e.makeupIds) {
-				let e = g.getById("makeup", t);
+				let e = h.getById("makeup", t);
 				e && (n.data.makeup.push(e), JSON.parse(e.images_json || "[]").forEach((e) => i(e.path)));
 			}
 			let a = await r.showSaveDialog(t, {
@@ -539,7 +538,7 @@ var g = new class e {
 			}
 			let i = u.readFileSync(n, "utf-8"), a = JSON.parse(i);
 			if (a.type !== "portraitplanner-export") throw Error("无效的导出文件格式");
-			let o = c.join(v.getPath(), "images", "import_temp");
+			let o = c.join(_.getPath(), "images", "import_temp");
 			u.existsSync(o) || u.mkdirSync(o, { recursive: !0 });
 			let s = {};
 			if (a.images) for (let [e, t] of Object.entries(a.images)) {
@@ -548,7 +547,7 @@ var g = new class e {
 			}
 			let l = (e) => e && (s[e] || e), d = (e, t, n, r = "", i = 0) => {
 				if (!e || !u.existsSync(e)) return e;
-				let a = r ? y(r) : "", o = a && a !== "unnamed" ? `${a}_${n}` : String(n), s = c.join(v.getPath(), "images", t, o);
+				let a = r ? v(r) : "", o = a && a !== "unnamed" ? `${a}_${n}` : String(n), s = c.join(_.getPath(), "images", t, o);
 				u.existsSync(s) || u.mkdirSync(s, { recursive: !0 });
 				let l = c.extname(e) || ".jpg", d = `${Date.now()}_${i}${l}`, f = c.join(s, d);
 				try {
@@ -557,13 +556,13 @@ var g = new class e {
 					return console.error("[ExportService] 复制文件失败:", t), e;
 				}
 			}, f = (e) => e ? `local-image://host/${e.replace(/\\/g, "/")}` : "";
-			if (g.transaction(() => {
+			if (h.transaction(() => {
 				if (a.data.models) for (let e of a.data.models) {
 					let t = {};
-					g.constructor.VALID_COLUMNS.models.forEach((n) => {
+					h.constructor.VALID_COLUMNS.models.forEach((n) => {
 						n !== "id" && n !== "created_at" && e[n] !== void 0 && (t[n] = e[n]);
 					});
-					let n = g.insert("models", t), r = n.id, i = l(t.avatar_path);
+					let n = h.insert("models", t), r = n.id, i = l(t.avatar_path);
 					i && i !== t.avatar_path && (i = d(i, "models", r, n.name, "avatar"));
 					let a = l(t.model_card_path);
 					a && a !== t.model_card_path && (a = d(a, "models", r, n.name, "modelcard"));
@@ -573,7 +572,7 @@ var g = new class e {
 							let i = l(e.path);
 							i && i !== e.path && (i = d(i, "models", r, n.name, `photo_${t}`)), e.path = i, e.url = f(i);
 						}
-					}), g.update("models", r, {
+					}), h.update("models", r, {
 						avatar_path: i,
 						model_card_path: a,
 						images_json: JSON.stringify(o)
@@ -581,10 +580,10 @@ var g = new class e {
 				}
 				if (a.data.locations) for (let e of a.data.locations) {
 					let t = {};
-					g.constructor.VALID_COLUMNS.locations.forEach((n) => {
+					h.constructor.VALID_COLUMNS.locations.forEach((n) => {
 						n !== "id" && n !== "created_at" && e[n] !== void 0 && (t[n] = e[n]);
 					});
-					let n = g.insert("locations", t), r = n.id, i = l(t.cover_path);
+					let n = h.insert("locations", t), r = n.id, i = l(t.cover_path);
 					i && i !== t.cover_path && (i = d(i, "locations", r, n.name, "cover"));
 					let a = JSON.parse(t.images_json || "[]");
 					a.forEach((e, t) => {
@@ -592,17 +591,17 @@ var g = new class e {
 							let i = l(e.path);
 							i && i !== e.path && (i = d(i, "locations", r, n.name, `photo_${t}`)), e.path = i, e.url = f(i);
 						}
-					}), g.update("locations", r, {
+					}), h.update("locations", r, {
 						cover_path: i,
 						images_json: JSON.stringify(a)
 					});
 				}
 				if (a.data.plans) for (let e of a.data.plans) {
 					let t = {};
-					g.constructor.VALID_COLUMNS.plans.forEach((n) => {
+					h.constructor.VALID_COLUMNS.plans.forEach((n) => {
 						n !== "id" && n !== "created_at" && n !== "updated_at" && e[n] !== void 0 && (t[n] = e[n]);
 					});
-					let n = g.insert("plans", t), r = n.id, i = l(t.cover_path);
+					let n = h.insert("plans", t), r = n.id, i = l(t.cover_path);
 					i && i !== t.cover_path && (i = d(i, "plans", r, n.title, "cover"));
 					let a = JSON.parse(t.modules_json || "[]");
 					a.forEach((e, t) => {
@@ -627,49 +626,49 @@ var g = new class e {
 								}
 							});
 						});
-					}), g.update("plans", r, {
+					}), h.update("plans", r, {
 						cover_path: i,
 						modules_json: JSON.stringify(a)
 					});
 				}
 				if (a.data.clothing) for (let e of a.data.clothing) {
 					let t = {};
-					g.constructor.VALID_COLUMNS.clothing.forEach((n) => {
+					h.constructor.VALID_COLUMNS.clothing.forEach((n) => {
 						n !== "id" && n !== "created_at" && e[n] !== void 0 && (t[n] = e[n]);
 					});
-					let n = g.insert("clothing", t), r = n.id, i = JSON.parse(t.images_json || "[]");
+					let n = h.insert("clothing", t), r = n.id, i = JSON.parse(t.images_json || "[]");
 					i.forEach((e, t) => {
 						if (e && typeof e == "object") {
 							let i = l(e.path);
 							i && i !== e.path && (i = d(i, "clothing", r, n.name, `photo_${t}`)), e.path = i, e.url = f(i);
 						}
-					}), g.update("clothing", r, { images_json: JSON.stringify(i) });
+					}), h.update("clothing", r, { images_json: JSON.stringify(i) });
 				}
 				if (a.data.props) for (let e of a.data.props) {
 					let t = {};
-					g.constructor.VALID_COLUMNS.props.forEach((n) => {
+					h.constructor.VALID_COLUMNS.props.forEach((n) => {
 						n !== "id" && n !== "created_at" && e[n] !== void 0 && (t[n] = e[n]);
 					});
-					let n = g.insert("props", t), r = n.id, i = JSON.parse(t.images_json || "[]");
+					let n = h.insert("props", t), r = n.id, i = JSON.parse(t.images_json || "[]");
 					i.forEach((e, t) => {
 						if (e && typeof e == "object") {
 							let i = l(e.path);
 							i && i !== e.path && (i = d(i, "props", r, n.name, `photo_${t}`)), e.path = i, e.url = f(i);
 						}
-					}), g.update("props", r, { images_json: JSON.stringify(i) });
+					}), h.update("props", r, { images_json: JSON.stringify(i) });
 				}
 				if (a.data.makeup) for (let e of a.data.makeup) {
 					let t = {};
-					g.constructor.VALID_COLUMNS.makeup.forEach((n) => {
+					h.constructor.VALID_COLUMNS.makeup.forEach((n) => {
 						n !== "id" && n !== "created_at" && e[n] !== void 0 && (t[n] = e[n]);
 					});
-					let n = g.insert("makeup", t), r = n.id, i = JSON.parse(t.images_json || "[]");
+					let n = h.insert("makeup", t), r = n.id, i = JSON.parse(t.images_json || "[]");
 					i.forEach((e, t) => {
 						if (e && typeof e == "object") {
 							let i = l(e.path);
 							i && i !== e.path && (i = d(i, "makeup", r, n.name, `photo_${t}`)), e.path = i, e.url = f(i);
 						}
-					}), g.update("makeup", r, { images_json: JSON.stringify(i) });
+					}), h.update("makeup", r, { images_json: JSON.stringify(i) });
 				}
 			}), u.existsSync(o)) try {
 				u.rmSync(o, {
@@ -687,23 +686,23 @@ var g = new class e {
 			};
 		}
 	}
-}(), x = "sepzerg1989-oss", S = "Desktop-Portrait-Planner", C = new d(), w = new class {
+}(), b = "sepzerg1989-oss", x = "Desktop-Portrait-Planner", S = new d(), C = new class {
 	constructor() {
 		this.currentVersion = n.getVersion(), this.tempFilePath = null, this.isDownloading = !1;
-		let e = C.get("lastRunVersion");
-		e !== this.currentVersion && (C.delete("ignoredVersion"), C.set("lastRunVersion", this.currentVersion), console.log(`[UpdateService] 检测到软件版本变更：v${e} -> v${this.currentVersion}，已重置已忽略的版本记录。`));
+		let e = S.get("lastRunVersion");
+		e !== this.currentVersion && (S.delete("ignoredVersion"), S.set("lastRunVersion", this.currentVersion), console.log(`[UpdateService] 检测到软件版本变更：v${e} -> v${this.currentVersion}，已重置已忽略的版本记录。`));
 	}
 	getUpdateConfigUrl() {
-		return `https://raw.githubusercontent.com/${x}/${S}/main/update.json`;
+		return `https://raw.githubusercontent.com/${b}/${x}/main/update.json`;
 	}
 	getUpdateConfigMirrorUrl() {
-		return `https://raw.gitmirror.com/${x}/${S}/main/update.json`;
+		return `https://gh-proxy.com/https://raw.githubusercontent.com/${b}/${x}/main/update.json`;
 	}
 	async autoCheck(e) {
 		try {
 			let t = await this.fetchLatestVersion();
 			if (!t) return;
-			if (C.get("ignoredVersion") === t.version) {
+			if (S.get("ignoredVersion") === t.version) {
 				console.log(`[UpdateService] 自动更新已静默：版本 v${t.version} 已被用户忽略`);
 				return;
 			}
@@ -739,45 +738,41 @@ var g = new class e {
 		}
 	}
 	ignoreVersion(e) {
-		return C.set("ignoredVersion", e), console.log(`[UpdateService] 用户已忽略版本：v${e}`), { success: !0 };
+		return S.set("ignoredVersion", e), console.log(`[UpdateService] 用户已忽略版本：v${e}`), { success: !0 };
 	}
 	async fetchLatestVersion() {
-		let e = this.getUpdateConfigMirrorUrl(), t = this.getUpdateConfigUrl();
-		try {
-			console.log(`[UpdateService] 尝试从国内镜像站获取更新配置: ${e}`);
-			let t = await a.fetch(e, {
+		let e = [
+			`https://gh-proxy.com/https://raw.githubusercontent.com/${b}/${x}/main/update.json`,
+			`https://ghproxy.net/https://raw.githubusercontent.com/${b}/${x}/main/update.json`,
+			this.getUpdateConfigUrl()
+		];
+		for (let t of e) try {
+			console.log(`[UpdateService] 正在尝试获取更新配置: ${t}`);
+			let e = await a.fetch(t, {
 				method: "GET",
 				redirect: "follow"
 			});
-			if (t.ok) {
-				let e = await t.text();
-				return JSON.parse(e);
+			if (e.ok) {
+				let t = await e.text();
+				return JSON.parse(t);
 			}
-			console.warn(`[UpdateService] 镜像站返回异常状态码: ${t.status}，将尝试直连 GitHub`);
+			console.warn(`[UpdateService] 加载地址返回状态码异常: ${t} -> ${e.status}`);
 		} catch (e) {
-			console.warn("[UpdateService] 镜像站获取更新配置失败，将尝试直连 GitHub Raw:", e.message);
+			console.warn(`[UpdateService] 加载地址失败: ${t}，错误信息: ${e.message}`);
 		}
-		console.log(`[UpdateService] 尝试直连 GitHub Raw 获取更新配置: ${t}`);
-		let n = await a.fetch(t, {
-			method: "GET",
-			redirect: "follow"
-		});
-		if (!n.ok) throw Error(`状态码异常: ${n.status}`);
-		let r = await n.text();
-		try {
-			return JSON.parse(r);
-		} catch {
-			throw Error("解析更新 JSON 失败");
-		}
+		throw Error("所有更新配置通道均获取失败");
 	}
 	async downloadPackage(e, t) {
 		if (this.isDownloading) throw Error("已有下载任务进行中");
-		this.isDownloading = !0;
+		this.isDownloading = !0, this.cancelRequested = !1;
 		let r = [e];
-		if (e.includes("github.com")) {
-			let t = `https://mirror.ghproxy.com/${e}`;
-			r.unshift(t);
-		}
+		e.includes("github.com") && [
+			"https://gh-proxy.com/",
+			"https://ghproxy.net/",
+			"https://ghproxy.homeboyc.cn/"
+		].reverse().forEach((t) => {
+			r.unshift(`${t}${e}`);
+		});
 		let i = process.platform === "darwin" ? ".dmg" : ".exe", o = `PortraitPlanner_Update_${Date.now()}${i}`, s = c.join(n.getPath("temp"), o);
 		this.tempFilePath = s;
 		let l = null;
@@ -792,6 +787,7 @@ var g = new class e {
 				if (!r.ok) throw Error(`状态码异常: ${r.status}`);
 				let i = parseInt(r.headers.get("content-length"), 10) || 0, o = 0, c = r.body.getReader();
 				for (;;) {
+					if (this.cancelRequested) throw Error("USER_CANCELLED");
 					let { done: e, value: r } = await c.read();
 					if (e) break;
 					if (n.write(Buffer.from(r)), o += r.length, i > 0) {
@@ -804,17 +800,23 @@ var g = new class e {
 				if (console.warn(`[UpdateService] 从地址下载失败: ${e}，错误信息: ${t.message}`), l = t, n.close(), u.existsSync(s)) try {
 					u.unlinkSync(s);
 				} catch {}
+				if (t.message === "USER_CANCELLED") break;
 			}
 		}
 		throw this.isDownloading = !1, l || /* @__PURE__ */ Error("所有下载通道均失败");
 	}
+	cancelDownload() {
+		this.isDownloading && (this.cancelRequested = !0, console.log("[UpdateService] 用户请求取消更新下载。"));
+	}
 	async startDownloadAndInstall(e, t) {
 		try {
 			let r = await this.downloadPackage(e, t);
-			return console.log("[UpdateService] 安装包下载完成:", r), process.platform === "win32" ? (h(r, {
-				detached: !0,
-				stdio: "ignore"
-			}).unref(), n.quit()) : process.platform === "darwin" && (await s.openPath(r), n.quit()), { success: !0 };
+			if (console.log("[UpdateService] 安装包下载完成:", r), process.platform === "win32" || process.platform === "darwin") {
+				let e = await s.openPath(r);
+				if (e) throw Error(`无法启动安装包: ${e}`);
+				n.quit();
+			}
+			return { success: !0 };
 		} catch (e) {
 			return console.error("[UpdateService] 下载升级失败:", e), this.isDownloading = !1, {
 				success: !1,
@@ -830,8 +832,8 @@ var g = new class e {
 		}
 		return 0;
 	}
-}(), T = c.dirname(l(import.meta.url)), E = new d({ name: "theme-config" });
-function D() {
+}(), w = c.dirname(l(import.meta.url)), T = new d({ name: "theme-config" });
+function E() {
 	let t = new e({
 		width: 1440,
 		height: 900,
@@ -844,14 +846,14 @@ function D() {
 			sage: "#D1D5D0",
 			rose: "#D9CECD",
 			haze: "#C6CDD3"
-		}[E.get("theme", "default")] || "#E5E0D8",
+		}[T.get("theme", "default")] || "#E5E0D8",
 		webPreferences: {
-			preload: c.join(T, "preload.js"),
+			preload: c.join(w, "preload.js"),
 			nodeIntegration: !1,
 			contextIsolation: !0
 		}
 	});
-	process.env.VITE_DEV_SERVER_URL ? (t.loadURL(process.env.VITE_DEV_SERVER_URL), t.webContents.openDevTools()) : t.loadFile(c.join(T, "../dist/index.html"));
+	process.env.VITE_DEV_SERVER_URL ? (t.loadURL(process.env.VITE_DEV_SERVER_URL), t.webContents.openDevTools()) : t.loadFile(c.join(w, "../dist/index.html"));
 }
 o.registerSchemesAsPrivileged([{
 	scheme: "local-image",
@@ -879,60 +881,60 @@ o.registerSchemesAsPrivileged([{
 			".gif": "image/gif",
 			".bmp": "image/bmp"
 		}[i] || "image/jpeg" } });
-	}), !await v.tryRestore() && !await v.selectWorkspace()) {
+	}), !await _.tryRestore() && !await _.selectWorkspace()) {
 		n.quit();
 		return;
 	}
-	D(), setTimeout(() => {
+	E(), setTimeout(() => {
 		let t = e.getAllWindows();
-		t.length > 0 && w.autoCheck(t[0]);
+		t.length > 0 && C.autoCheck(t[0]);
 	}, 4e3), t.setApplicationMenu(null), n.on("activate", () => {
-		e.getAllWindows().length === 0 && D();
+		e.getAllWindows().length === 0 && E();
 	});
 }), n.on("window-all-closed", () => {
-	g.close(), process.platform !== "darwin" && n.quit();
-}), i.handle("workspace:getPath", () => v.getPath()), i.handle("workspace:selectAndSet", async (t) => {
-	let n = e.fromWebContents(t.sender), r = await v.selectWorkspace(n);
+	h.close(), process.platform !== "darwin" && n.quit();
+}), i.handle("workspace:getPath", () => _.getPath()), i.handle("workspace:selectAndSet", async (t) => {
+	let n = e.fromWebContents(t.sender), r = await _.selectWorkspace(n);
 	return r ? {
 		success: !0,
 		path: r
 	} : { success: !1 };
 });
-function O(e) {
+function D(e) {
 	let t = e === "plans" ? "plans" : e;
-	i.handle(`db:${t}:getAll`, () => g.getAll(e)), i.handle(`db:${t}:create`, (t, n) => g.insert(e, n)), i.handle(`db:${t}:update`, (t, n, r) => g.update(e, n, r)), i.handle(`db:${t}:delete`, async (t, n) => {
-		let r = g.delete(e, n);
-		return r.success && await _.deleteEntityFolder(`${e}/${n}`), r;
+	i.handle(`db:${t}:getAll`, () => h.getAll(e)), i.handle(`db:${t}:create`, (t, n) => h.insert(e, n)), i.handle(`db:${t}:update`, (t, n, r) => h.update(e, n, r)), i.handle(`db:${t}:delete`, async (t, n) => {
+		let r = h.delete(e, n);
+		return r.success && await g.deleteEntityFolder(`${e}/${n}`), r;
 	}), i.handle(`db:${t}:deleteBatch`, async (t, n) => {
-		let r = g.deleteBatch(e, n);
-		return r.success && Promise.all(n.map((t) => _.deleteEntityFolder(`${e}/${t}`))).catch((t) => console.error(`[main] 批量删除${e}图片目录失败:`, t)), r;
+		let r = h.deleteBatch(e, n);
+		return r.success && Promise.all(n.map((t) => g.deleteEntityFolder(`${e}/${t}`))).catch((t) => console.error(`[main] 批量删除${e}图片目录失败:`, t)), r;
 	});
 }
-O("models"), O("locations"), O("clothing"), O("props"), O("makeup"), i.handle("db:plans:getAll", () => g.getAll("plans")), i.handle("db:plans:create", (e, t) => g.createEmptyPlan(t)), i.handle("db:plans:createFromTemplate", (e, t, n) => {
-	let r = g.getById("templates", n);
+D("models"), D("locations"), D("clothing"), D("props"), D("makeup"), i.handle("db:plans:getAll", () => h.getAll("plans")), i.handle("db:plans:create", (e, t) => h.createEmptyPlan(t)), i.handle("db:plans:createFromTemplate", (e, t, n) => {
+	let r = h.getById("templates", n);
 	if (!r) return null;
 	let i = JSON.parse(r.structure_json).map((e, t) => ({
 		id: "m" + Date.now() + t,
 		type: e.type,
 		title: e.title,
-		data: k(e.type)
+		data: O(e.type)
 	}));
-	return g.insert("plans", {
+	return h.insert("plans", {
 		title: t,
 		modules_json: JSON.stringify(i)
 	});
-}), i.handle("db:plans:getById", (e, t) => g.getById("plans", t)), i.handle("db:plans:save", (e, t, n) => g.savePlan(t, n)), i.handle("db:plans:delete", async (e, t) => {
-	let n = g.delete("plans", t);
-	return n.success && await _.deleteEntityFolder(`plans/${t}`), n;
+}), i.handle("db:plans:getById", (e, t) => h.getById("plans", t)), i.handle("db:plans:save", (e, t, n) => h.savePlan(t, n)), i.handle("db:plans:delete", async (e, t) => {
+	let n = h.delete("plans", t);
+	return n.success && await g.deleteEntityFolder(`plans/${t}`), n;
 }), i.handle("db:plans:deleteBatch", async (e, t) => {
-	let n = g.deleteBatch("plans", t);
-	return n.success && Promise.all(t.map((e) => _.deleteEntityFolder(`plans/${e}`))).catch((e) => console.error("[main] 批量删除策划图片目录失败:", e)), n;
-}), i.handle("db:templates:getAll", () => g.getTemplates()), i.handle("db:templates:save", (e, t, n) => g.saveTemplate(t, n)), i.handle("db:templates:delete", (e, t) => g.delete("templates", t)), i.handle("image:compress", async (e, t, n) => await _.compressAndStore(t, n)), i.handle("image:saveFromBuffer", async (e, t, r) => {
+	let n = h.deleteBatch("plans", t);
+	return n.success && Promise.all(t.map((e) => g.deleteEntityFolder(`plans/${e}`))).catch((e) => console.error("[main] 批量删除策划图片目录失败:", e)), n;
+}), i.handle("db:templates:getAll", () => h.getTemplates()), i.handle("db:templates:save", (e, t, n) => h.saveTemplate(t, n)), i.handle("db:templates:delete", (e, t) => h.delete("templates", t)), i.handle("image:compress", async (e, t, n) => await g.compressAndStore(t, n)), i.handle("image:saveFromBuffer", async (e, t, r) => {
 	let i = c.join(n.getPath("temp"), `temp_${Date.now()}.png`);
 	u.writeFileSync(i, Buffer.from(t));
-	let a = await _.compressAndStore(i, r);
+	let a = await g.compressAndStore(i, r);
 	return u.existsSync(i) && u.unlinkSync(i), a;
-}), i.handle("image:deleteFile", async (e, t) => await _.deleteFile(t)), i.handle("image:renameFolder", async (e, t, n) => await _.renameEntityFolder(t, n)), i.handle("image:copyFilesToEntity", async (e, t, n) => await _.copyFilesToEntity(t, n)), i.handle("image:selectFiles", async (t) => {
+}), i.handle("image:deleteFile", async (e, t) => await g.deleteFile(t)), i.handle("image:renameFolder", async (e, t, n) => await g.renameEntityFolder(t, n)), i.handle("image:copyFilesToEntity", async (e, t, n) => await g.copyFilesToEntity(t, n)), i.handle("image:selectFiles", async (t) => {
 	let n = e.fromWebContents(t.sender), i = await r.showOpenDialog(n, {
 		title: "选择图片",
 		properties: ["openFile", "multiSelections"],
@@ -949,12 +951,12 @@ O("models"), O("locations"), O("clothing"), O("props"), O("makeup"), i.handle("d
 		}]
 	});
 	return i.canceled ? [] : i.filePaths;
-}), i.handle("image:cleanupTempFolder", async (e, t) => await _.deleteEntityFolder(t)), i.handle("system:exportData", async (t, n) => {
+}), i.handle("image:cleanupTempFolder", async (e, t) => await g.deleteEntityFolder(t)), i.handle("system:exportData", async (t, n) => {
 	let r = e.fromWebContents(t.sender);
-	return await b.exportData(n, r);
+	return await y.exportData(n, r);
 }), i.handle("system:importData", async (t, n) => {
 	let r = e.fromWebContents(t.sender);
-	return await b.importData(r, n);
+	return await y.importData(r, n);
 }), i.handle("system:exportImage", async (t, n, i) => {
 	let a = e.fromWebContents(t.sender), o = await r.showSaveDialog(a, {
 		title: "导出为长图",
@@ -987,14 +989,14 @@ O("models"), O("locations"), O("clothing"), O("props"), O("makeup"), i.handle("d
 	n.isMaximized() ? n.unmaximize() : n.maximize();
 }), i.on("window-close", (t) => {
 	e.fromWebContents(t.sender).close();
-}), i.handle("theme:getSaved", () => E.get("theme", "default")), i.handle("theme:save", (e, t) => (E.set("theme", t), { success: !0 })), i.on("theme:setBackgroundColor", (t, n) => {
+}), i.handle("theme:getSaved", () => T.get("theme", "default")), i.handle("theme:save", (e, t) => (T.set("theme", t), { success: !0 })), i.on("theme:setBackgroundColor", (t, n) => {
 	let r = e.fromWebContents(t.sender);
 	r && !r.isDestroyed() && r.setBackgroundColor(n);
-}), i.handle("update:check", () => w.manualCheck()), i.handle("update:ignore", (e, t) => w.ignoreVersion(t)), i.handle("update:download", (t, n) => {
+}), i.handle("update:check", () => C.manualCheck()), i.handle("update:ignore", (e, t) => C.ignoreVersion(t)), i.handle("update:download", (t, n) => {
 	let r = e.fromWebContents(t.sender);
-	return w.startDownloadAndInstall(n, r);
-});
-function k(e) {
+	return C.startDownloadAndInstall(n, r);
+}), i.handle("update:cancel", () => (C.cancelDownload(), { success: !0 }));
+function O(e) {
 	return {
 		theme: {
 			title: "",

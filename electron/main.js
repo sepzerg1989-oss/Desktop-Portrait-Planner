@@ -373,6 +373,11 @@ ipcMain.handle('update:download', (event, url) => {
   return UpdateService.startDownloadAndInstall(url, win)
 })
 
+ipcMain.handle('update:cancel', () => {
+  UpdateService.cancelDownload()
+  return { success: true }
+})
+
 // ==================== 辅助函数 ====================
 
 /** 根据模块类型返回默认数据结构 */

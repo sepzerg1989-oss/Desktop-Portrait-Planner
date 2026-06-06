@@ -83,6 +83,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   checkUpdate: () => ipcRenderer.invoke('update:check'),
   ignoreVersion: (ver) => ipcRenderer.invoke('update:ignore', ver),
   startDownload: (url) => ipcRenderer.invoke('update:download', url),
+  cancelDownload: () => ipcRenderer.invoke('update:cancel'),
   onDownloadProgress: (callback) => {
     const listener = (e, val) => callback(val)
     ipcRenderer.on('update:download-progress', listener)

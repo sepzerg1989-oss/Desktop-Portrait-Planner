@@ -59,6 +59,7 @@ e.exposeInMainWorld("electronAPI", {
 	checkUpdate: () => t.invoke("update:check"),
 	ignoreVersion: (e) => t.invoke("update:ignore", e),
 	startDownload: (e) => t.invoke("update:download", e),
+	cancelDownload: () => t.invoke("update:cancel"),
 	onDownloadProgress: (e) => {
 		let n = (t, n) => e(n);
 		return t.on("update:download-progress", n), () => t.removeListener("update:download-progress", n);
