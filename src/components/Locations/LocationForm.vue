@@ -15,7 +15,7 @@
       </div>
       <div>
         <label class="block text-[10px] uppercase tracking-wider text-morandi-muted mb-2 font-bold">分类标签 / TAGS</label>
-        <input v-model="formData.tagsInput" type="text" class="w-full px-1 py-3 bg-transparent border-b border-morandi-border/30 focus:border-morandi-text outline-none text-sm text-morandi-text transition-colors rounded-none" placeholder="如: 自然光, 北欧" />
+        <input v-model="formData.tagsInput" type="text" class="w-full px-1 py-3 bg-transparent border-b border-morandi-border/30 focus:border-morandi-text outline-none text-sm text-morandi-text transition-colors rounded-none" placeholder="用逗号分隔，如: 自然光, 北欧" />
       </div>
     </div>
 

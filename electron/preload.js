@@ -57,6 +57,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveImageFromBuffer: (buffer, category) => ipcRenderer.invoke('image:saveFromBuffer', buffer, category),
   deleteImageFile: (path) => ipcRenderer.invoke('image:deleteFile', path),
   renameImageFolder: (oldCat, newCat) => ipcRenderer.invoke('image:renameFolder', oldCat, newCat),
+  copyFilesToEntity: (sourcePaths, category) => ipcRenderer.invoke('image:copyFilesToEntity', sourcePaths, category),
   selectImageFiles: (multiple) => ipcRenderer.invoke('image:selectFiles', multiple),
   cleanupTempFolder: (category) => ipcRenderer.invoke('image:cleanupTempFolder', category),
   // 将本地绝对路径转为 local-image:// 协议 URL（纯本地计算，无需 IPC）

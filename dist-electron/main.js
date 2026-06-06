@@ -1,129 +1,43 @@
-import { BrowserWindow, Menu, app, dialog, ipcMain, net, protocol, shell } from "electron";
-import path from "path";
-import { fileURLToPath } from "url";
-import fs from "fs";
-import Store from "electron-store";
-import Database from "better-sqlite3";
-import sharp from "sharp";
-import crypto from "crypto";
-import { spawn } from "child_process";
-var DatabaseService_default = new class DatabaseService {
+import { BrowserWindow as e, Menu as t, app as n, dialog as r, ipcMain as i, net as a, protocol as o, shell as s } from "electron";
+import c from "path";
+import { fileURLToPath as l } from "url";
+import u from "fs";
+import d from "electron-store";
+import f from "better-sqlite3";
+import p from "sharp";
+import m from "crypto";
+import { spawn as h } from "child_process";
+var g = new class e {
 	constructor() {
 		this.db = null;
 	}
-	/**
-	* 初始化数据库连接并创建表结构
-	* @param {string} workspacePath - 用户工作区目录的绝对路径
-	*/
-	init(workspacePath) {
-		const dbPath = path.join(workspacePath, "database.sqlite");
-		this.db = new Database(dbPath);
-		this.db.pragma("journal_mode = WAL");
-		this._createTables();
+	init(e) {
+		let t = c.join(e, "database.sqlite");
+		this.db = new f(t), this.db.pragma("journal_mode = WAL"), this._createTables();
 	}
-	/** 创建所有核心业务数据表 */
 	_createTables() {
-		this.db.exec(`
-      -- 策划案表
-      CREATE TABLE IF NOT EXISTS plans (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT NOT NULL DEFAULT '未命名策划案',
-        cover_path TEXT,
-        modules_json TEXT DEFAULT '[]',
-        created_at TEXT DEFAULT (datetime('now','localtime')),
-        updated_at TEXT DEFAULT (datetime('now','localtime'))
-      );
-
-      -- 模特库表
-      CREATE TABLE IF NOT EXISTS models (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        tags TEXT DEFAULT '[]',
-        avatar_path TEXT,
-        model_card_path TEXT,
-        social TEXT DEFAULT '',
-        region TEXT DEFAULT '',
-        price TEXT DEFAULT '',
-        images_json TEXT DEFAULT '[]',
-        created_at TEXT DEFAULT (datetime('now','localtime'))
-      );
-
-      -- 场地库表
-      CREATE TABLE IF NOT EXISTS locations (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        address TEXT DEFAULT '',
-        price TEXT DEFAULT '',
-        tags TEXT DEFAULT '[]',
-        cover_path TEXT,
-        images_json TEXT DEFAULT '[]',
-        created_at TEXT DEFAULT (datetime('now','localtime'))
-      );
-
-      -- 模板预设表（从 localStorage 迁移）
-      CREATE TABLE IF NOT EXISTS templates (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        structure_json TEXT DEFAULT '[]',
-        created_at TEXT DEFAULT (datetime('now','localtime'))
-      );
-
-      -- 服装库表 (Clothing)
-      CREATE TABLE IF NOT EXISTS clothing (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        description TEXT DEFAULT '',
-        tags TEXT DEFAULT '[]',
-        link TEXT DEFAULT '',
-        price TEXT DEFAULT '',
-        images_json TEXT DEFAULT '[]',
-        created_at TEXT DEFAULT (datetime('now','localtime'))
-      );
-
-      -- 道具库表 (Props)
-      CREATE TABLE IF NOT EXISTS props (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        description TEXT DEFAULT '',
-        tags TEXT DEFAULT '[]',
-        link TEXT DEFAULT '',
-        price TEXT DEFAULT '',
-        images_json TEXT DEFAULT '[]',
-        created_at TEXT DEFAULT (datetime('now','localtime'))
-      );
-
-      -- 妆容库表 (Makeup)
-      CREATE TABLE IF NOT EXISTS makeup (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        description TEXT DEFAULT '',
-        tags TEXT DEFAULT '[]',
-        images_json TEXT DEFAULT '[]',
-        created_at TEXT DEFAULT (datetime('now','localtime'))
-      );
-    `);
+		this.db.exec("\n      -- 策划案表\n      CREATE TABLE IF NOT EXISTS plans (\n        id INTEGER PRIMARY KEY AUTOINCREMENT,\n        title TEXT NOT NULL DEFAULT '未命名策划案',\n        cover_path TEXT,\n        modules_json TEXT DEFAULT '[]',\n        created_at TEXT DEFAULT (datetime('now','localtime')),\n        updated_at TEXT DEFAULT (datetime('now','localtime'))\n      );\n\n      -- 模特库表\n      CREATE TABLE IF NOT EXISTS models (\n        id INTEGER PRIMARY KEY AUTOINCREMENT,\n        name TEXT NOT NULL,\n        tags TEXT DEFAULT '[]',\n        avatar_path TEXT,\n        model_card_path TEXT,\n        social TEXT DEFAULT '',\n        region TEXT DEFAULT '',\n        price TEXT DEFAULT '',\n        images_json TEXT DEFAULT '[]',\n        created_at TEXT DEFAULT (datetime('now','localtime'))\n      );\n\n      -- 场地库表\n      CREATE TABLE IF NOT EXISTS locations (\n        id INTEGER PRIMARY KEY AUTOINCREMENT,\n        name TEXT NOT NULL,\n        address TEXT DEFAULT '',\n        price TEXT DEFAULT '',\n        tags TEXT DEFAULT '[]',\n        cover_path TEXT,\n        images_json TEXT DEFAULT '[]',\n        created_at TEXT DEFAULT (datetime('now','localtime'))\n      );\n\n      -- 模板预设表（从 localStorage 迁移）\n      CREATE TABLE IF NOT EXISTS templates (\n        id INTEGER PRIMARY KEY AUTOINCREMENT,\n        name TEXT NOT NULL,\n        structure_json TEXT DEFAULT '[]',\n        created_at TEXT DEFAULT (datetime('now','localtime'))\n      );\n\n      -- 服装库表 (Clothing)\n      CREATE TABLE IF NOT EXISTS clothing (\n        id INTEGER PRIMARY KEY AUTOINCREMENT,\n        name TEXT NOT NULL,\n        description TEXT DEFAULT '',\n        tags TEXT DEFAULT '[]',\n        link TEXT DEFAULT '',\n        price TEXT DEFAULT '',\n        images_json TEXT DEFAULT '[]',\n        created_at TEXT DEFAULT (datetime('now','localtime'))\n      );\n\n      -- 道具库表 (Props)\n      CREATE TABLE IF NOT EXISTS props (\n        id INTEGER PRIMARY KEY AUTOINCREMENT,\n        name TEXT NOT NULL,\n        description TEXT DEFAULT '',\n        tags TEXT DEFAULT '[]',\n        link TEXT DEFAULT '',\n        price TEXT DEFAULT '',\n        images_json TEXT DEFAULT '[]',\n        created_at TEXT DEFAULT (datetime('now','localtime'))\n      );\n\n      -- 妆容库表 (Makeup)\n      CREATE TABLE IF NOT EXISTS makeup (\n        id INTEGER PRIMARY KEY AUTOINCREMENT,\n        name TEXT NOT NULL,\n        description TEXT DEFAULT '',\n        tags TEXT DEFAULT '[]',\n        images_json TEXT DEFAULT '[]',\n        created_at TEXT DEFAULT (datetime('now','localtime'))\n      );\n    ");
 		try {
 			this.db.exec("ALTER TABLE models ADD COLUMN region TEXT DEFAULT ''");
 		} catch (e) {
-			if (!e.message.includes("duplicate column")) console.warn("[DatabaseService] 迁移 region 字段失败:", e.message);
+			e.message.includes("duplicate column") || console.warn("[DatabaseService] 迁移 region 字段失败:", e.message);
 		}
 		try {
 			this.db.exec("ALTER TABLE models ADD COLUMN price TEXT DEFAULT ''");
 		} catch (e) {
-			if (!e.message.includes("duplicate column")) console.warn("[DatabaseService] 迁移 price 字段失败:", e.message);
+			e.message.includes("duplicate column") || console.warn("[DatabaseService] 迁移 price 字段失败:", e.message);
 		}
 		try {
 			this.db.exec("ALTER TABLE models ADD COLUMN model_card_path TEXT DEFAULT ''");
 		} catch (e) {
-			if (!e.message.includes("duplicate column")) console.warn("[DatabaseService] 迁移 model_card_path 字段失败:", e.message);
+			e.message.includes("duplicate column") || console.warn("[DatabaseService] 迁移 model_card_path 字段失败:", e.message);
 		}
 		try {
 			this.db.exec("ALTER TABLE models ADD COLUMN images_json TEXT DEFAULT '[]'");
 		} catch (e) {
-			if (!e.message.includes("duplicate column")) console.warn("[DatabaseService] 迁移 images_json 字段失败:", e.message);
+			e.message.includes("duplicate column") || console.warn("[DatabaseService] 迁移 images_json 字段失败:", e.message);
 		}
 	}
-	/** 允许操作的表白名单 — 防御性校验 */
 	static VALID_TABLES = [
 		"plans",
 		"models",
@@ -199,76 +113,61 @@ var DatabaseService_default = new class DatabaseService {
 			"created_at"
 		]
 	};
-	_validateTable(table) {
-		if (!DatabaseService.VALID_TABLES.includes(table)) throw new Error(`[DatabaseService] 非法表名: ${table}`);
+	_validateTable(t) {
+		if (!e.VALID_TABLES.includes(t)) throw Error(`[DatabaseService] 非法表名: ${t}`);
 	}
-	_validateColumns(table, keys) {
-		const allowed = DatabaseService.VALID_COLUMNS[table];
-		if (!allowed) throw new Error(`[DatabaseService] 未知表: ${table}`);
-		for (const key of keys) if (!allowed.includes(key)) throw new Error(`[DatabaseService] 非法列名: ${table}.${key}`);
+	_validateColumns(t, n) {
+		let r = e.VALID_COLUMNS[t];
+		if (!r) throw Error(`[DatabaseService] 未知表: ${t}`);
+		for (let e of n) if (!r.includes(e)) throw Error(`[DatabaseService] 非法列名: ${t}.${e}`);
 	}
-	/** 获取表中所有记录 */
-	getAll(table) {
-		this._validateTable(table);
-		return this.db.prepare(`SELECT * FROM ${table} ORDER BY created_at DESC`).all();
+	getAll(e) {
+		return this._validateTable(e), this.db.prepare(`SELECT * FROM ${e} ORDER BY created_at DESC`).all();
 	}
-	/** 按 ID 获取单条记录 */
-	getById(table, id) {
-		this._validateTable(table);
-		return this.db.prepare(`SELECT * FROM ${table} WHERE id = ?`).get(id);
+	getById(e, t) {
+		return this._validateTable(e), this.db.prepare(`SELECT * FROM ${e} WHERE id = ?`).get(t);
 	}
-	/** 插入一条记录，返回插入后的完整记录 */
-	insert(table, data) {
-		this._validateTable(table);
-		const keys = Object.keys(data);
-		this._validateColumns(table, keys);
-		const placeholders = keys.map(() => "?").join(", ");
-		const sql = `INSERT INTO ${table} (${keys.join(", ")}) VALUES (${placeholders})`;
-		const result = this.db.prepare(sql).run(...keys.map((k) => data[k]));
-		return this.getById(table, result.lastInsertRowid);
+	insert(e, t) {
+		this._validateTable(e);
+		let n = Object.keys(t);
+		this._validateColumns(e, n);
+		let r = n.map(() => "?").join(", "), i = `INSERT INTO ${e} (${n.join(", ")}) VALUES (${r})`, a = this.db.prepare(i).run(...n.map((e) => t[e]));
+		return this.getById(e, a.lastInsertRowid);
 	}
-	update(table, id, data) {
-		this._validateTable(table);
-		const keys = Object.keys(data);
-		this._validateColumns(table, keys);
-		const sql = `UPDATE ${table} SET ${keys.map((k) => `${k} = ?`).join(", ")} WHERE id = ?`;
-		this.db.prepare(sql).run(...keys.map((k) => data[k]), id);
-		return this.getById(table, id);
+	update(e, t, n) {
+		this._validateTable(e);
+		let r = Object.keys(n);
+		this._validateColumns(e, r);
+		let i = `UPDATE ${e} SET ${r.map((e) => `${e} = ?`).join(", ")} WHERE id = ?`;
+		return this.db.prepare(i).run(...r.map((e) => n[e]), t), this.getById(e, t);
 	}
-	/** 删除一条记录 */
-	delete(table, id) {
-		this._validateTable(table);
-		this.db.prepare(`DELETE FROM ${table} WHERE id = ?`).run(id);
-		return { success: true };
+	delete(e, t) {
+		return this._validateTable(e), this.db.prepare(`DELETE FROM ${e} WHERE id = ?`).run(t), { success: !0 };
 	}
-	/** 批量删除记录 (使用 SQLite 事务) */
-	deleteBatch(table, ids) {
-		this._validateTable(table);
-		const stmt = this.db.prepare(`DELETE FROM ${table} WHERE id = ?`);
-		this.db.transaction((targetIds) => {
-			for (const id of targetIds) stmt.run(id);
-		})(ids);
-		return { success: true };
+	deleteBatch(e, t) {
+		this._validateTable(e);
+		let n = this.db.prepare(`DELETE FROM ${e} WHERE id = ?`);
+		return this.db.transaction((e) => {
+			for (let t of e) n.run(t);
+		})(t), { success: !0 };
 	}
-	/** 保存策划案 (含更新时间戳) */
-	savePlan(id, data) {
-		const now = (/* @__PURE__ */ new Date()).toISOString().replace("T", " ").substring(0, 19);
-		return this.update("plans", id, {
-			...data,
-			updated_at: now
+	savePlan(e, t) {
+		let n = (/* @__PURE__ */ new Date()).toISOString().replace("T", " ").substring(0, 19);
+		return this.update("plans", e, {
+			...t,
+			updated_at: n
 		});
 	}
-	/** 创建空策划案 */
-	createEmptyPlan(title = "未命名策划案") {
+	createEmptyPlan(e = "未命名策划案") {
 		return this.insert("plans", {
-			title,
+			title: e,
 			modules_json: JSON.stringify([
 				{
 					id: "m1",
 					type: "theme",
 					title: "拍摄主题",
 					data: {
-						title,
+						title: e,
 						description: "",
 						images: []
 					}
@@ -302,343 +201,255 @@ var DatabaseService_default = new class DatabaseService {
 			])
 		});
 	}
-	/** 保存为模板 */
-	saveTemplate(name, structureJson) {
+	saveTemplate(e, t) {
 		return this.insert("templates", {
-			name,
-			structure_json: JSON.stringify(structureJson)
+			name: e,
+			structure_json: JSON.stringify(t)
 		});
 	}
-	/** 获取所有模板 */
 	getTemplates() {
 		return this.getAll("templates");
 	}
-	/** 关闭数据库连接 */
 	close() {
-		if (this.db) {
-			this.db.close();
-			this.db = null;
-		}
+		this.db &&= (this.db.close(), null);
 	}
-	/** 在事务中执行回调，失败时自动回滚 */
-	transaction(fn) {
+	transaction(e) {
 		this.db.transaction(() => {
-			fn();
+			e();
 		})();
 	}
-}();
-//#endregion
-//#region electron/services/ImageService.js
-/**
-* 图片处理服务 — 基于 sharp 的图片压缩与存储
-* 核心职责：接收源图片，压缩至 ≤300kb，存入工作区对应子目录
-*/
-var ImageService = class {
+}(), _ = new class {
 	constructor() {
-		this.workspacePath = null;
-		this.MAX_SIZE_BYTES = 300 * 1024;
-		this.queue = [];
-		this.runningCount = 0;
-		this.MAX_CONCURRENCY = 5;
+		this.workspacePath = null, this.MAX_SIZE_BYTES = 300 * 1024, this.queue = [], this.runningCount = 0, this.MAX_CONCURRENCY = 5;
 	}
-	/** 设置工作区路径 */
-	setWorkspace(workspacePath) {
-		this.workspacePath = workspacePath;
+	setWorkspace(e) {
+		this.workspacePath = e;
 	}
-	/**
-	* 压缩并存储图片（带并发队列控制）
-	*/
-	async compressAndStore(sourcePath, category = "plans") {
-		return new Promise((resolve, reject) => {
+	async compressAndStore(e, t = "plans") {
+		return new Promise((n, r) => {
 			this.queue.push({
-				sourcePath,
-				category,
-				resolve,
-				reject
-			});
-			this.next();
+				sourcePath: e,
+				category: t,
+				resolve: n,
+				reject: r
+			}), this.next();
 		});
 	}
 	async next() {
 		if (this.runningCount >= this.MAX_CONCURRENCY || this.queue.length === 0) return;
 		this.runningCount++;
-		const { sourcePath, category, resolve, reject } = this.queue.shift();
+		let { sourcePath: e, category: t, resolve: n, reject: r } = this.queue.shift();
 		try {
-			resolve(await this._doCompress(sourcePath, category));
-		} catch (error) {
-			reject(error);
+			n(await this._doCompress(e, t));
+		} catch (e) {
+			r(e);
 		} finally {
-			this.runningCount--;
-			this.next();
+			this.runningCount--, this.next();
 		}
 	}
-	/**
-	* 实际执行压缩的私有方法
-	*/
-	async _doCompress(sourcePath, category = "plans") {
-		if (!this.workspacePath) throw new Error("工作区尚未初始化");
-		const categoryParts = this._sanitizeCategory(category);
-		if (!categoryParts) throw new Error("无效的资源分类路径");
-		const targetDir = path.join(this.workspacePath, "images", ...categoryParts);
-		if (!this._isPathWithinWorkspace(targetDir)) throw new Error("拒绝写入非工作区目录");
-		if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
-		const ext = path.extname(sourcePath).toLowerCase() || ".jpg";
-		const hash = crypto.randomBytes(8).toString("hex");
-		const fileName = `${Date.now()}_${hash}${ext}`;
-		const targetPath = path.join(targetDir, fileName);
+	async _doCompress(e, t = "plans") {
+		if (!this.workspacePath) throw Error("工作区尚未初始化");
+		let n = this._sanitizeCategory(t);
+		if (!n) throw Error("无效的资源分类路径");
+		let r = c.join(this.workspacePath, "images", ...n);
+		if (!this._isPathWithinWorkspace(r)) throw Error("拒绝写入非工作区目录");
+		u.existsSync(r) || u.mkdirSync(r, { recursive: !0 });
+		let i = c.extname(e).toLowerCase() || ".jpg", a = m.randomBytes(8).toString("hex"), o = `${Date.now()}_${a}${i}`, s = c.join(r, o);
 		try {
-			const image = sharp(sourcePath).rotate();
-			const metadata = await image.metadata();
-			let pipeline = image;
-			let currentWidth = metadata.width;
-			metadata.height;
-			if (metadata.width > 1600) {
-				pipeline = pipeline.resize({
-					width: 1600,
-					withoutEnlargement: true
-				});
-				Math.round(metadata.height * (1600 / metadata.width));
-				currentWidth = 1600;
-			}
-			let buffer = await pipeline.jpeg({
+			let t = p(e).rotate(), n = await t.metadata(), r = t, i = n.width;
+			n.height, n.width > 1600 && (r = r.resize({
+				width: 1600,
+				withoutEnlargement: !0
+			}), Math.round(n.height * (1600 / n.width)), i = 1600);
+			let a = await r.jpeg({
 				quality: 80,
-				mozjpeg: true,
-				progressive: true
+				mozjpeg: !0,
+				progressive: !0
 			}).toBuffer();
-			if (buffer.length > this.MAX_SIZE_BYTES) {
-				const sizeRatio = Math.sqrt(this.MAX_SIZE_BYTES / buffer.length);
-				currentWidth = Math.min(1200, Math.round(currentWidth * sizeRatio * .9));
-				buffer = await pipeline.resize({
-					width: currentWidth,
-					withoutEnlargement: true
+			if (a.length > this.MAX_SIZE_BYTES) {
+				let e = Math.sqrt(this.MAX_SIZE_BYTES / a.length);
+				i = Math.min(1200, Math.round(i * e * .9)), a = await r.resize({
+					width: i,
+					withoutEnlargement: !0
 				}).jpeg({
 					quality: 60,
-					mozjpeg: true,
-					progressive: true
+					mozjpeg: !0,
+					progressive: !0
 				}).toBuffer();
 			}
-			if (buffer.length > this.MAX_SIZE_BYTES) buffer = await pipeline.resize({
+			a.length > this.MAX_SIZE_BYTES && (a = await r.resize({
 				width: 800,
-				withoutEnlargement: true
+				withoutEnlargement: !0
 			}).jpeg({
 				quality: 40,
-				mozjpeg: true
-			}).toBuffer();
-			const finalMetadata = await sharp(buffer).metadata();
-			const ratio = finalMetadata.width / finalMetadata.height;
-			fs.writeFileSync(targetPath, buffer);
-			return {
-				success: true,
-				path: targetPath,
-				ratio
+				mozjpeg: !0
+			}).toBuffer());
+			let o = await p(a).metadata(), c = o.width / o.height;
+			return u.writeFileSync(s, a), {
+				success: !0,
+				path: s,
+				ratio: c
 			};
-		} catch (error) {
-			console.error("[ImageService] 图片压缩失败:", error);
-			return {
-				success: false,
-				error: error.message
+		} catch (e) {
+			return console.error("[ImageService] 图片压缩失败:", e), {
+				success: !1,
+				error: e.message
 			};
 		}
 	}
-	/**
-	* 删除指定的实体文件夹（用于清理已删除的数据项）
-	*/
-	_isPathWithinWorkspace(targetPath) {
-		if (!this.workspacePath) return false;
-		const normalizedTarget = path.normalize(targetPath);
-		const normalizedBase = path.normalize(path.join(this.workspacePath, "images"));
-		return normalizedTarget.startsWith(normalizedBase + path.sep) || normalizedTarget === normalizedBase;
+	_isPathWithinWorkspace(e) {
+		if (!this.workspacePath) return !1;
+		let t = c.normalize(e), n = c.normalize(c.join(this.workspacePath, "images"));
+		return t.startsWith(n + c.sep) || t === n;
 	}
-	_sanitizeCategory(category) {
-		if (!category) return null;
-		const parts = category.split(/[\\\/]/).filter((p) => p && !p.includes("..") && !p.includes(":") && !/^[~]/.test(p));
-		if (parts.length === 0) return null;
-		return parts;
+	_sanitizeCategory(e) {
+		if (!e) return null;
+		let t = e.split(/[\\\/]/).filter((e) => e && !e.includes("..") && !e.includes(":") && !/^[~]/.test(e));
+		return t.length === 0 ? null : t;
 	}
-	async deleteEntityFolder(category) {
-		if (!this.workspacePath || !category) return;
-		const categoryParts = this._sanitizeCategory(category);
-		if (!categoryParts) return;
-		const targetDir = path.join(this.workspacePath, "images", ...categoryParts);
-		if (!this._isPathWithinWorkspace(targetDir)) {
-			console.warn(`[ImageService] 拒绝删除非工作区目录: ${targetDir}`);
+	async deleteEntityFolder(e) {
+		if (!this.workspacePath || !e) return;
+		let t = this._sanitizeCategory(e);
+		if (!t) return;
+		let n = c.join(this.workspacePath, "images", ...t);
+		if (!this._isPathWithinWorkspace(n)) {
+			console.warn(`[ImageService] 拒绝删除非工作区目录: ${n}`);
 			return;
 		}
 		try {
-			if (fs.existsSync(targetDir)) {
-				fs.rmSync(targetDir, {
-					recursive: true,
-					force: true
-				});
-				console.log(`[ImageService] 已清理资源目录: ${targetDir}`);
+			let e = !1;
+			u.existsSync(n) && (u.rmSync(n, {
+				recursive: !0,
+				force: !0
+			}), console.log(`[ImageService] 已清理资源目录: ${n}`), e = !0);
+			let r = t[t.length - 1];
+			if (/^\d+$/.test(r)) {
+				let n = c.join(this.workspacePath, "images", ...t.slice(0, -1));
+				if (u.existsSync(n)) {
+					let t = u.readdirSync(n);
+					for (let i of t) {
+						let t = c.join(n, i);
+						u.statSync(t).isDirectory() && (i.endsWith(`_${r}`) || i === r) && (u.rmSync(t, {
+							recursive: !0,
+							force: !0
+						}), console.log(`[ImageService] 已清理资源目录（匹配 ID 后缀）: ${t}`), e = !0);
+					}
+				}
 			}
-		} catch (error) {
-			console.error(`[ImageService] 清理资源目录失败: ${targetDir}`, error);
+			e || console.log(`[ImageService] 未找到需要清理的资源目录: ${n}`);
+		} catch (e) {
+			console.error(`[ImageService] 清理资源目录失败: ${n}`, e);
 		}
 	}
-	/**
-	* 删除单个图片文件
-	*/
-	async deleteFile(absolutePath) {
-		if (!this.workspacePath || !absolutePath) return { success: false };
+	async copyFilesToEntity(e, t) {
+		if (!this.workspacePath || !t || !Array.isArray(e)) return [];
+		let n = this._sanitizeCategory(t);
+		if (!n) throw Error("无效的资源分类路径");
+		let r = c.join(this.workspacePath, "images", ...n);
+		if (!this._isPathWithinWorkspace(r)) throw Error("拒绝写入非工作区目录");
+		u.existsSync(r) || u.mkdirSync(r, { recursive: !0 });
+		let i = [];
+		return e.forEach((e, t) => {
+			if (!e || !u.existsSync(e)) return;
+			let n = c.extname(e).toLowerCase() || ".jpg", a = m.randomBytes(8).toString("hex"), o = `${Date.now()}_copy_${t}_${a}${n}`, s = c.join(r, o);
+			try {
+				u.copyFileSync(e, s), i.push({
+					oldPath: e,
+					newPath: s
+				});
+			} catch (t) {
+				console.error("[ImageService] 复制归档文件失败:", e, t);
+			}
+		}), i;
+	}
+	async deleteFile(e) {
+		if (!this.workspacePath || !e) return { success: !1 };
 		try {
-			const normalizedPath = path.normalize(absolutePath);
-			if (!this._isPathWithinWorkspace(normalizedPath) && normalizedPath !== path.normalize(path.join(this.workspacePath, "images"))) {
-				console.warn(`[ImageService] 拒绝删除非工作区图片: ${absolutePath}`);
-				return {
-					success: false,
-					error: "Access denied"
-				};
-			}
-			if (fs.existsSync(normalizedPath)) {
-				fs.unlinkSync(normalizedPath);
-				return { success: true };
-			}
-			return {
-				success: false,
+			let t = c.normalize(e);
+			return !this._isPathWithinWorkspace(t) && t !== c.normalize(c.join(this.workspacePath, "images")) ? (console.warn(`[ImageService] 拒绝删除非工作区图片: ${e}`), {
+				success: !1,
+				error: "Access denied"
+			}) : u.existsSync(t) ? (u.unlinkSync(t), { success: !0 }) : {
+				success: !1,
 				error: "File not found"
 			};
-		} catch (error) {
-			console.error(`[ImageService] 删除文件失败: ${absolutePath}`, error);
-			return {
-				success: false,
-				error: error.message
+		} catch (t) {
+			return console.error(`[ImageService] 删除文件失败: ${e}`, t), {
+				success: !1,
+				error: t.message
 			};
 		}
 	}
-	/**
-	* 重命名实体文件夹
-	*/
-	async renameEntityFolder(oldCategory, newCategory) {
-		if (!this.workspacePath || !oldCategory || !newCategory) return { success: false };
-		if (oldCategory === newCategory) return { success: true };
-		const oldParts = this._sanitizeCategory(oldCategory);
-		const newParts = this._sanitizeCategory(newCategory);
-		if (!oldParts || !newParts) return {
-			success: false,
+	async renameEntityFolder(e, t) {
+		if (!this.workspacePath || !e || !t) return { success: !1 };
+		if (e === t) return { success: !0 };
+		let n = this._sanitizeCategory(e), r = this._sanitizeCategory(t);
+		if (!n || !r) return {
+			success: !1,
 			error: "Invalid category"
 		};
-		const oldPath = path.join(this.workspacePath, "images", ...oldParts);
-		const newPath = path.join(this.workspacePath, "images", ...newParts);
-		if (!this._isPathWithinWorkspace(oldPath) || !this._isPathWithinWorkspace(newPath)) {
-			console.warn(`[ImageService] 拒绝重命名非工作区目录: ${oldPath} -> ${newPath}`);
-			return {
-				success: false,
-				error: "Access denied"
-			};
-		}
+		let i = c.join(this.workspacePath, "images", ...n), a = c.join(this.workspacePath, "images", ...r);
+		if (!this._isPathWithinWorkspace(i) || !this._isPathWithinWorkspace(a)) return console.warn(`[ImageService] 拒绝重命名非工作区目录: ${i} -> ${a}`), {
+			success: !1,
+			error: "Access denied"
+		};
 		try {
-			if (fs.existsSync(oldPath)) {
-				const newParent = path.dirname(newPath);
-				if (!fs.existsSync(newParent)) fs.mkdirSync(newParent, { recursive: true });
-				fs.renameSync(oldPath, newPath);
-				console.log(`[ImageService] 文件夹已重命名: ${oldPath} -> ${newPath}`);
-				return { success: true };
+			if (u.existsSync(i)) {
+				let e = c.dirname(a);
+				return u.existsSync(e) || u.mkdirSync(e, { recursive: !0 }), u.renameSync(i, a), console.log(`[ImageService] 文件夹已重命名: ${i} -> ${a}`), { success: !0 };
 			}
 			return {
-				success: false,
+				success: !1,
 				error: "Source folder not found"
 			};
-		} catch (error) {
-			console.error(`[ImageService] 重命名文件夹失败: ${oldPath}`, error);
-			return {
-				success: false,
-				error: error.message
+		} catch (e) {
+			return console.error(`[ImageService] 重命名文件夹失败: ${i}`, e), {
+				success: !1,
+				error: e.message
 			};
 		}
 	}
-};
-var ImageService_default = new ImageService();
-//#endregion
-//#region electron/services/WorkspaceService.js
-/**
-* 工作区服务 — 管理用户本地工作区的初始化与持久化
-* 使用 electron-store 记住上一次选择的工作区路径
-*/
-var WorkspaceService = class {
+}(), v = new class {
 	constructor() {
-		this.store = new Store({ name: "workspace-config" });
-		this.currentPath = null;
+		this.store = new d({ name: "workspace-config" }), this.currentPath = null;
 	}
-	/**
-	* 获取已保存的工作区路径，若无则返回 null
-	*/
 	getSavedPath() {
 		return this.store.get("workspacePath", null);
 	}
-	/**
-	* 弹出系统文件夹选择对话框，让用户选择工作区目录
-	* @returns {Promise<string|null>} 用户选择的路径，取消则返回 null
-	*/
-	async selectWorkspace(parentWindow = null) {
-		const result = await dialog.showOpenDialog(parentWindow, {
+	async selectWorkspace(e = null) {
+		let t = await r.showOpenDialog(e, {
 			title: "选择工作区文件夹 (Portrait Planner)",
 			properties: ["openDirectory", "createDirectory"]
 		});
-		if (result.canceled || result.filePaths.length === 0) return null;
-		const selectedPath = result.filePaths[0];
-		await this.initWorkspace(selectedPath);
-		return selectedPath;
+		if (t.canceled || t.filePaths.length === 0) return null;
+		let n = t.filePaths[0];
+		return await this.initWorkspace(n), n;
 	}
-	/**
-	* 初始化工作区 — 创建目录结构并初始化数据库
-	* @param {string} dirPath - 工作区根目录路径
-	*/
-	async initWorkspace(dirPath) {
-		const dirs = [
-			path.join(dirPath, "images", "models"),
-			path.join(dirPath, "images", "locations"),
-			path.join(dirPath, "images", "plans"),
-			path.join(dirPath, "exports")
+	async initWorkspace(e) {
+		let t = [
+			c.join(e, "images", "models"),
+			c.join(e, "images", "locations"),
+			c.join(e, "images", "plans"),
+			c.join(e, "exports")
 		];
-		for (const dir of dirs) if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-		DatabaseService_default.init(dirPath);
-		ImageService_default.setWorkspace(dirPath);
-		this.currentPath = dirPath;
-		this.store.set("workspacePath", dirPath);
+		for (let e of t) u.existsSync(e) || u.mkdirSync(e, { recursive: !0 });
+		g.init(e), _.setWorkspace(e), this.currentPath = e, this.store.set("workspacePath", e);
 	}
-	/**
-	* 尝试自动恢复上次的工作区（应用启动时调用）
-	* @returns {boolean} 是否成功恢复
-	*/
 	async tryRestore() {
-		const saved = this.getSavedPath();
-		if (saved && fs.existsSync(saved)) {
-			await this.initWorkspace(saved);
-			return true;
-		}
-		return false;
+		let e = this.getSavedPath();
+		return e && u.existsSync(e) ? (await this.initWorkspace(e), !0) : !1;
 	}
-	/**
-	* 获取当前工作区路径
-	*/
 	getPath() {
 		return this.currentPath;
 	}
-	/**
-	* 使用默认路径初始化（首次启动且用户未选择时的兜底方案）
-	*/
 	async initDefault() {
-		const defaultPath = path.join(app.getPath("documents"), "PortraitPlanner");
-		await this.initWorkspace(defaultPath);
-		return defaultPath;
+		let e = c.join(n.getPath("documents"), "PortraitPlanner");
+		return await this.initWorkspace(e), e;
 	}
-};
-var WorkspaceService_default = new WorkspaceService();
-//#endregion
-//#region electron/services/ExportService.js
-/**
-* 数据导出与导入服务
-*/
-var ExportService = class {
-	/**
-	* 导出选定的数据包
-	* @param {Object} ids - { planIds: [], modelIds: [], locationIds: [] }
-	* @param {BrowserWindow} win - 弹出对话框所依赖的窗口
-	*/
-	async exportData(ids, win) {
+}(), y = (e) => (e || "").replace(/[\\\/:*?"<>|]/g, "_").trim() || "unnamed", b = new class {
+	async exportData(e, t) {
 		try {
-			const exportData = {
+			let n = {
 				version: "1.0",
 				type: "portraitplanner-export",
 				timestamp: (/* @__PURE__ */ new Date()).toISOString(),
@@ -651,69 +462,42 @@ var ExportService = class {
 					makeup: []
 				},
 				images: {}
-			};
-			const addImage = (absPath) => {
-				if (!absPath || exportData.images[absPath]) return;
-				try {
-					if (fs.existsSync(absPath)) exportData.images[absPath] = fs.readFileSync(absPath, "base64");
-				} catch (err) {
-					console.warn("[ExportService] 读取图片失败:", absPath, err);
+			}, i = (e) => {
+				if (!(!e || n.images[e])) try {
+					u.existsSync(e) && (n.images[e] = u.readFileSync(e, "base64"));
+				} catch (t) {
+					console.warn("[ExportService] 读取图片失败:", e, t);
 				}
 			};
-			if (ids.planIds && Array.isArray(ids.planIds)) for (const id of ids.planIds) {
-				const plan = DatabaseService_default.getById("plans", id);
-				if (plan) {
-					exportData.data.plans.push(plan);
-					if (plan.cover_path) addImage(plan.cover_path);
-					JSON.parse(plan.modules_json || "[]").forEach((m) => {
-						if (m.data?.images) m.data.images.forEach((img) => addImage(img.path));
-						if (m.data?.avatar) addImage(m.data.avatar);
-						if (m.data?.modelCard) addImage(m.data.modelCard);
-						if (m.data?.items) m.data.items.forEach((item) => {
-							if (item.images) item.images.forEach((img) => addImage(img.path));
-						});
+			if (e.planIds && Array.isArray(e.planIds)) for (let t of e.planIds) {
+				let e = g.getById("plans", t);
+				e && (n.data.plans.push(e), e.cover_path && i(e.cover_path), JSON.parse(e.modules_json || "[]").forEach((e) => {
+					e.data?.images && e.data.images.forEach((e) => i(e.path)), e.data?.avatar && i(e.data.avatar), e.data?.modelCard && i(e.data.modelCard), e.data?.items && e.data.items.forEach((e) => {
+						e.images && e.images.forEach((e) => i(e.path));
 					});
-				}
+				}));
 			}
-			if (ids.modelIds && Array.isArray(ids.modelIds)) for (const id of ids.modelIds) {
-				const model = DatabaseService_default.getById("models", id);
-				if (model) {
-					exportData.data.models.push(model);
-					if (model.avatar_path) addImage(model.avatar_path);
-					if (model.model_card_path) addImage(model.model_card_path);
-					JSON.parse(model.images_json || "[]").forEach((img) => addImage(img.path));
-				}
+			if (e.modelIds && Array.isArray(e.modelIds)) for (let t of e.modelIds) {
+				let e = g.getById("models", t);
+				e && (n.data.models.push(e), e.avatar_path && i(e.avatar_path), e.model_card_path && i(e.model_card_path), JSON.parse(e.images_json || "[]").forEach((e) => i(e.path)));
 			}
-			if (ids.locationIds && Array.isArray(ids.locationIds)) for (const id of ids.locationIds) {
-				const loc = DatabaseService_default.getById("locations", id);
-				if (loc) {
-					exportData.data.locations.push(loc);
-					if (loc.cover_path) addImage(loc.cover_path);
-					JSON.parse(loc.images_json || "[]").forEach((img) => addImage(img.path));
-				}
+			if (e.locationIds && Array.isArray(e.locationIds)) for (let t of e.locationIds) {
+				let e = g.getById("locations", t);
+				e && (n.data.locations.push(e), e.cover_path && i(e.cover_path), JSON.parse(e.images_json || "[]").forEach((e) => i(e.path)));
 			}
-			if (ids.clothingIds && Array.isArray(ids.clothingIds)) for (const id of ids.clothingIds) {
-				const item = DatabaseService_default.getById("clothing", id);
-				if (item) {
-					exportData.data.clothing.push(item);
-					JSON.parse(item.images_json || "[]").forEach((img) => addImage(img.path));
-				}
+			if (e.clothingIds && Array.isArray(e.clothingIds)) for (let t of e.clothingIds) {
+				let e = g.getById("clothing", t);
+				e && (n.data.clothing.push(e), JSON.parse(e.images_json || "[]").forEach((e) => i(e.path)));
 			}
-			if (ids.propsIds && Array.isArray(ids.propsIds)) for (const id of ids.propsIds) {
-				const item = DatabaseService_default.getById("props", id);
-				if (item) {
-					exportData.data.props.push(item);
-					JSON.parse(item.images_json || "[]").forEach((img) => addImage(img.path));
-				}
+			if (e.propsIds && Array.isArray(e.propsIds)) for (let t of e.propsIds) {
+				let e = g.getById("props", t);
+				e && (n.data.props.push(e), JSON.parse(e.images_json || "[]").forEach((e) => i(e.path)));
 			}
-			if (ids.makeupIds && Array.isArray(ids.makeupIds)) for (const id of ids.makeupIds) {
-				const item = DatabaseService_default.getById("makeup", id);
-				if (item) {
-					exportData.data.makeup.push(item);
-					JSON.parse(item.images_json || "[]").forEach((img) => addImage(img.path));
-				}
+			if (e.makeupIds && Array.isArray(e.makeupIds)) for (let t of e.makeupIds) {
+				let e = g.getById("makeup", t);
+				e && (n.data.makeup.push(e), JSON.parse(e.images_json || "[]").forEach((e) => i(e.path)));
 			}
-			const result = await dialog.showSaveDialog(win, {
+			let a = await r.showSaveDialog(t, {
 				title: "导出数据",
 				defaultPath: "PortraitPlanner_Data.ppexport",
 				filters: [{
@@ -721,33 +505,25 @@ var ExportService = class {
 					extensions: ["ppexport"]
 				}]
 			});
-			if (result.canceled || !result.filePath) return {
-				success: false,
+			return a.canceled || !a.filePath ? {
+				success: !1,
 				error: "User canceled"
-			};
-			fs.writeFileSync(result.filePath, JSON.stringify(exportData));
-			return {
-				success: true,
-				filePath: result.filePath
-			};
+			} : (u.writeFileSync(a.filePath, JSON.stringify(n)), {
+				success: !0,
+				filePath: a.filePath
+			});
 		} catch (e) {
-			console.error("[ExportService] 导出失败:", e);
-			return {
-				success: false,
+			return console.error("[ExportService] 导出失败:", e), {
+				success: !1,
 				error: e.message
 			};
 		}
 	}
-	/**
-	* 导入数据包
-	* @param {BrowserWindow} win - 弹出对话框所依赖的窗口
-	* @param {string} [filePath] - 可选的直接文件路径，用于拖拽上传等静默导入
-	*/
-	async importData(win, filePath = null) {
+	async importData(e, t = null) {
 		try {
-			let finalFilePath = filePath;
-			if (!finalFilePath) {
-				const result = await dialog.showOpenDialog(win, {
+			let n = t;
+			if (!n) {
+				let t = await r.showOpenDialog(e, {
 					title: "导入数据",
 					properties: ["openFile"],
 					filters: [{
@@ -755,316 +531,283 @@ var ExportService = class {
 						extensions: ["ppexport"]
 					}]
 				});
-				if (result.canceled || result.filePaths.length === 0) return {
-					success: false,
+				if (t.canceled || t.filePaths.length === 0) return {
+					success: !1,
 					error: "User canceled"
 				};
-				finalFilePath = result.filePaths[0];
+				n = t.filePaths[0];
 			}
-			const fileContent = fs.readFileSync(finalFilePath, "utf-8");
-			const exportData = JSON.parse(fileContent);
-			if (exportData.type !== "portraitplanner-export") throw new Error("无效的导出文件格式");
-			const importedImagesDir = path.join(WorkspaceService_default.getPath(), "images", "imported");
-			if (!fs.existsSync(importedImagesDir)) fs.mkdirSync(importedImagesDir, { recursive: true });
-			const pathMapping = {};
-			if (exportData.images) for (const [oldPath, base64Str] of Object.entries(exportData.images)) {
-				const buffer = Buffer.from(base64Str, "base64");
-				const hash = crypto.randomBytes(8).toString("hex");
-				const ext = path.extname(oldPath) || ".jpg";
-				const fileName = `${Date.now()}_${hash}${ext}`;
-				const targetPath = path.join(importedImagesDir, fileName);
-				fs.writeFileSync(targetPath, buffer);
-				pathMapping[oldPath] = targetPath;
+			let i = u.readFileSync(n, "utf-8"), a = JSON.parse(i);
+			if (a.type !== "portraitplanner-export") throw Error("无效的导出文件格式");
+			let o = c.join(v.getPath(), "images", "import_temp");
+			u.existsSync(o) || u.mkdirSync(o, { recursive: !0 });
+			let s = {};
+			if (a.images) for (let [e, t] of Object.entries(a.images)) {
+				let n = Buffer.from(t, "base64"), r = m.randomBytes(8).toString("hex"), i = c.extname(e) || ".jpg", a = `${Date.now()}_${r}${i}`, l = c.join(o, a);
+				u.writeFileSync(l, n), s[e] = l;
 			}
-			const replacePath = (oldPath) => {
-				if (!oldPath) return oldPath;
-				return pathMapping[oldPath] || oldPath;
-			};
-			DatabaseService_default.transaction(() => {
-				if (exportData.data.models) for (const model of exportData.data.models) {
-					const newModel = {};
-					DatabaseService_default.constructor.VALID_COLUMNS.models.forEach((key) => {
-						if (key !== "id" && key !== "created_at" && model[key] !== void 0) newModel[key] = model[key];
-					});
-					newModel.avatar_path = replacePath(newModel.avatar_path);
-					newModel.model_card_path = replacePath(newModel.model_card_path);
-					const images = JSON.parse(newModel.images_json || "[]");
-					images.forEach((img) => img.path = replacePath(img.path));
-					newModel.images_json = JSON.stringify(images);
-					DatabaseService_default.insert("models", newModel);
+			let l = (e) => e && (s[e] || e), d = (e, t, n, r = "", i = 0) => {
+				if (!e || !u.existsSync(e)) return e;
+				let a = r ? y(r) : "", o = a && a !== "unnamed" ? `${a}_${n}` : String(n), s = c.join(v.getPath(), "images", t, o);
+				u.existsSync(s) || u.mkdirSync(s, { recursive: !0 });
+				let l = c.extname(e) || ".jpg", d = `${Date.now()}_${i}${l}`, f = c.join(s, d);
+				try {
+					return u.copyFileSync(e, f), f;
+				} catch (t) {
+					return console.error("[ExportService] 复制文件失败:", t), e;
 				}
-				if (exportData.data.locations) for (const loc of exportData.data.locations) {
-					const newLoc = {};
-					DatabaseService_default.constructor.VALID_COLUMNS.locations.forEach((key) => {
-						if (key !== "id" && key !== "created_at" && loc[key] !== void 0) newLoc[key] = loc[key];
+			}, f = (e) => e ? `local-image://host/${e.replace(/\\/g, "/")}` : "";
+			if (g.transaction(() => {
+				if (a.data.models) for (let e of a.data.models) {
+					let t = {};
+					g.constructor.VALID_COLUMNS.models.forEach((n) => {
+						n !== "id" && n !== "created_at" && e[n] !== void 0 && (t[n] = e[n]);
 					});
-					newLoc.cover_path = replacePath(newLoc.cover_path);
-					const images = JSON.parse(newLoc.images_json || "[]");
-					images.forEach((img) => img.path = replacePath(img.path));
-					newLoc.images_json = JSON.stringify(images);
-					DatabaseService_default.insert("locations", newLoc);
+					let n = g.insert("models", t), r = n.id, i = l(t.avatar_path);
+					i && i !== t.avatar_path && (i = d(i, "models", r, n.name, "avatar"));
+					let a = l(t.model_card_path);
+					a && a !== t.model_card_path && (a = d(a, "models", r, n.name, "modelcard"));
+					let o = JSON.parse(t.images_json || "[]");
+					o.forEach((e, t) => {
+						if (e && typeof e == "object") {
+							let i = l(e.path);
+							i && i !== e.path && (i = d(i, "models", r, n.name, `photo_${t}`)), e.path = i, e.url = f(i);
+						}
+					}), g.update("models", r, {
+						avatar_path: i,
+						model_card_path: a,
+						images_json: JSON.stringify(o)
+					});
 				}
-				if (exportData.data.plans) for (const plan of exportData.data.plans) {
-					const newPlan = {};
-					DatabaseService_default.constructor.VALID_COLUMNS.plans.forEach((key) => {
-						if (key !== "id" && key !== "created_at" && key !== "updated_at" && plan[key] !== void 0) newPlan[key] = plan[key];
+				if (a.data.locations) for (let e of a.data.locations) {
+					let t = {};
+					g.constructor.VALID_COLUMNS.locations.forEach((n) => {
+						n !== "id" && n !== "created_at" && e[n] !== void 0 && (t[n] = e[n]);
 					});
-					newPlan.cover_path = replacePath(newPlan.cover_path);
-					const modules = JSON.parse(newPlan.modules_json || "[]");
-					modules.forEach((m) => {
-						if (m.data?.images) m.data.images.forEach((img) => img.path = replacePath(img.path));
-						if (m.data?.avatar) m.data.avatar = replacePath(m.data.avatar);
-						if (m.data?.modelCard) m.data.modelCard = replacePath(m.data.modelCard);
-						if (m.data?.items) m.data.items.forEach((item) => {
-							if (item.images) item.images.forEach((img) => img.path = replacePath(img.path));
+					let n = g.insert("locations", t), r = n.id, i = l(t.cover_path);
+					i && i !== t.cover_path && (i = d(i, "locations", r, n.name, "cover"));
+					let a = JSON.parse(t.images_json || "[]");
+					a.forEach((e, t) => {
+						if (e && typeof e == "object") {
+							let i = l(e.path);
+							i && i !== e.path && (i = d(i, "locations", r, n.name, `photo_${t}`)), e.path = i, e.url = f(i);
+						}
+					}), g.update("locations", r, {
+						cover_path: i,
+						images_json: JSON.stringify(a)
+					});
+				}
+				if (a.data.plans) for (let e of a.data.plans) {
+					let t = {};
+					g.constructor.VALID_COLUMNS.plans.forEach((n) => {
+						n !== "id" && n !== "created_at" && n !== "updated_at" && e[n] !== void 0 && (t[n] = e[n]);
+					});
+					let n = g.insert("plans", t), r = n.id, i = l(t.cover_path);
+					i && i !== t.cover_path && (i = d(i, "plans", r, n.title, "cover"));
+					let a = JSON.parse(t.modules_json || "[]");
+					a.forEach((e, t) => {
+						if (e.data?.images && e.data.images.forEach((e, i) => {
+							if (e && typeof e == "object") {
+								let a = l(e.path);
+								a && a !== e.path && (a = d(a, "plans", r, n.title, `mod_${t}_img_${i}`)), e.path = a, e.url = f(e.path);
+							}
+						}), e.data?.avatar) {
+							let i = l(e.data.avatarPath || e.data.avatar);
+							i && i !== (e.data.avatarPath || e.data.avatar) && (i = d(i, "plans", r, n.title, `mod_${t}_avatar`)), e.data.avatarPath ? (e.data.avatarPath = i, e.data.avatar = f(i)) : (e.data.avatar = i, e.data.avatar && !e.data.avatar.startsWith("local-image://") && (e.data.avatar = f(i)));
+						}
+						if (e.data?.modelCard) {
+							let i = l(e.data.modelCardPath || e.data.modelCard);
+							i && i !== (e.data.modelCardPath || e.data.modelCard) && (i = d(i, "plans", r, n.title, `mod_${t}_modelcard`)), e.data.modelCardPath ? (e.data.modelCardPath = i, e.data.modelCard = f(i)) : (e.data.modelCard = i, e.data.modelCard && !e.data.modelCard.startsWith("local-image://") && (e.data.modelCard = f(i)));
+						}
+						e.data?.items && e.data.items.forEach((e, i) => {
+							e.images && e.images.forEach((e, a) => {
+								if (e && typeof e == "object") {
+									let o = l(e.path);
+									o && o !== e.path && (o = d(o, "plans", r, n.title, `mod_${t}_item_${i}_img_${a}`)), e.path = o, e.url = f(e.path);
+								}
+							});
 						});
+					}), g.update("plans", r, {
+						cover_path: i,
+						modules_json: JSON.stringify(a)
 					});
-					newPlan.modules_json = JSON.stringify(modules);
-					DatabaseService_default.insert("plans", newPlan);
 				}
-				if (exportData.data.clothing) for (const item of exportData.data.clothing) {
-					const newItem = {};
-					DatabaseService_default.constructor.VALID_COLUMNS.clothing.forEach((key) => {
-						if (key !== "id" && key !== "created_at" && item[key] !== void 0) newItem[key] = item[key];
+				if (a.data.clothing) for (let e of a.data.clothing) {
+					let t = {};
+					g.constructor.VALID_COLUMNS.clothing.forEach((n) => {
+						n !== "id" && n !== "created_at" && e[n] !== void 0 && (t[n] = e[n]);
 					});
-					const images = JSON.parse(newItem.images_json || "[]");
-					images.forEach((img) => {
-						if (img) img.path = replacePath(img.path);
-					});
-					newItem.images_json = JSON.stringify(images);
-					DatabaseService_default.insert("clothing", newItem);
+					let n = g.insert("clothing", t), r = n.id, i = JSON.parse(t.images_json || "[]");
+					i.forEach((e, t) => {
+						if (e && typeof e == "object") {
+							let i = l(e.path);
+							i && i !== e.path && (i = d(i, "clothing", r, n.name, `photo_${t}`)), e.path = i, e.url = f(i);
+						}
+					}), g.update("clothing", r, { images_json: JSON.stringify(i) });
 				}
-				if (exportData.data.props) for (const item of exportData.data.props) {
-					const newItem = {};
-					DatabaseService_default.constructor.VALID_COLUMNS.props.forEach((key) => {
-						if (key !== "id" && key !== "created_at" && item[key] !== void 0) newItem[key] = item[key];
+				if (a.data.props) for (let e of a.data.props) {
+					let t = {};
+					g.constructor.VALID_COLUMNS.props.forEach((n) => {
+						n !== "id" && n !== "created_at" && e[n] !== void 0 && (t[n] = e[n]);
 					});
-					const images = JSON.parse(newItem.images_json || "[]");
-					images.forEach((img) => {
-						if (img) img.path = replacePath(img.path);
-					});
-					newItem.images_json = JSON.stringify(images);
-					DatabaseService_default.insert("props", newItem);
+					let n = g.insert("props", t), r = n.id, i = JSON.parse(t.images_json || "[]");
+					i.forEach((e, t) => {
+						if (e && typeof e == "object") {
+							let i = l(e.path);
+							i && i !== e.path && (i = d(i, "props", r, n.name, `photo_${t}`)), e.path = i, e.url = f(i);
+						}
+					}), g.update("props", r, { images_json: JSON.stringify(i) });
 				}
-				if (exportData.data.makeup) for (const item of exportData.data.makeup) {
-					const newItem = {};
-					DatabaseService_default.constructor.VALID_COLUMNS.makeup.forEach((key) => {
-						if (key !== "id" && key !== "created_at" && item[key] !== void 0) newItem[key] = item[key];
+				if (a.data.makeup) for (let e of a.data.makeup) {
+					let t = {};
+					g.constructor.VALID_COLUMNS.makeup.forEach((n) => {
+						n !== "id" && n !== "created_at" && e[n] !== void 0 && (t[n] = e[n]);
 					});
-					const images = JSON.parse(newItem.images_json || "[]");
-					images.forEach((img) => {
-						if (img) img.path = replacePath(img.path);
-					});
-					newItem.images_json = JSON.stringify(images);
-					DatabaseService_default.insert("makeup", newItem);
+					let n = g.insert("makeup", t), r = n.id, i = JSON.parse(t.images_json || "[]");
+					i.forEach((e, t) => {
+						if (e && typeof e == "object") {
+							let i = l(e.path);
+							i && i !== e.path && (i = d(i, "makeup", r, n.name, `photo_${t}`)), e.path = i, e.url = f(i);
+						}
+					}), g.update("makeup", r, { images_json: JSON.stringify(i) });
 				}
-			});
-			return { success: true };
+			}), u.existsSync(o)) try {
+				u.rmSync(o, {
+					recursive: !0,
+					force: !0
+				});
+			} catch (e) {
+				console.warn("[ExportService] 清理临时文件夹失败:", e);
+			}
+			return { success: !0 };
 		} catch (e) {
-			console.error("[ExportService] 导入失败:", e);
-			return {
-				success: false,
+			return console.error("[ExportService] 导入失败:", e), {
+				success: !1,
 				error: e.message
 			};
 		}
 	}
-};
-var ExportService_default = new ExportService();
-//#endregion
-//#region electron/services/UpdateService.js
-var GITHUB_OWNER = "sepzerg1989-oss";
-var GITHUB_REPO = "Desktop-Portrait-Planner-Releases";
-var store = new Store();
-var UpdateService = class {
+}(), x = "sepzerg1989-oss", S = "Desktop-Portrait-Planner-Releases", C = new d(), w = new class {
 	constructor() {
-		this.currentVersion = app.getVersion();
-		this.tempFilePath = null;
-		this.isDownloading = false;
-		const lastRunVersion = store.get("lastRunVersion");
-		if (lastRunVersion !== this.currentVersion) {
-			store.delete("ignoredVersion");
-			store.set("lastRunVersion", this.currentVersion);
-			console.log(`[UpdateService] 检测到软件版本变更：v${lastRunVersion} -> v${this.currentVersion}，已重置已忽略的版本记录。`);
-		}
+		this.currentVersion = n.getVersion(), this.tempFilePath = null, this.isDownloading = !1;
+		let e = C.get("lastRunVersion");
+		e !== this.currentVersion && (C.delete("ignoredVersion"), C.set("lastRunVersion", this.currentVersion), console.log(`[UpdateService] 检测到软件版本变更：v${e} -> v${this.currentVersion}，已重置已忽略的版本记录。`));
 	}
-	/**
-	* 获取检测更新配置文件 update.json 的路径
-	*/
 	getUpdateConfigUrl() {
-		return `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/main/update.json`;
+		return `https://raw.githubusercontent.com/${x}/${S}/main/update.json`;
 	}
-	/**
-	* 自动在启动时检测更新（排除已忽略的版本）
-	* @param {BrowserWindow} win 
-	*/
-	async autoCheck(win) {
+	async autoCheck(e) {
 		try {
-			const updateInfo = await this.fetchLatestVersion();
-			if (!updateInfo) return;
-			if (store.get("ignoredVersion") === updateInfo.version) {
-				console.log(`[UpdateService] 自动更新已静默：版本 v${updateInfo.version} 已被用户忽略`);
+			let t = await this.fetchLatestVersion();
+			if (!t) return;
+			if (C.get("ignoredVersion") === t.version) {
+				console.log(`[UpdateService] 自动更新已静默：版本 v${t.version} 已被用户忽略`);
 				return;
 			}
-			if (this.compareVersion(updateInfo.version, this.currentVersion) > 0) {
-				console.log(`[UpdateService] 发现新版本 v${updateInfo.version}`);
-				win.webContents.send("update:available", {
-					version: updateInfo.version,
-					changelog: updateInfo.changelog,
-					downloadUrl: process.platform === "darwin" ? updateInfo.macDownloadUrl : updateInfo.downloadUrl
-				});
-			}
-		} catch (err) {
-			console.warn("[UpdateService] 启动自动检查更新失败:", err.message);
+			this.compareVersion(t.version, this.currentVersion) > 0 && (console.log(`[UpdateService] 发现新版本 v${t.version}`), e.webContents.send("update:available", {
+				version: t.version,
+				changelog: t.changelog,
+				downloadUrl: process.platform === "darwin" ? t.macDownloadUrl : t.downloadUrl
+			}));
+		} catch (e) {
+			console.warn("[UpdateService] 启动自动检查更新失败:", e.message);
 		}
 	}
-	/**
-	* 手动点击检测更新（无视忽略标志）
-	*/
 	async manualCheck() {
 		try {
-			const updateInfo = await this.fetchLatestVersion();
-			if (!updateInfo) return {
-				hasUpdate: false,
+			let e = await this.fetchLatestVersion();
+			return e ? {
+				hasUpdate: this.compareVersion(e.version, this.currentVersion) > 0,
+				currentVersion: this.currentVersion,
+				latestVersion: e.version,
+				changelog: e.changelog,
+				downloadUrl: process.platform === "darwin" ? e.macDownloadUrl : e.downloadUrl
+			} : {
+				hasUpdate: !1,
 				msg: "获取更新配置失败",
 				currentVersion: this.currentVersion
 			};
-			return {
-				hasUpdate: this.compareVersion(updateInfo.version, this.currentVersion) > 0,
-				currentVersion: this.currentVersion,
-				latestVersion: updateInfo.version,
-				changelog: updateInfo.changelog,
-				downloadUrl: process.platform === "darwin" ? updateInfo.macDownloadUrl : updateInfo.downloadUrl
-			};
-		} catch (err) {
-			console.error("[UpdateService] 手动检查更新失败:", err);
-			return {
-				hasUpdate: false,
-				error: err.message,
+		} catch (e) {
+			return console.error("[UpdateService] 手动检查更新失败:", e), {
+				hasUpdate: !1,
+				error: e.message,
 				currentVersion: this.currentVersion
 			};
 		}
 	}
-	/**
-	* 忽略该版本号
-	*/
-	ignoreVersion(version) {
-		store.set("ignoredVersion", version);
-		console.log(`[UpdateService] 用户已忽略版本：v${version}`);
-		return { success: true };
+	ignoreVersion(e) {
+		return C.set("ignoredVersion", e), console.log(`[UpdateService] 用户已忽略版本：v${e}`), { success: !0 };
 	}
-	/**
-	* 从云端获取最新 update.json 的配置内容
-	* 使用 Electron 的 net.fetch，能完美穿透国内代理、自动集成系统代理设置
-	*/
 	async fetchLatestVersion() {
-		const url = this.getUpdateConfigUrl();
-		const response = await net.fetch(url, {
+		let e = this.getUpdateConfigUrl(), t = await a.fetch(e, {
 			method: "GET",
 			redirect: "follow"
 		});
-		if (!response.ok) throw new Error(`状态码异常: ${response.status}`);
-		const body = await response.text();
+		if (!t.ok) throw Error(`状态码异常: ${t.status}`);
+		let n = await t.text();
 		try {
-			return JSON.parse(body);
-		} catch (e) {
-			throw new Error("解析更新 JSON 失败");
+			return JSON.parse(n);
+		} catch {
+			throw Error("解析更新 JSON 失败");
 		}
 	}
-	/**
-	* 执行流式网络下载（支持国内镜像加速）
-	* 采用 Electron 的 net.fetch，完美适配系统 VPN/代理，防止 TLS 握手断开错误
-	*/
-	async downloadPackage(downloadUrl, win) {
-		if (this.isDownloading) throw new Error("已有下载任务进行中");
-		this.isDownloading = true;
-		const finalUrl = downloadUrl;
-		const ext = process.platform === "darwin" ? ".dmg" : ".exe";
-		const fileName = `PortraitPlanner_Update_${Date.now()}${ext}`;
-		const tempPath = path.join(app.getPath("temp"), fileName);
-		this.tempFilePath = tempPath;
-		const fileStream = fs.createWriteStream(tempPath);
+	async downloadPackage(e, t) {
+		if (this.isDownloading) throw Error("已有下载任务进行中");
+		this.isDownloading = !0;
+		let r = e, i = process.platform === "darwin" ? ".dmg" : ".exe", o = `PortraitPlanner_Update_${Date.now()}${i}`, s = c.join(n.getPath("temp"), o);
+		this.tempFilePath = s;
+		let l = u.createWriteStream(s);
 		try {
-			const response = await net.fetch(finalUrl, {
+			let e = await a.fetch(r, {
 				method: "GET",
 				redirect: "follow"
 			});
-			if (!response.ok) throw new Error(`下载失败，状态码: ${response.status}`);
-			const totalBytes = parseInt(response.headers.get("content-length"), 10) || 0;
-			let downloadedBytes = 0;
-			const reader = response.body.getReader();
-			while (true) {
-				const { done, value } = await reader.read();
-				if (done) break;
-				fileStream.write(Buffer.from(value));
-				downloadedBytes += value.length;
-				if (totalBytes > 0) {
-					const percent = Math.round(downloadedBytes / totalBytes * 100);
-					if (win && !win.isDestroyed()) win.webContents.send("update:download-progress", percent);
+			if (!e.ok) throw Error(`下载失败，状态码: ${e.status}`);
+			let n = parseInt(e.headers.get("content-length"), 10) || 0, i = 0, o = e.body.getReader();
+			for (;;) {
+				let { done: e, value: r } = await o.read();
+				if (e) break;
+				if (l.write(Buffer.from(r)), i += r.length, n > 0) {
+					let e = Math.round(i / n * 100);
+					t && !t.isDestroyed() && t.webContents.send("update:download-progress", e);
 				}
 			}
-			fileStream.end();
-			this.isDownloading = false;
-			return tempPath;
-		} catch (err) {
-			this.isDownloading = false;
-			fileStream.close();
-			if (fs.existsSync(tempPath)) try {
-				fs.unlinkSync(tempPath);
-			} catch (_) {}
-			throw err;
+			return l.end(), this.isDownloading = !1, s;
+		} catch (e) {
+			if (this.isDownloading = !1, l.close(), u.existsSync(s)) try {
+				u.unlinkSync(s);
+			} catch {}
+			throw e;
 		}
 	}
-	/**
-	* 触发下载并自动执行升级安装
-	*/
-	async startDownloadAndInstall(downloadUrl, win) {
+	async startDownloadAndInstall(e, t) {
 		try {
-			const packagePath = await this.downloadPackage(downloadUrl, win);
-			console.log("[UpdateService] 安装包下载完成:", packagePath);
-			if (process.platform === "win32") {
-				spawn(packagePath, {
-					detached: true,
-					stdio: "ignore"
-				}).unref();
-				app.quit();
-			} else if (process.platform === "darwin") {
-				await shell.openPath(packagePath);
-				app.quit();
-			}
-			return { success: true };
-		} catch (err) {
-			console.error("[UpdateService] 下载升级失败:", err);
-			this.isDownloading = false;
-			return {
-				success: false,
-				error: err.message
+			let r = await this.downloadPackage(e, t);
+			return console.log("[UpdateService] 安装包下载完成:", r), process.platform === "win32" ? (h(r, {
+				detached: !0,
+				stdio: "ignore"
+			}).unref(), n.quit()) : process.platform === "darwin" && (await s.openPath(r), n.quit()), { success: !0 };
+		} catch (e) {
+			return console.error("[UpdateService] 下载升级失败:", e), this.isDownloading = !1, {
+				success: !1,
+				error: e.message
 			};
 		}
 	}
-	/**
-	* 辅助工具：版本号对比 (v1 > v2 返回正数，v1 < v2 返回负数，相等返回0)
-	*/
-	compareVersion(v1, v2) {
-		const parts1 = v1.replace(/^v/, "").split(".").map(Number);
-		const parts2 = v2.replace(/^v/, "").split(".").map(Number);
-		for (let i = 0; i < Math.max(parts1.length, parts2.length); i++) {
-			const num1 = parts1[i] || 0;
-			const num2 = parts2[i] || 0;
-			if (num1 !== num2) return num1 - num2;
+	compareVersion(e, t) {
+		let n = e.replace(/^v/, "").split(".").map(Number), r = t.replace(/^v/, "").split(".").map(Number);
+		for (let e = 0; e < Math.max(n.length, r.length); e++) {
+			let t = n[e] || 0, i = r[e] || 0;
+			if (t !== i) return t - i;
 		}
 		return 0;
 	}
-};
-var UpdateService_default = new UpdateService();
-//#endregion
-//#region electron/main.js
-var __dirname = path.dirname(fileURLToPath(import.meta.url));
-var themeStore = new Store({ name: "theme-config" });
-function createWindow() {
-	const win = new BrowserWindow({
+}(), T = c.dirname(l(import.meta.url)), E = new d({ name: "theme-config" });
+function D() {
+	let t = new e({
 		width: 1440,
 		height: 900,
-		frame: false,
+		frame: !1,
 		titleBarStyle: "hidden",
 		backgroundColor: {
 			default: "#E5E0D8",
@@ -1073,165 +816,96 @@ function createWindow() {
 			sage: "#D1D5D0",
 			rose: "#D9CECD",
 			haze: "#C6CDD3"
-		}[themeStore.get("theme", "default")] || "#E5E0D8",
+		}[E.get("theme", "default")] || "#E5E0D8",
 		webPreferences: {
-			preload: path.join(__dirname, "preload.js"),
-			nodeIntegration: false,
-			contextIsolation: true
+			preload: c.join(T, "preload.js"),
+			nodeIntegration: !1,
+			contextIsolation: !0
 		}
 	});
-	if (process.env.VITE_DEV_SERVER_URL) {
-		win.loadURL(process.env.VITE_DEV_SERVER_URL);
-		win.webContents.openDevTools();
-	} else win.loadFile(path.join(__dirname, "../dist/index.html"));
+	process.env.VITE_DEV_SERVER_URL ? (t.loadURL(process.env.VITE_DEV_SERVER_URL), t.webContents.openDevTools()) : t.loadFile(c.join(T, "../dist/index.html"));
 }
-protocol.registerSchemesAsPrivileged([{
+o.registerSchemesAsPrivileged([{
 	scheme: "local-image",
 	privileges: {
-		secure: true,
-		supportFetchAPI: true,
-		standard: true,
-		bypassCSP: true
+		secure: !0,
+		supportFetchAPI: !0,
+		standard: !0,
+		bypassCSP: !0
 	}
-}]);
-app.whenReady().then(async () => {
-	protocol.handle("local-image", async (request) => {
-		const url = new URL(request.url);
-		let filePath = decodeURIComponent(url.pathname);
-		if (process.platform === "win32" && filePath.startsWith("/")) filePath = filePath.substring(1);
+}]), n.whenReady().then(async () => {
+	if (o.handle("local-image", async (e) => {
+		let t = new URL(e.url), n = decodeURIComponent(t.pathname);
+		process.platform === "win32" && n.startsWith("/") && (n = n.substring(1));
 		try {
-			await fs.promises.access(filePath, fs.constants.R_OK);
-		} catch (e) {
+			await u.promises.access(n, u.constants.R_OK);
+		} catch {
 			return new Response("File not found", { status: 404 });
 		}
-		const stream = fs.createReadStream(filePath);
-		const ext = path.extname(filePath).toLowerCase();
-		return new Response(stream, { headers: { "Content-Type": {
+		let r = u.createReadStream(n), i = c.extname(n).toLowerCase();
+		return new Response(r, { headers: { "Content-Type": {
 			".jpg": "image/jpeg",
 			".jpeg": "image/jpeg",
 			".png": "image/png",
 			".webp": "image/webp",
 			".gif": "image/gif",
 			".bmp": "image/bmp"
-		}[ext] || "image/jpeg" } });
-	});
-	if (!await WorkspaceService_default.tryRestore()) {
-		if (!await WorkspaceService_default.selectWorkspace()) {
-			app.quit();
-			return;
-		}
+		}[i] || "image/jpeg" } });
+	}), !await v.tryRestore() && !await v.selectWorkspace()) {
+		n.quit();
+		return;
 	}
-	createWindow();
-	setTimeout(() => {
-		const wins = BrowserWindow.getAllWindows();
-		if (wins.length > 0) UpdateService_default.autoCheck(wins[0]);
-	}, 4e3);
-	Menu.setApplicationMenu(null);
-	app.on("activate", () => {
-		if (BrowserWindow.getAllWindows().length === 0) createWindow();
+	D(), setTimeout(() => {
+		let t = e.getAllWindows();
+		t.length > 0 && w.autoCheck(t[0]);
+	}, 4e3), t.setApplicationMenu(null), n.on("activate", () => {
+		e.getAllWindows().length === 0 && D();
 	});
+}), n.on("window-all-closed", () => {
+	g.close(), process.platform !== "darwin" && n.quit();
+}), i.handle("workspace:getPath", () => v.getPath()), i.handle("workspace:selectAndSet", async (t) => {
+	let n = e.fromWebContents(t.sender), r = await v.selectWorkspace(n);
+	return r ? {
+		success: !0,
+		path: r
+	} : { success: !1 };
 });
-app.on("window-all-closed", () => {
-	DatabaseService_default.close();
-	if (process.platform !== "darwin") app.quit();
-});
-ipcMain.handle("workspace:getPath", () => {
-	return WorkspaceService_default.getPath();
-});
-ipcMain.handle("workspace:selectAndSet", async (event) => {
-	const win = BrowserWindow.fromWebContents(event.sender);
-	const newPath = await WorkspaceService_default.selectWorkspace(win);
-	if (newPath) return {
-		success: true,
-		path: newPath
-	};
-	return { success: false };
-});
-function registerLibraryCrud(tableName) {
-	const name = tableName === "plans" ? "plans" : tableName;
-	ipcMain.handle(`db:${name}:getAll`, () => DatabaseService_default.getAll(tableName));
-	ipcMain.handle(`db:${name}:create`, (event, data) => DatabaseService_default.insert(tableName, data));
-	ipcMain.handle(`db:${name}:update`, (event, id, data) => DatabaseService_default.update(tableName, id, data));
-	ipcMain.handle(`db:${name}:delete`, async (event, id) => {
-		const result = DatabaseService_default.delete(tableName, id);
-		if (result.success) await ImageService_default.deleteEntityFolder(`${tableName}/${id}`);
-		return result;
-	});
-	ipcMain.handle(`db:${name}:deleteBatch`, async (event, ids) => {
-		const result = DatabaseService_default.deleteBatch(tableName, ids);
-		if (result.success) Promise.all(ids.map((id) => ImageService_default.deleteEntityFolder(`${tableName}/${id}`))).catch((e) => console.error(`[main] 批量删除${tableName}图片目录失败:`, e));
-		return result;
+function O(e) {
+	let t = e === "plans" ? "plans" : e;
+	i.handle(`db:${t}:getAll`, () => g.getAll(e)), i.handle(`db:${t}:create`, (t, n) => g.insert(e, n)), i.handle(`db:${t}:update`, (t, n, r) => g.update(e, n, r)), i.handle(`db:${t}:delete`, async (t, n) => {
+		let r = g.delete(e, n);
+		return r.success && await _.deleteEntityFolder(`${e}/${n}`), r;
+	}), i.handle(`db:${t}:deleteBatch`, async (t, n) => {
+		let r = g.deleteBatch(e, n);
+		return r.success && Promise.all(n.map((t) => _.deleteEntityFolder(`${e}/${t}`))).catch((t) => console.error(`[main] 批量删除${e}图片目录失败:`, t)), r;
 	});
 }
-registerLibraryCrud("models");
-registerLibraryCrud("locations");
-registerLibraryCrud("clothing");
-registerLibraryCrud("props");
-registerLibraryCrud("makeup");
-ipcMain.handle("db:plans:getAll", () => {
-	return DatabaseService_default.getAll("plans");
-});
-ipcMain.handle("db:plans:create", (event, title) => {
-	return DatabaseService_default.createEmptyPlan(title);
-});
-ipcMain.handle("db:plans:createFromTemplate", (event, title, templateId) => {
-	const template = DatabaseService_default.getById("templates", templateId);
-	if (!template) return null;
-	const modules = JSON.parse(template.structure_json).map((item, idx) => ({
-		id: "m" + Date.now() + idx,
-		type: item.type,
-		title: item.title,
-		data: getDefaultDataForType(item.type)
+O("models"), O("locations"), O("clothing"), O("props"), O("makeup"), i.handle("db:plans:getAll", () => g.getAll("plans")), i.handle("db:plans:create", (e, t) => g.createEmptyPlan(t)), i.handle("db:plans:createFromTemplate", (e, t, n) => {
+	let r = g.getById("templates", n);
+	if (!r) return null;
+	let i = JSON.parse(r.structure_json).map((e, t) => ({
+		id: "m" + Date.now() + t,
+		type: e.type,
+		title: e.title,
+		data: k(e.type)
 	}));
-	return DatabaseService_default.insert("plans", {
-		title,
-		modules_json: JSON.stringify(modules)
+	return g.insert("plans", {
+		title: t,
+		modules_json: JSON.stringify(i)
 	});
-});
-ipcMain.handle("db:plans:getById", (event, id) => {
-	return DatabaseService_default.getById("plans", id);
-});
-ipcMain.handle("db:plans:save", (event, id, data) => {
-	return DatabaseService_default.savePlan(id, data);
-});
-ipcMain.handle("db:plans:delete", async (event, id) => {
-	const result = DatabaseService_default.delete("plans", id);
-	if (result.success) await ImageService_default.deleteEntityFolder(`plans/${id}`);
-	return result;
-});
-ipcMain.handle("db:plans:deleteBatch", async (event, ids) => {
-	const result = DatabaseService_default.deleteBatch("plans", ids);
-	if (result.success) Promise.all(ids.map((id) => ImageService_default.deleteEntityFolder(`plans/${id}`))).catch((e) => console.error("[main] 批量删除策划图片目录失败:", e));
-	return result;
-});
-ipcMain.handle("db:templates:getAll", () => {
-	return DatabaseService_default.getTemplates();
-});
-ipcMain.handle("db:templates:save", (event, name, structure) => {
-	return DatabaseService_default.saveTemplate(name, structure);
-});
-ipcMain.handle("db:templates:delete", (event, id) => {
-	return DatabaseService_default.delete("templates", id);
-});
-ipcMain.handle("image:compress", async (event, sourcePath, category) => {
-	return await ImageService_default.compressAndStore(sourcePath, category);
-});
-ipcMain.handle("image:saveFromBuffer", async (event, buffer, category) => {
-	const tempPath = path.join(app.getPath("temp"), `temp_${Date.now()}.png`);
-	fs.writeFileSync(tempPath, Buffer.from(buffer));
-	const result = await ImageService_default.compressAndStore(tempPath, category);
-	if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
-	return result;
-});
-ipcMain.handle("image:deleteFile", async (event, absolutePath) => {
-	return await ImageService_default.deleteFile(absolutePath);
-});
-ipcMain.handle("image:renameFolder", async (event, oldCategory, newCategory) => {
-	return await ImageService_default.renameEntityFolder(oldCategory, newCategory);
-});
-ipcMain.handle("image:selectFiles", async (event) => {
-	const win = BrowserWindow.fromWebContents(event.sender);
-	const result = await dialog.showOpenDialog(win, {
+}), i.handle("db:plans:getById", (e, t) => g.getById("plans", t)), i.handle("db:plans:save", (e, t, n) => g.savePlan(t, n)), i.handle("db:plans:delete", async (e, t) => {
+	let n = g.delete("plans", t);
+	return n.success && await _.deleteEntityFolder(`plans/${t}`), n;
+}), i.handle("db:plans:deleteBatch", async (e, t) => {
+	let n = g.deleteBatch("plans", t);
+	return n.success && Promise.all(t.map((e) => _.deleteEntityFolder(`plans/${e}`))).catch((e) => console.error("[main] 批量删除策划图片目录失败:", e)), n;
+}), i.handle("db:templates:getAll", () => g.getTemplates()), i.handle("db:templates:save", (e, t, n) => g.saveTemplate(t, n)), i.handle("db:templates:delete", (e, t) => g.delete("templates", t)), i.handle("image:compress", async (e, t, n) => await _.compressAndStore(t, n)), i.handle("image:saveFromBuffer", async (e, t, r) => {
+	let i = c.join(n.getPath("temp"), `temp_${Date.now()}.png`);
+	u.writeFileSync(i, Buffer.from(t));
+	let a = await _.compressAndStore(i, r);
+	return u.existsSync(i) && u.unlinkSync(i), a;
+}), i.handle("image:deleteFile", async (e, t) => await _.deleteFile(t)), i.handle("image:renameFolder", async (e, t, n) => await _.renameEntityFolder(t, n)), i.handle("image:copyFilesToEntity", async (e, t, n) => await _.copyFilesToEntity(t, n)), i.handle("image:selectFiles", async (t) => {
+	let n = e.fromWebContents(t.sender), i = await r.showOpenDialog(n, {
 		title: "选择图片",
 		properties: ["openFile", "multiSelections"],
 		filters: [{
@@ -1246,80 +920,53 @@ ipcMain.handle("image:selectFiles", async (event) => {
 			]
 		}]
 	});
-	if (result.canceled) return [];
-	return result.filePaths;
-});
-ipcMain.handle("image:cleanupTempFolder", async (event, category) => {
-	return await ImageService_default.deleteEntityFolder(category);
-});
-ipcMain.handle("system:exportData", async (event, ids) => {
-	const win = BrowserWindow.fromWebContents(event.sender);
-	return await ExportService_default.exportData(ids, win);
-});
-ipcMain.handle("system:importData", async (event, filePath) => {
-	const win = BrowserWindow.fromWebContents(event.sender);
-	return await ExportService_default.importData(win, filePath);
-});
-ipcMain.handle("system:exportImage", async (event, dataUrl, defaultName) => {
-	const win = BrowserWindow.fromWebContents(event.sender);
-	const result = await dialog.showSaveDialog(win, {
+	return i.canceled ? [] : i.filePaths;
+}), i.handle("image:cleanupTempFolder", async (e, t) => await _.deleteEntityFolder(t)), i.handle("system:exportData", async (t, n) => {
+	let r = e.fromWebContents(t.sender);
+	return await b.exportData(n, r);
+}), i.handle("system:importData", async (t, n) => {
+	let r = e.fromWebContents(t.sender);
+	return await b.importData(r, n);
+}), i.handle("system:exportImage", async (t, n, i) => {
+	let a = e.fromWebContents(t.sender), o = await r.showSaveDialog(a, {
 		title: "导出为长图",
-		defaultPath: defaultName || "策划案_长图.jpg",
+		defaultPath: i || "策划案_长图.jpg",
 		filters: [{
 			name: "JPEG Image",
 			extensions: ["jpg", "jpeg"]
 		}]
 	});
-	if (result.canceled || !result.filePath) return {
-		success: false,
+	if (o.canceled || !o.filePath) return {
+		success: !1,
 		error: "User canceled"
 	};
 	try {
-		const base64Data = dataUrl.replace(/^data:image\/\w+;base64,/, "");
-		const buffer = Buffer.from(base64Data, "base64");
-		fs.writeFileSync(result.filePath, buffer);
-		return {
-			success: true,
-			filePath: result.filePath
+		let e = n.replace(/^data:image\/\w+;base64,/, ""), t = Buffer.from(e, "base64");
+		return u.writeFileSync(o.filePath, t), {
+			success: !0,
+			filePath: o.filePath
 		};
-	} catch (err) {
-		console.error("Export error:", err);
-		return {
-			success: false,
-			error: err.message
+	} catch (e) {
+		return console.error("Export error:", e), {
+			success: !1,
+			error: e.message
 		};
 	}
+}), i.on("window-minimize", (t) => {
+	e.fromWebContents(t.sender).minimize();
+}), i.on("window-toggle-maximize", (t) => {
+	let n = e.fromWebContents(t.sender);
+	n.isMaximized() ? n.unmaximize() : n.maximize();
+}), i.on("window-close", (t) => {
+	e.fromWebContents(t.sender).close();
+}), i.handle("theme:getSaved", () => E.get("theme", "default")), i.handle("theme:save", (e, t) => (E.set("theme", t), { success: !0 })), i.on("theme:setBackgroundColor", (t, n) => {
+	let r = e.fromWebContents(t.sender);
+	r && !r.isDestroyed() && r.setBackgroundColor(n);
+}), i.handle("update:check", () => w.manualCheck()), i.handle("update:ignore", (e, t) => w.ignoreVersion(t)), i.handle("update:download", (t, n) => {
+	let r = e.fromWebContents(t.sender);
+	return w.startDownloadAndInstall(n, r);
 });
-ipcMain.on("window-minimize", (event) => {
-	BrowserWindow.fromWebContents(event.sender).minimize();
-});
-ipcMain.on("window-toggle-maximize", (event) => {
-	const win = BrowserWindow.fromWebContents(event.sender);
-	if (win.isMaximized()) win.unmaximize();
-	else win.maximize();
-});
-ipcMain.on("window-close", (event) => {
-	BrowserWindow.fromWebContents(event.sender).close();
-});
-ipcMain.handle("theme:getSaved", () => {
-	return themeStore.get("theme", "default");
-});
-ipcMain.handle("theme:save", (event, themeName) => {
-	themeStore.set("theme", themeName);
-	return { success: true };
-});
-ipcMain.on("theme:setBackgroundColor", (event, hexColor) => {
-	const win = BrowserWindow.fromWebContents(event.sender);
-	if (win && !win.isDestroyed()) win.setBackgroundColor(hexColor);
-});
-ipcMain.handle("update:check", () => UpdateService_default.manualCheck());
-ipcMain.handle("update:ignore", (event, version) => UpdateService_default.ignoreVersion(version));
-ipcMain.handle("update:download", (event, url) => {
-	const win = BrowserWindow.fromWebContents(event.sender);
-	return UpdateService_default.startDownloadAndInstall(url, win);
-});
-/** 根据模块类型返回默认数据结构 */
-function getDefaultDataForType(type) {
+function k(e) {
 	return {
 		theme: {
 			title: "",
@@ -1348,6 +995,6 @@ function getDefaultDataForType(type) {
 			description: "",
 			images: []
 		}
-	}[type] || {};
+	}[e] || {};
 }
 //#endregion

@@ -238,7 +238,7 @@ const regions = computed(() => {
 const {
   isDrawerOpen, drawerMode, editingId, tempId, previewUrl, initialFolderName,
   searchQuery, selectedTags, isManageMode, selectedIds, selectedSort,
-  filteredItems: baseFiltered, isAllSelected,
+  allTags, filteredItems: baseFiltered, isAllSelected,
   isConfirmOpen, confirmMessage, showNamePrompt, promptName,
   resetFilters: baseResetFilters, handleCardClick, toggleAll, executeBatchDelete, cancelManageMode,
   openCreateDrawer, confirmNamePrompt, cancelNamePrompt, openViewDrawer,

@@ -5,6 +5,9 @@ import crypto from 'crypto'
 import DatabaseService from './DatabaseService.js'
 import WorkspaceService from './WorkspaceService.js'
 
+// 清理文件名中的非法字符，用于生成安全的文件夹名称
+const sanitize = (name) => (name || '').replace(/[\\\/:*?"<>|]/g, '_').trim() || 'unnamed';
+
 /**
  * 数据导出与导入服务
  */
@@ -165,15 +168,15 @@ class ExportService {
         throw new Error('无效的导出文件格式');
       }
 
-      // 准备图片目标目录
-      const importedImagesDir = path.join(WorkspaceService.getPath(), 'images', 'imported');
-      if (!fs.existsSync(importedImagesDir)) {
-        fs.mkdirSync(importedImagesDir, { recursive: true });
+      // 准备临时图片解压目录
+      const importTempDir = path.join(WorkspaceService.getPath(), 'images', 'import_temp');
+      if (!fs.existsSync(importTempDir)) {
+        fs.mkdirSync(importTempDir, { recursive: true });
       }
 
-      const pathMapping = {}; // 旧绝对路径 -> 新绝对路径
+      const tempPathMapping = {}; // 旧绝对路径 -> 临时绝对路径
       
-      // 1. 还原所有 Base64 图片为本地物理文件
+      // 1. 还原所有 Base64 图片为本地临时物理文件
       if (exportData.images) {
         for (const [oldPath, base64Str] of Object.entries(exportData.images)) {
           const buffer = Buffer.from(base64Str, 'base64');
@@ -181,19 +184,53 @@ class ExportService {
           const hash = crypto.randomBytes(8).toString('hex');
           const ext = path.extname(oldPath) || '.jpg';
           const fileName = `${Date.now()}_${hash}${ext}`;
-          const targetPath = path.join(importedImagesDir, fileName);
+          const targetPath = path.join(importTempDir, fileName);
           fs.writeFileSync(targetPath, buffer);
-          pathMapping[oldPath] = targetPath;
+          tempPathMapping[oldPath] = targetPath;
         }
       }
 
-      // 替换路径的辅助方法
-      const replacePath = (oldPath) => {
+      // 获取临时路径的辅助方法
+      const getTempPath = (oldPath) => {
         if (!oldPath) return oldPath;
-        return pathMapping[oldPath] || oldPath; // 如果没找到映射，可能原图片就没有打包，保留原路径或清理
+        return tempPathMapping[oldPath] || oldPath;
       };
 
-      // 2. 在事务中插入所有记录，失败时自动回滚
+      // 复制临时图片到目标实体目录的辅助方法
+      const copyToEntityDir = (tempPath, tableName, entityId, name = '', index = 0) => {
+        if (!tempPath || !fs.existsSync(tempPath)) return tempPath;
+        
+        // 构建与前端一致的 `${sanitize(name)}_${id}` 格式，如果名字为空则使用 `id`
+        const sanitizedName = name ? sanitize(name) : '';
+        const folderName = sanitizedName && sanitizedName !== 'unnamed' 
+          ? `${sanitizedName}_${entityId}` 
+          : String(entityId);
+        
+        const targetDir = path.join(WorkspaceService.getPath(), 'images', tableName, folderName);
+        if (!fs.existsSync(targetDir)) {
+          fs.mkdirSync(targetDir, { recursive: true });
+        }
+        
+        const ext = path.extname(tempPath) || '.jpg';
+        const fileName = `${Date.now()}_${index}${ext}`;
+        const targetPath = path.join(targetDir, fileName);
+        
+        try {
+          fs.copyFileSync(tempPath, targetPath);
+          return targetPath;
+        } catch (err) {
+          console.error('[ExportService] 复制文件失败:', err);
+          return tempPath;
+        }
+      };
+
+      // 将物理路径转换为 local-image:// 协议链接
+      const pathToLocalImageURL = (absolutePath) => {
+        if (!absolutePath) return '';
+        return `local-image://host/${absolutePath.replace(/\\/g, '/')}`;
+      };
+
+      // 2. 在事务中插入所有记录并归档图片，失败时自动回滚
       DatabaseService.transaction(() => {
         if (exportData.data.models) {
           for (const model of exportData.data.models) {
@@ -202,14 +239,39 @@ class ExportService {
               if (key !== 'id' && key !== 'created_at' && model[key] !== undefined) newModel[key] = model[key];
             });
             
-            newModel.avatar_path = replacePath(newModel.avatar_path);
-            newModel.model_card_path = replacePath(newModel.model_card_path);
+            // 插入一条临时记录获取 id
+            const record = DatabaseService.insert('models', newModel);
+            const newId = record.id;
             
+            // 复制头像和模卡
+            let avatarPath = getTempPath(newModel.avatar_path);
+            if (avatarPath && avatarPath !== newModel.avatar_path) {
+              avatarPath = copyToEntityDir(avatarPath, 'models', newId, record.name, 'avatar');
+            }
+            let modelCardPath = getTempPath(newModel.model_card_path);
+            if (modelCardPath && modelCardPath !== newModel.model_card_path) {
+              modelCardPath = copyToEntityDir(modelCardPath, 'models', newId, record.name, 'modelcard');
+            }
+            
+            // 复制作品照片组
             const images = JSON.parse(newModel.images_json || '[]');
-            images.forEach(img => img.path = replacePath(img.path));
-            newModel.images_json = JSON.stringify(images);
-
-            DatabaseService.insert('models', newModel);
+            images.forEach((img, idx) => {
+              if (img && typeof img === 'object') {
+                let p = getTempPath(img.path);
+                if (p && p !== img.path) {
+                  p = copyToEntityDir(p, 'models', newId, record.name, `photo_${idx}`);
+                }
+                img.path = p;
+                img.url = pathToLocalImageURL(p);
+              }
+            });
+            
+            // 更新该记录
+            DatabaseService.update('models', newId, {
+              avatar_path: avatarPath,
+              model_card_path: modelCardPath,
+              images_json: JSON.stringify(images)
+            });
           }
         }
 
@@ -220,13 +282,30 @@ class ExportService {
               if (key !== 'id' && key !== 'created_at' && loc[key] !== undefined) newLoc[key] = loc[key];
             });
             
-            newLoc.cover_path = replacePath(newLoc.cover_path);
+            const record = DatabaseService.insert('locations', newLoc);
+            const newId = record.id;
+            
+            let coverPath = getTempPath(newLoc.cover_path);
+            if (coverPath && coverPath !== newLoc.cover_path) {
+              coverPath = copyToEntityDir(coverPath, 'locations', newId, record.name, 'cover');
+            }
             
             const images = JSON.parse(newLoc.images_json || '[]');
-            images.forEach(img => img.path = replacePath(img.path));
-            newLoc.images_json = JSON.stringify(images);
-
-            DatabaseService.insert('locations', newLoc);
+            images.forEach((img, idx) => {
+              if (img && typeof img === 'object') {
+                let p = getTempPath(img.path);
+                if (p && p !== img.path) {
+                  p = copyToEntityDir(p, 'locations', newId, record.name, `photo_${idx}`);
+                }
+                img.path = p;
+                img.url = pathToLocalImageURL(p);
+              }
+            });
+            
+            DatabaseService.update('locations', newId, {
+              cover_path: coverPath,
+              images_json: JSON.stringify(images)
+            });
           }
         }
 
@@ -237,24 +316,80 @@ class ExportService {
               if (key !== 'id' && key !== 'created_at' && key !== 'updated_at' && plan[key] !== undefined) newPlan[key] = plan[key];
             });
             
-            newPlan.cover_path = replacePath(newPlan.cover_path);
+            const record = DatabaseService.insert('plans', newPlan);
+            const newId = record.id;
+            
+            let coverPath = getTempPath(newPlan.cover_path);
+            if (coverPath && coverPath !== newPlan.cover_path) {
+              coverPath = copyToEntityDir(coverPath, 'plans', newId, record.title, 'cover');
+            }
             
             const modules = JSON.parse(newPlan.modules_json || '[]');
-            modules.forEach(m => {
-              if (m.data?.images) m.data.images.forEach(img => img.path = replacePath(img.path));
-              if (m.data?.avatar) m.data.avatar = replacePath(m.data.avatar);
-              if (m.data?.modelCard) m.data.modelCard = replacePath(m.data.modelCard);
+            modules.forEach((m, mIdx) => {
+              if (m.data?.images) {
+                m.data.images.forEach((img, imgIdx) => {
+                  if (img && typeof img === 'object') {
+                    let p = getTempPath(img.path);
+                    if (p && p !== img.path) {
+                      p = copyToEntityDir(p, 'plans', newId, record.title, `mod_${mIdx}_img_${imgIdx}`);
+                    }
+                    img.path = p;
+                    img.url = pathToLocalImageURL(img.path);
+                  }
+                });
+              }
+              if (m.data?.avatar) {
+                let p = getTempPath(m.data.avatarPath || m.data.avatar);
+                if (p && p !== (m.data.avatarPath || m.data.avatar)) {
+                  p = copyToEntityDir(p, 'plans', newId, record.title, `mod_${mIdx}_avatar`);
+                }
+                if (m.data.avatarPath) {
+                  m.data.avatarPath = p;
+                  m.data.avatar = pathToLocalImageURL(p);
+                } else {
+                  m.data.avatar = p;
+                  if (m.data.avatar && !m.data.avatar.startsWith('local-image://')) {
+                    m.data.avatar = pathToLocalImageURL(p);
+                  }
+                }
+              }
+              if (m.data?.modelCard) {
+                let p = getTempPath(m.data.modelCardPath || m.data.modelCard);
+                if (p && p !== (m.data.modelCardPath || m.data.modelCard)) {
+                  p = copyToEntityDir(p, 'plans', newId, record.title, `mod_${mIdx}_modelcard`);
+                }
+                if (m.data.modelCardPath) {
+                  m.data.modelCardPath = p;
+                  m.data.modelCard = pathToLocalImageURL(p);
+                } else {
+                  m.data.modelCard = p;
+                  if (m.data.modelCard && !m.data.modelCard.startsWith('local-image://')) {
+                    m.data.modelCard = pathToLocalImageURL(p);
+                  }
+                }
+              }
               if (m.data?.items) {
-                m.data.items.forEach(item => {
+                m.data.items.forEach((item, itemIdx) => {
                   if (item.images) {
-                    item.images.forEach(img => img.path = replacePath(img.path));
+                    item.images.forEach((img, imgIdx) => {
+                      if (img && typeof img === 'object') {
+                        let p = getTempPath(img.path);
+                        if (p && p !== img.path) {
+                          p = copyToEntityDir(p, 'plans', newId, record.title, `mod_${mIdx}_item_${itemIdx}_img_${imgIdx}`);
+                        }
+                        img.path = p;
+                        img.url = pathToLocalImageURL(img.path);
+                      }
+                    });
                   }
                 });
               }
             });
-            newPlan.modules_json = JSON.stringify(modules);
-
-            DatabaseService.insert('plans', newPlan);
+            
+            DatabaseService.update('plans', newId, {
+              cover_path: coverPath,
+              modules_json: JSON.stringify(modules)
+            });
           }
         }
 
@@ -265,13 +400,24 @@ class ExportService {
               if (key !== 'id' && key !== 'created_at' && item[key] !== undefined) newItem[key] = item[key];
             });
             
+            const record = DatabaseService.insert('clothing', newItem);
+            const newId = record.id;
+            
             const images = JSON.parse(newItem.images_json || '[]');
-            images.forEach(img => {
-              if (img) img.path = replacePath(img.path);
+            images.forEach((img, idx) => {
+              if (img && typeof img === 'object') {
+                let p = getTempPath(img.path);
+                if (p && p !== img.path) {
+                  p = copyToEntityDir(p, 'clothing', newId, record.name, `photo_${idx}`);
+                }
+                img.path = p;
+                img.url = pathToLocalImageURL(p);
+              }
             });
-            newItem.images_json = JSON.stringify(images);
-
-            DatabaseService.insert('clothing', newItem);
+            
+            DatabaseService.update('clothing', newId, {
+              images_json: JSON.stringify(images)
+            });
           }
         }
 
@@ -282,13 +428,24 @@ class ExportService {
               if (key !== 'id' && key !== 'created_at' && item[key] !== undefined) newItem[key] = item[key];
             });
             
+            const record = DatabaseService.insert('props', newItem);
+            const newId = record.id;
+            
             const images = JSON.parse(newItem.images_json || '[]');
-            images.forEach(img => {
-              if (img) img.path = replacePath(img.path);
+            images.forEach((img, idx) => {
+              if (img && typeof img === 'object') {
+                let p = getTempPath(img.path);
+                if (p && p !== img.path) {
+                  p = copyToEntityDir(p, 'props', newId, record.name, `photo_${idx}`);
+                }
+                img.path = p;
+                img.url = pathToLocalImageURL(p);
+              }
             });
-            newItem.images_json = JSON.stringify(images);
-
-            DatabaseService.insert('props', newItem);
+            
+            DatabaseService.update('props', newId, {
+              images_json: JSON.stringify(images)
+            });
           }
         }
 
@@ -299,16 +456,36 @@ class ExportService {
               if (key !== 'id' && key !== 'created_at' && item[key] !== undefined) newItem[key] = item[key];
             });
             
+            const record = DatabaseService.insert('makeup', newItem);
+            const newId = record.id;
+            
             const images = JSON.parse(newItem.images_json || '[]');
-            images.forEach(img => {
-              if (img) img.path = replacePath(img.path);
+            images.forEach((img, idx) => {
+              if (img && typeof img === 'object') {
+                let p = getTempPath(img.path);
+                if (p && p !== img.path) {
+                  p = copyToEntityDir(p, 'makeup', newId, record.name, `photo_${idx}`);
+                }
+                img.path = p;
+                img.url = pathToLocalImageURL(p);
+              }
             });
-            newItem.images_json = JSON.stringify(images);
-
-            DatabaseService.insert('makeup', newItem);
+            
+            DatabaseService.update('makeup', newId, {
+              images_json: JSON.stringify(images)
+            });
           }
         }
       });
+
+      // 3. 清理临时文件夹
+      if (fs.existsSync(importTempDir)) {
+        try {
+          fs.rmSync(importTempDir, { recursive: true, force: true });
+        } catch (e) {
+          console.warn('[ExportService] 清理临时文件夹失败:', e);
+        }
+      }
 
       return { success: true };
     } catch (e) {

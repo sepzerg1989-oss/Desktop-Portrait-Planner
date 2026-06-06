@@ -1,85 +1,81 @@
 //#endregion
 //#region electron/preload.js
-var { contextBridge, ipcRenderer, webUtils } = (/* @__PURE__ */ ((x) => typeof require !== "undefined" ? require : typeof Proxy !== "undefined" ? new Proxy(x, { get: (a, b) => (typeof require !== "undefined" ? require : a)[b] }) : x)(function(x) {
-	if (typeof require !== "undefined") return require.apply(this, arguments);
-	throw Error("Calling `require` for \"" + x + "\" in an environment that doesn't expose the `require` function. See https://rolldown.rs/in-depth/bundling-cjs#require-external-modules for more details.");
+var { contextBridge: e, ipcRenderer: t, webUtils: n } = (/* @__PURE__ */ ((e) => typeof require < "u" ? require : typeof Proxy < "u" ? new Proxy(e, { get: (e, t) => (typeof require < "u" ? require : e)[t] }) : e)(function(e) {
+	if (typeof require < "u") return require.apply(this, arguments);
+	throw Error("Calling `require` for \"" + e + "\" in an environment that doesn't expose the `require` function. See https://rolldown.rs/in-depth/bundling-cjs#require-external-modules for more details.");
 }))("electron");
-contextBridge.exposeInMainWorld("electronAPI", {
-	getModels: () => ipcRenderer.invoke("db:models:getAll"),
-	createModel: (data) => ipcRenderer.invoke("db:models:create", data),
-	updateModel: (id, data) => ipcRenderer.invoke("db:models:update", id, data),
-	deleteModel: (id) => ipcRenderer.invoke("db:models:delete", id),
-	deleteModelsBatch: (ids) => ipcRenderer.invoke("db:models:deleteBatch", ids),
-	getLocations: () => ipcRenderer.invoke("db:locations:getAll"),
-	createLocation: (data) => ipcRenderer.invoke("db:locations:create", data),
-	updateLocation: (id, data) => ipcRenderer.invoke("db:locations:update", id, data),
-	deleteLocation: (id) => ipcRenderer.invoke("db:locations:delete", id),
-	deleteLocationsBatch: (ids) => ipcRenderer.invoke("db:locations:deleteBatch", ids),
-	getClothings: () => ipcRenderer.invoke("db:clothing:getAll"),
-	createClothing: (data) => ipcRenderer.invoke("db:clothing:create", data),
-	updateClothing: (id, data) => ipcRenderer.invoke("db:clothing:update", id, data),
-	deleteClothing: (id) => ipcRenderer.invoke("db:clothing:delete", id),
-	deleteClothingsBatch: (ids) => ipcRenderer.invoke("db:clothing:deleteBatch", ids),
-	getProps: () => ipcRenderer.invoke("db:props:getAll"),
-	createProp: (data) => ipcRenderer.invoke("db:props:create", data),
-	updateProp: (id, data) => ipcRenderer.invoke("db:props:update", id, data),
-	deleteProp: (id) => ipcRenderer.invoke("db:props:delete", id),
-	deletePropsBatch: (ids) => ipcRenderer.invoke("db:props:deleteBatch", ids),
-	getMakeups: () => ipcRenderer.invoke("db:makeup:getAll"),
-	createMakeup: (data) => ipcRenderer.invoke("db:makeup:create", data),
-	updateMakeup: (id, data) => ipcRenderer.invoke("db:makeup:update", id, data),
-	deleteMakeup: (id) => ipcRenderer.invoke("db:makeup:delete", id),
-	deleteMakeupsBatch: (ids) => ipcRenderer.invoke("db:makeup:deleteBatch", ids),
-	getPlans: () => ipcRenderer.invoke("db:plans:getAll"),
-	createPlan: (title) => ipcRenderer.invoke("db:plans:create", title),
-	createPlanFromTemplate: (title, templateId) => ipcRenderer.invoke("db:plans:createFromTemplate", title, templateId),
-	getPlanById: (id) => ipcRenderer.invoke("db:plans:getById", id),
-	savePlan: (id, data) => ipcRenderer.invoke("db:plans:save", id, data),
-	deletePlan: (id) => ipcRenderer.invoke("db:plans:delete", id),
-	deletePlansBatch: (ids) => ipcRenderer.invoke("db:plans:deleteBatch", ids),
-	getTemplates: () => ipcRenderer.invoke("db:templates:getAll"),
-	saveTemplate: (name, structure) => ipcRenderer.invoke("db:templates:save", name, structure),
-	deleteTemplate: (id) => ipcRenderer.invoke("db:templates:delete", id),
-	compressImage: (sourcePath, category) => ipcRenderer.invoke("image:compress", sourcePath, category),
-	saveImageFromBuffer: (buffer, category) => ipcRenderer.invoke("image:saveFromBuffer", buffer, category),
-	deleteImageFile: (path) => ipcRenderer.invoke("image:deleteFile", path),
-	renameImageFolder: (oldCat, newCat) => ipcRenderer.invoke("image:renameFolder", oldCat, newCat),
-	selectImageFiles: (multiple) => ipcRenderer.invoke("image:selectFiles", multiple),
-	cleanupTempFolder: (category) => ipcRenderer.invoke("image:cleanupTempFolder", category),
-	imageToURL: (absolutePath) => {
-		if (!absolutePath) return "";
-		return `local-image://host/${absolutePath.replace(/\\/g, "/")}`;
-	},
-	getFilePath: (file) => webUtils.getPathForFile(file),
-	exportImage: (dataUrl, fileName) => ipcRenderer.invoke("system:exportImage", dataUrl, fileName),
-	exportData: (ids) => ipcRenderer.invoke("system:exportData", ids),
-	importData: (filePath) => ipcRenderer.invoke("system:importData", filePath),
+e.exposeInMainWorld("electronAPI", {
+	getModels: () => t.invoke("db:models:getAll"),
+	createModel: (e) => t.invoke("db:models:create", e),
+	updateModel: (e, n) => t.invoke("db:models:update", e, n),
+	deleteModel: (e) => t.invoke("db:models:delete", e),
+	deleteModelsBatch: (e) => t.invoke("db:models:deleteBatch", e),
+	getLocations: () => t.invoke("db:locations:getAll"),
+	createLocation: (e) => t.invoke("db:locations:create", e),
+	updateLocation: (e, n) => t.invoke("db:locations:update", e, n),
+	deleteLocation: (e) => t.invoke("db:locations:delete", e),
+	deleteLocationsBatch: (e) => t.invoke("db:locations:deleteBatch", e),
+	getClothings: () => t.invoke("db:clothing:getAll"),
+	createClothing: (e) => t.invoke("db:clothing:create", e),
+	updateClothing: (e, n) => t.invoke("db:clothing:update", e, n),
+	deleteClothing: (e) => t.invoke("db:clothing:delete", e),
+	deleteClothingsBatch: (e) => t.invoke("db:clothing:deleteBatch", e),
+	getProps: () => t.invoke("db:props:getAll"),
+	createProp: (e) => t.invoke("db:props:create", e),
+	updateProp: (e, n) => t.invoke("db:props:update", e, n),
+	deleteProp: (e) => t.invoke("db:props:delete", e),
+	deletePropsBatch: (e) => t.invoke("db:props:deleteBatch", e),
+	getMakeups: () => t.invoke("db:makeup:getAll"),
+	createMakeup: (e) => t.invoke("db:makeup:create", e),
+	updateMakeup: (e, n) => t.invoke("db:makeup:update", e, n),
+	deleteMakeup: (e) => t.invoke("db:makeup:delete", e),
+	deleteMakeupsBatch: (e) => t.invoke("db:makeup:deleteBatch", e),
+	getPlans: () => t.invoke("db:plans:getAll"),
+	createPlan: (e) => t.invoke("db:plans:create", e),
+	createPlanFromTemplate: (e, n) => t.invoke("db:plans:createFromTemplate", e, n),
+	getPlanById: (e) => t.invoke("db:plans:getById", e),
+	savePlan: (e, n) => t.invoke("db:plans:save", e, n),
+	deletePlan: (e) => t.invoke("db:plans:delete", e),
+	deletePlansBatch: (e) => t.invoke("db:plans:deleteBatch", e),
+	getTemplates: () => t.invoke("db:templates:getAll"),
+	saveTemplate: (e, n) => t.invoke("db:templates:save", e, n),
+	deleteTemplate: (e) => t.invoke("db:templates:delete", e),
+	compressImage: (e, n) => t.invoke("image:compress", e, n),
+	saveImageFromBuffer: (e, n) => t.invoke("image:saveFromBuffer", e, n),
+	deleteImageFile: (e) => t.invoke("image:deleteFile", e),
+	renameImageFolder: (e, n) => t.invoke("image:renameFolder", e, n),
+	copyFilesToEntity: (e, n) => t.invoke("image:copyFilesToEntity", e, n),
+	selectImageFiles: (e) => t.invoke("image:selectFiles", e),
+	cleanupTempFolder: (e) => t.invoke("image:cleanupTempFolder", e),
+	imageToURL: (e) => e ? `local-image://host/${e.replace(/\\/g, "/")}` : "",
+	getFilePath: (e) => n.getPathForFile(e),
+	exportImage: (e, n) => t.invoke("system:exportImage", e, n),
+	exportData: (e) => t.invoke("system:exportData", e),
+	importData: (e) => t.invoke("system:importData", e),
 	workspace: {
-		getPath: () => ipcRenderer.invoke("workspace:getPath"),
-		selectAndSet: () => ipcRenderer.invoke("workspace:selectAndSet")
+		getPath: () => t.invoke("workspace:getPath"),
+		selectAndSet: () => t.invoke("workspace:selectAndSet")
 	},
-	checkUpdate: () => ipcRenderer.invoke("update:check"),
-	ignoreVersion: (ver) => ipcRenderer.invoke("update:ignore", ver),
-	startDownload: (url) => ipcRenderer.invoke("update:download", url),
-	onDownloadProgress: (callback) => {
-		const listener = (e, val) => callback(val);
-		ipcRenderer.on("update:download-progress", listener);
-		return () => ipcRenderer.removeListener("update:download-progress", listener);
+	checkUpdate: () => t.invoke("update:check"),
+	ignoreVersion: (e) => t.invoke("update:ignore", e),
+	startDownload: (e) => t.invoke("update:download", e),
+	onDownloadProgress: (e) => {
+		let n = (t, n) => e(n);
+		return t.on("update:download-progress", n), () => t.removeListener("update:download-progress", n);
 	},
-	onUpdateAvailable: (callback) => {
-		const listener = (e, data) => callback(data);
-		ipcRenderer.on("update:available", listener);
-		return () => ipcRenderer.removeListener("update:available", listener);
+	onUpdateAvailable: (e) => {
+		let n = (t, n) => e(n);
+		return t.on("update:available", n), () => t.removeListener("update:available", n);
 	},
 	window: {
-		minimize: () => ipcRenderer.send("window-minimize"),
-		toggleMaximize: () => ipcRenderer.send("window-toggle-maximize"),
-		close: () => ipcRenderer.send("window-close")
+		minimize: () => t.send("window-minimize"),
+		toggleMaximize: () => t.send("window-toggle-maximize"),
+		close: () => t.send("window-close")
 	},
 	theme: {
-		getSavedTheme: () => ipcRenderer.invoke("theme:getSaved"),
-		saveTheme: (themeName) => ipcRenderer.invoke("theme:save", themeName),
-		setBackgroundColor: (hexColor) => ipcRenderer.send("theme:setBackgroundColor", hexColor)
+		getSavedTheme: () => t.invoke("theme:getSaved"),
+		saveTheme: (e) => t.invoke("theme:save", e),
+		setBackgroundColor: (e) => t.send("theme:setBackgroundColor", e)
 	}
 });
 //#endregion

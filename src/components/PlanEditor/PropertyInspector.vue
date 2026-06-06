@@ -326,15 +326,57 @@ const saveToLibrary = async () => {
     ? formData.value.tagsInput.split(/[,，]/).map(s => s.trim()).filter(Boolean)
     : (formData.value.tags || [])
 
+  // 复制物理文件到全局 models 目录，以防计划删除导致图片丢失
+  const tempFolderName = `${sanitize(formData.value.name)}_${Date.now()}`
+  const targetCategory = `models/${tempFolderName}`
+
+  const filePathsToCopy = []
+  if (formData.value.avatarPath) filePathsToCopy.push(formData.value.avatarPath)
+  if (formData.value.modelCardPath) filePathsToCopy.push(formData.value.modelCardPath)
+  if (formData.value.images) {
+    formData.value.images.forEach(img => {
+      if (img && img.path) filePathsToCopy.push(img.path)
+    })
+  }
+
+  let finalAvatarPath = formData.value.avatarPath || ''
+  let finalModelCardPath = formData.value.modelCardPath || ''
+  let finalImages = JSON.parse(JSON.stringify(formData.value.images || []))
+
+  if (filePathsToCopy.length > 0) {
+    try {
+      const copyResults = await window.electronAPI.copyFilesToEntity(filePathsToCopy, targetCategory)
+      const pathMapping = {}
+      copyResults.forEach(res => {
+        pathMapping[res.oldPath] = res.newPath
+      })
+
+      if (finalAvatarPath && pathMapping[finalAvatarPath]) {
+        finalAvatarPath = pathMapping[finalAvatarPath]
+      }
+      if (finalModelCardPath && pathMapping[finalModelCardPath]) {
+        finalModelCardPath = pathMapping[finalModelCardPath]
+      }
+      finalImages.forEach(img => {
+        if (img && img.path && pathMapping[img.path]) {
+          img.path = pathMapping[img.path]
+          img.url = window.electronAPI.imageToURL(img.path)
+        }
+      })
+    } catch (err) {
+      console.error('保存并归档模特图片失败:', err)
+    }
+  }
+
   const dataToSave = {
     name: formData.value.name,
     region: formData.value.region || '',
     price: formData.value.price || '',
     tags: tags,
     social: '',
-    avatar_path: formData.value.avatarPath || '',
-    model_card_path: formData.value.modelCardPath || '',
-    images: formData.value.images || []
+    avatar_path: finalAvatarPath,
+    model_card_path: finalModelCardPath,
+    images: finalImages
   }
 
   await modelStore.create(dataToSave)
@@ -391,11 +433,42 @@ const saveLocationToLibrary = async () => {
     ? formData.value.tagsInput.split(/[,，]/).map(s => s.trim()).filter(Boolean)
     : (formData.value.tags || [])
 
+  // 复制物理文件到全局 locations 目录
+  const tempFolderName = `${sanitize(formData.value.name)}_${Date.now()}`
+  const targetCategory = `locations/${tempFolderName}`
+
+  const filePathsToCopy = []
+  if (formData.value.images) {
+    formData.value.images.forEach(img => {
+      if (img && img.path) filePathsToCopy.push(img.path)
+    })
+  }
+
+  let finalImages = JSON.parse(JSON.stringify(formData.value.images || []))
+  if (filePathsToCopy.length > 0) {
+    try {
+      const copyResults = await window.electronAPI.copyFilesToEntity(filePathsToCopy, targetCategory)
+      const pathMapping = {}
+      copyResults.forEach(res => {
+        pathMapping[res.oldPath] = res.newPath
+      })
+
+      finalImages.forEach(img => {
+        if (img && img.path && pathMapping[img.path]) {
+          img.path = pathMapping[img.path]
+          img.url = window.electronAPI.imageToURL(img.path)
+        }
+      })
+    } catch (err) {
+      console.error('保存并归档场地图片失败:', err)
+    }
+  }
+
   const dataToSave = {
     name: formData.value.name,
     address: formData.value.address || '',
     tags: tags,
-    images: formData.value.images || []
+    images: finalImages
   }
 
   await locationStore.create(dataToSave)
@@ -459,13 +532,44 @@ const saveClothingToLibrary = async (item) => {
     ? targetItem.tagsInput.split(/[,，·]/).map(s => s.trim()).filter(Boolean)
     : (targetItem.tags || [])
 
+  // 复制物理文件到全局 clothing 目录
+  const tempFolderName = `${sanitize(targetItem.name)}_${Date.now()}`
+  const targetCategory = `clothing/${tempFolderName}`
+
+  const filePathsToCopy = []
+  if (targetItem.images) {
+    targetItem.images.forEach(img => {
+      if (img && img.path) filePathsToCopy.push(img.path)
+    })
+  }
+
+  let finalImages = JSON.parse(JSON.stringify(targetItem.images || []))
+  if (filePathsToCopy.length > 0) {
+    try {
+      const copyResults = await window.electronAPI.copyFilesToEntity(filePathsToCopy, targetCategory)
+      const pathMapping = {}
+      copyResults.forEach(res => {
+        pathMapping[res.oldPath] = res.newPath
+      })
+
+      finalImages.forEach(img => {
+        if (img && img.path && pathMapping[img.path]) {
+          img.path = pathMapping[img.path]
+          img.url = window.electronAPI.imageToURL(img.path)
+        }
+      })
+    } catch (err) {
+      console.error('保存并归档服装图片失败:', err)
+    }
+  }
+
   const dataToSave = {
     name: targetItem.name,
     description: targetItem.description || '',
     tags: tags,
     price: targetItem.price || '',
     link: targetItem.link || '',
-    images: targetItem.images || []
+    images: finalImages
   }
 
   await clothingStore.create(dataToSave)
@@ -529,13 +633,44 @@ const savePropToLibrary = async (item) => {
     ? targetItem.tagsInput.split(/[,，·]/).map(s => s.trim()).filter(Boolean)
     : (targetItem.tags || [])
 
+  // 复制物理文件到全局 props 目录
+  const tempFolderName = `${sanitize(targetItem.name)}_${Date.now()}`
+  const targetCategory = `props/${tempFolderName}`
+
+  const filePathsToCopy = []
+  if (targetItem.images) {
+    targetItem.images.forEach(img => {
+      if (img && img.path) filePathsToCopy.push(img.path)
+    })
+  }
+
+  let finalImages = JSON.parse(JSON.stringify(targetItem.images || []))
+  if (filePathsToCopy.length > 0) {
+    try {
+      const copyResults = await window.electronAPI.copyFilesToEntity(filePathsToCopy, targetCategory)
+      const pathMapping = {}
+      copyResults.forEach(res => {
+        pathMapping[res.oldPath] = res.newPath
+      })
+
+      finalImages.forEach(img => {
+        if (img && img.path && pathMapping[img.path]) {
+          img.path = pathMapping[img.path]
+          img.url = window.electronAPI.imageToURL(img.path)
+        }
+      })
+    } catch (err) {
+      console.error('保存并归档道具图片失败:', err)
+    }
+  }
+
   const dataToSave = {
     name: targetItem.name,
     description: targetItem.description || '',
     tags: tags,
     price: targetItem.price || '',
     link: targetItem.link || '',
-    images: targetItem.images || []
+    images: finalImages
   }
 
   await propsStore.create(dataToSave)
@@ -591,11 +726,42 @@ const saveMakeupToLibrary = async () => {
     ? formData.value.tagsInput.split(/[,，]/).map(s => s.trim()).filter(Boolean)
     : (formData.value.tags || [])
 
+  // 复制物理文件到全局 makeup 目录
+  const tempFolderName = `${sanitize(formData.value.name)}_${Date.now()}`
+  const targetCategory = `makeup/${tempFolderName}`
+
+  const filePathsToCopy = []
+  if (formData.value.images) {
+    formData.value.images.forEach(img => {
+      if (img && img.path) filePathsToCopy.push(img.path)
+    })
+  }
+
+  let finalImages = JSON.parse(JSON.stringify(formData.value.images || []))
+  if (filePathsToCopy.length > 0) {
+    try {
+      const copyResults = await window.electronAPI.copyFilesToEntity(filePathsToCopy, targetCategory)
+      const pathMapping = {}
+      copyResults.forEach(res => {
+        pathMapping[res.oldPath] = res.newPath
+      })
+
+      finalImages.forEach(img => {
+        if (img && img.path && pathMapping[img.path]) {
+          img.path = pathMapping[img.path]
+          img.url = window.electronAPI.imageToURL(img.path)
+        }
+      })
+    } catch (err) {
+      console.error('保存并归档妆容图片失败:', err)
+    }
+  }
+
   const dataToSave = {
     name: formData.value.name,
     description: formData.value.description || '',
     tags: tags,
-    images: formData.value.images || []
+    images: finalImages
   }
 
   await makeupStore.create(dataToSave)

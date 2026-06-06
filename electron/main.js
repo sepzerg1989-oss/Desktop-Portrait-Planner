@@ -267,6 +267,10 @@ ipcMain.handle('image:renameFolder', async (event, oldCategory, newCategory) => 
   return await ImageService.renameEntityFolder(oldCategory, newCategory)
 })
 
+ipcMain.handle('image:copyFilesToEntity', async (event, sourcePaths, category) => {
+  return await ImageService.copyFilesToEntity(sourcePaths, category)
+})
+
 // 打开系统文件选择对话框（选择图片）
 ipcMain.handle('image:selectFiles', async (event) => {
   const win = BrowserWindow.fromWebContents(event.sender)

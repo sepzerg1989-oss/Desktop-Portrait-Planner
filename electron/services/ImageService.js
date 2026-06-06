@@ -160,13 +160,86 @@ class ImageService {
     }
 
     try {
+      let deleted = false
       if (fs.existsSync(targetDir)) {
         fs.rmSync(targetDir, { recursive: true, force: true })
         console.log(`[ImageService] 已清理资源目录: ${targetDir}`)
+        deleted = true
+      }
+      
+      // Fallback: 如果直接删除不存在，且最后一个路径部分是数字 ID（符合数据库 id 特征）
+      // 我们在父目录下寻找以 `_<id>` 结尾的文件夹并进行清理，以彻底解决 `${name}_${id}` 文件夹删除残留问题
+      const lastPart = categoryParts[categoryParts.length - 1]
+      if (/^\d+$/.test(lastPart)) {
+        const parentDir = path.join(this.workspacePath, 'images', ...categoryParts.slice(0, -1))
+        if (fs.existsSync(parentDir)) {
+          const files = fs.readdirSync(parentDir)
+          for (const file of files) {
+            const filePath = path.join(parentDir, file)
+            const stat = fs.statSync(filePath)
+            if (stat.isDirectory() && (file.endsWith(`_${lastPart}`) || file === lastPart)) {
+              fs.rmSync(filePath, { recursive: true, force: true })
+              console.log(`[ImageService] 已清理资源目录（匹配 ID 后缀）: ${filePath}`)
+              deleted = true
+            }
+          }
+        }
+      }
+      if (!deleted) {
+        console.log(`[ImageService] 未找到需要清理的资源目录: ${targetDir}`)
       }
     } catch (error) {
       console.error(`[ImageService] 清理资源目录失败: ${targetDir}`, error)
     }
+  }
+
+  /**
+   * 复制并归档一组图片到指定的实体文件夹
+   * @param {Array<string>} sourcePaths - 源物理文件路径数组
+   * @param {string} category - 实体目标分类目录（例如 'locations/雪华摄影_123'）
+   * @returns {Promise<Array<{oldPath: string, newPath: string}>>} 映射关系数组
+   */
+  async copyFilesToEntity(sourcePaths, category) {
+    if (!this.workspacePath || !category || !Array.isArray(sourcePaths)) {
+      return []
+    }
+
+    const categoryParts = this._sanitizeCategory(category)
+    if (!categoryParts) {
+      throw new Error('无效的资源分类路径')
+    }
+
+    const targetDir = path.join(this.workspacePath, 'images', ...categoryParts)
+    if (!this._isPathWithinWorkspace(targetDir)) {
+      throw new Error('拒绝写入非工作区目录')
+    }
+
+    if (!fs.existsSync(targetDir)) {
+      fs.mkdirSync(targetDir, { recursive: true })
+    }
+
+    const results = []
+    sourcePaths.forEach((srcPath, idx) => {
+      if (!srcPath || !fs.existsSync(srcPath)) return
+      
+      const ext = path.extname(srcPath).toLowerCase() || '.jpg'
+      const hash = crypto.randomBytes(8).toString('hex')
+      const timestamp = Date.now()
+      const fileName = `${timestamp}_copy_${idx}_${hash}${ext}`
+      const targetPath = path.join(targetDir, fileName)
+      
+      try {
+        fs.copyFileSync(srcPath, targetPath)
+        results.push({
+          oldPath: srcPath,
+          newPath: targetPath
+        })
+      } catch (err) {
+        console.error('[ImageService] 复制归档文件失败:', srcPath, err)
+      }
+    })
+
+    return results
   }
 
   /**
