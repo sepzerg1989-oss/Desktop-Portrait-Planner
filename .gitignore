@@ -38,6 +38,7 @@ dist-release/
 # Local files
 *.local
 *.ico
+!build/icon.ico
 
 # Non-app directories (Local background and Agent config)
 projectbackground/
