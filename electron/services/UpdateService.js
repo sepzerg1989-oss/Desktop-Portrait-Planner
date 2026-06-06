@@ -6,7 +6,7 @@ import Store from 'electron-store'
 
 // ==================== 配置项 ====================
 const GITHUB_OWNER = 'sepzerg1989-oss'
-const GITHUB_REPO = 'Desktop-Portrait-Planner-Releases'
+const GITHUB_REPO = 'Desktop-Portrait-Planner'
 
 const store = new Store()
 
@@ -26,10 +26,17 @@ class UpdateService {
   }
 
   /**
-   * 获取检测更新配置文件 update.json 的路径
+   * 获取检测更新配置文件 update.json 的官方路径
    */
   getUpdateConfigUrl() {
     return `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/main/update.json`
+  }
+
+  /**
+   * 获取检测更新配置文件 update.json 的国内加速镜像路径
+   */
+  getUpdateConfigMirrorUrl() {
+    return `https://raw.gitmirror.com/${GITHUB_OWNER}/${GITHUB_REPO}/main/update.json`
   }
 
   /**
@@ -95,11 +102,28 @@ class UpdateService {
 
   /**
    * 从云端获取最新 update.json 的配置内容
-   * 使用 Electron 的 net.fetch，能完美穿透国内代理、自动集成系统代理设置
+   * 优先从国内镜像加速通道获取，若失败则自动回退至 GitHub 原生通道
    */
   async fetchLatestVersion() {
-    const url = this.getUpdateConfigUrl()
-    const response = await net.fetch(url, { method: 'GET', redirect: 'follow' })
+    const mirrorUrl = this.getUpdateConfigMirrorUrl()
+    const rawUrl = this.getUpdateConfigUrl()
+
+    // 优先尝试国内镜像站
+    try {
+      console.log(`[UpdateService] 尝试从国内镜像站获取更新配置: ${mirrorUrl}`)
+      const response = await net.fetch(mirrorUrl, { method: 'GET', redirect: 'follow' })
+      if (response.ok) {
+        const body = await response.text()
+        return JSON.parse(body)
+      }
+      console.warn(`[UpdateService] 镜像站返回异常状态码: ${response.status}，将尝试直连 GitHub`)
+    } catch (err) {
+      console.warn('[UpdateService] 镜像站获取更新配置失败，将尝试直连 GitHub Raw:', err.message)
+    }
+
+    // 回退到 GitHub Raw 直连
+    console.log(`[UpdateService] 尝试直连 GitHub Raw 获取更新配置: ${rawUrl}`)
+    const response = await net.fetch(rawUrl, { method: 'GET', redirect: 'follow' })
     if (!response.ok) {
       throw new Error(`状态码异常: ${response.status}`)
     }
@@ -112,58 +136,72 @@ class UpdateService {
   }
 
   /**
-   * 执行流式网络下载（支持国内镜像加速）
-   * 采用 Electron 的 net.fetch，完美适配系统 VPN/代理，防止 TLS 握手断开错误
+   * 执行流式网络下载（支持国内镜像加速与自动降级重试）
+   * 优先使用 mirror.ghproxy.com 加速下载，若失败则自动回退至 GitHub 原地址直连下载
    */
   async downloadPackage(downloadUrl, win) {
     if (this.isDownloading) throw new Error('已有下载任务进行中')
     this.isDownloading = true
 
-    const finalUrl = downloadUrl
+    const urlsToTry = [downloadUrl]
+    // 若为 GitHub 官方 Release 链接，则优先在其前面加入国内镜像代理
+    if (downloadUrl.includes('github.com')) {
+      const mirrorUrl = `https://mirror.ghproxy.com/${downloadUrl}`
+      urlsToTry.unshift(mirrorUrl)
+    }
 
     const ext = process.platform === 'darwin' ? '.dmg' : '.exe'
     const fileName = `PortraitPlanner_Update_${Date.now()}${ext}`
     const tempPath = path.join(app.getPath('temp'), fileName)
     this.tempFilePath = tempPath
 
-    const fileStream = fs.createWriteStream(tempPath)
+    let lastError = null
 
-    try {
-      const response = await net.fetch(finalUrl, { method: 'GET', redirect: 'follow' })
-      if (!response.ok) {
-        throw new Error(`下载失败，状态码: ${response.status}`)
-      }
+    for (const url of urlsToTry) {
+      console.log(`[UpdateService] 正在尝试下载安装包: ${url}`)
+      const fileStream = fs.createWriteStream(tempPath)
 
-      const totalBytes = parseInt(response.headers.get('content-length'), 10) || 0
-      let downloadedBytes = 0
+      try {
+        const response = await net.fetch(url, { method: 'GET', redirect: 'follow' })
+        if (!response.ok) {
+          throw new Error(`状态码异常: ${response.status}`)
+        }
 
-      const reader = response.body.getReader()
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
+        const totalBytes = parseInt(response.headers.get('content-length'), 10) || 0
+        let downloadedBytes = 0
 
-        fileStream.write(Buffer.from(value))
-        downloadedBytes += value.length
+        const reader = response.body.getReader()
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
 
-        if (totalBytes > 0) {
-          const percent = Math.round((downloadedBytes / totalBytes) * 100)
-          if (win && !win.isDestroyed()) {
-            win.webContents.send('update:download-progress', percent)
+          fileStream.write(Buffer.from(value))
+          downloadedBytes += value.length
+
+          if (totalBytes > 0) {
+            const percent = Math.round((downloadedBytes / totalBytes) * 100)
+            if (win && !win.isDestroyed()) {
+              win.webContents.send('update:download-progress', percent)
+            }
           }
         }
-      }
 
-      fileStream.end()
-      this.isDownloading = false
-      return tempPath
-    } catch (err) {
-      this.isDownloading = false
-      fileStream.close()
-      if (fs.existsSync(tempPath)) {
-        try { fs.unlinkSync(tempPath) } catch (_) {}
+        fileStream.end()
+        this.isDownloading = false
+        console.log(`[UpdateService] 成功从地址下载完成: ${url}`)
+        return tempPath
+      } catch (err) {
+        console.warn(`[UpdateService] 从地址下载失败: ${url}，错误信息: ${err.message}`)
+        lastError = err
+        fileStream.close()
+        if (fs.existsSync(tempPath)) {
+          try { fs.unlinkSync(tempPath) } catch (_) {}
+        }
       }
-      throw err
     }
+
+    this.isDownloading = false
+    throw lastError || new Error('所有下载通道均失败')
   }
 
   /**

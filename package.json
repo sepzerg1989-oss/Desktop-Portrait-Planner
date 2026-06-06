@@ -56,6 +56,7 @@
       "target": [
         "nsis"
       ],
+      "artifactName": "PortraitPlanner_Setup.${ext}",
       "forceCodeSigning": false,
       "signAndEditExecutable": true
     },
@@ -63,7 +64,8 @@
       "icon": "build/logo.png",
       "target": [
         "dmg"
-      ]
+      ],
+      "artifactName": "PortraitPlanner_Mac.${ext}"
     },
     "nsis": {
       "oneClick": false,

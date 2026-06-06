@@ -15,8 +15,20 @@
         <div v-if="!isDownloading">
           <!-- 更新内容日志 (凹陷装裱卡槽) -->
           <p class="text-[10px] uppercase tracking-widest text-morandi-muted mb-2 font-medium">更新内容 / Changelog：</p>
-          <div class="max-h-48 overflow-y-auto mb-8 bg-morandi-canvas/10 p-4 border border-morandi-border text-xs text-morandi-text leading-relaxed whitespace-pre-line font-sans scroll-thin shadow-[inset_0_2px_8px_rgba(0,0,0,0.01)]">
+          <div class="max-h-36 overflow-y-auto mb-4 bg-morandi-canvas/10 p-4 border border-morandi-border text-xs text-morandi-text leading-relaxed whitespace-pre-line font-sans scroll-thin shadow-[inset_0_2px_8px_rgba(0,0,0,0.01)]">
             {{ updateInfo.changelog }}
+          </div>
+
+          <!-- 备用下载通道 (百度网盘) -->
+          <div class="mb-6 bg-morandi-canvas/5 p-3 border border-dashed border-morandi-border text-[11px] text-morandi-text leading-relaxed select-text">
+            <span class="text-[9px] uppercase tracking-widest text-morandi-muted block mb-1 font-semibold">备用网盘下载 / Backup Link：</span>
+            <p class="text-morandi-muted text-[10px] mb-1.5 leading-snug">
+              本项目使用 GitHub 镜像站自动更新，若遇到网络问题无法下载更新包，可手动复制以下网盘地址前往浏览器下载最新的版本：
+            </p>
+            <div class="bg-morandi-canvas/10 p-2 border border-morandi-border font-mono select-text break-all text-[10px]">
+              链接：https://pan.baidu.com/s/1jDNYUUlCc4eWCK0vygJyyw?pwd=5acq<br/>
+              提取码：5acq
+            </div>
           </div>
 
           <!-- 操作按钮 (一Ghost一快门胶囊) -->

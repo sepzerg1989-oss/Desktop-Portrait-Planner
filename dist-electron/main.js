@@ -687,7 +687,7 @@ var g = new class e {
 			};
 		}
 	}
-}(), x = "sepzerg1989-oss", S = "Desktop-Portrait-Planner-Releases", C = new d(), w = new class {
+}(), x = "sepzerg1989-oss", S = "Desktop-Portrait-Planner", C = new d(), w = new class {
 	constructor() {
 		this.currentVersion = n.getVersion(), this.tempFilePath = null, this.isDownloading = !1;
 		let e = C.get("lastRunVersion");
@@ -695,6 +695,9 @@ var g = new class e {
 	}
 	getUpdateConfigUrl() {
 		return `https://raw.githubusercontent.com/${x}/${S}/main/update.json`;
+	}
+	getUpdateConfigMirrorUrl() {
+		return `https://raw.gitmirror.com/${x}/${S}/main/update.json`;
 	}
 	async autoCheck(e) {
 		try {
@@ -739,14 +742,30 @@ var g = new class e {
 		return C.set("ignoredVersion", e), console.log(`[UpdateService] 用户已忽略版本：v${e}`), { success: !0 };
 	}
 	async fetchLatestVersion() {
-		let e = this.getUpdateConfigUrl(), t = await a.fetch(e, {
+		let e = this.getUpdateConfigMirrorUrl(), t = this.getUpdateConfigUrl();
+		try {
+			console.log(`[UpdateService] 尝试从国内镜像站获取更新配置: ${e}`);
+			let t = await a.fetch(e, {
+				method: "GET",
+				redirect: "follow"
+			});
+			if (t.ok) {
+				let e = await t.text();
+				return JSON.parse(e);
+			}
+			console.warn(`[UpdateService] 镜像站返回异常状态码: ${t.status}，将尝试直连 GitHub`);
+		} catch (e) {
+			console.warn("[UpdateService] 镜像站获取更新配置失败，将尝试直连 GitHub Raw:", e.message);
+		}
+		console.log(`[UpdateService] 尝试直连 GitHub Raw 获取更新配置: ${t}`);
+		let n = await a.fetch(t, {
 			method: "GET",
 			redirect: "follow"
 		});
-		if (!t.ok) throw Error(`状态码异常: ${t.status}`);
-		let n = await t.text();
+		if (!n.ok) throw Error(`状态码异常: ${n.status}`);
+		let r = await n.text();
 		try {
-			return JSON.parse(n);
+			return JSON.parse(r);
 		} catch {
 			throw Error("解析更新 JSON 失败");
 		}
@@ -754,31 +773,40 @@ var g = new class e {
 	async downloadPackage(e, t) {
 		if (this.isDownloading) throw Error("已有下载任务进行中");
 		this.isDownloading = !0;
-		let r = e, i = process.platform === "darwin" ? ".dmg" : ".exe", o = `PortraitPlanner_Update_${Date.now()}${i}`, s = c.join(n.getPath("temp"), o);
-		this.tempFilePath = s;
-		let l = u.createWriteStream(s);
-		try {
-			let e = await a.fetch(r, {
-				method: "GET",
-				redirect: "follow"
-			});
-			if (!e.ok) throw Error(`下载失败，状态码: ${e.status}`);
-			let n = parseInt(e.headers.get("content-length"), 10) || 0, i = 0, o = e.body.getReader();
-			for (;;) {
-				let { done: e, value: r } = await o.read();
-				if (e) break;
-				if (l.write(Buffer.from(r)), i += r.length, n > 0) {
-					let e = Math.round(i / n * 100);
-					t && !t.isDestroyed() && t.webContents.send("update:download-progress", e);
-				}
-			}
-			return l.end(), this.isDownloading = !1, s;
-		} catch (e) {
-			if (this.isDownloading = !1, l.close(), u.existsSync(s)) try {
-				u.unlinkSync(s);
-			} catch {}
-			throw e;
+		let r = [e];
+		if (e.includes("github.com")) {
+			let t = `https://mirror.ghproxy.com/${e}`;
+			r.unshift(t);
 		}
+		let i = process.platform === "darwin" ? ".dmg" : ".exe", o = `PortraitPlanner_Update_${Date.now()}${i}`, s = c.join(n.getPath("temp"), o);
+		this.tempFilePath = s;
+		let l = null;
+		for (let e of r) {
+			console.log(`[UpdateService] 正在尝试下载安装包: ${e}`);
+			let n = u.createWriteStream(s);
+			try {
+				let r = await a.fetch(e, {
+					method: "GET",
+					redirect: "follow"
+				});
+				if (!r.ok) throw Error(`状态码异常: ${r.status}`);
+				let i = parseInt(r.headers.get("content-length"), 10) || 0, o = 0, c = r.body.getReader();
+				for (;;) {
+					let { done: e, value: r } = await c.read();
+					if (e) break;
+					if (n.write(Buffer.from(r)), o += r.length, i > 0) {
+						let e = Math.round(o / i * 100);
+						t && !t.isDestroyed() && t.webContents.send("update:download-progress", e);
+					}
+				}
+				return n.end(), this.isDownloading = !1, console.log(`[UpdateService] 成功从地址下载完成: ${e}`), s;
+			} catch (t) {
+				if (console.warn(`[UpdateService] 从地址下载失败: ${e}，错误信息: ${t.message}`), l = t, n.close(), u.existsSync(s)) try {
+					u.unlinkSync(s);
+				} catch {}
+			}
+		}
+		throw this.isDownloading = !1, l || /* @__PURE__ */ Error("所有下载通道均失败");
 	}
 	async startDownloadAndInstall(e, t) {
 		try {
