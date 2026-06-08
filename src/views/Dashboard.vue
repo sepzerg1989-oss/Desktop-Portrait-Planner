@@ -3,7 +3,7 @@
     <div class="flex flex-col md:flex-row justify-between items-stretch md:items-end gap-6 mb-12">
       <div>
         <h1 class="text-luxury-title-lg text-morandi-text/90 mb-2">光影笺案</h1>
-        <p class="text-luxury-meta-sm text-morandi-muted">收录创作预案，留存独属拍摄构思</p>
+        <p class="text-luxury-meta-lg text-morandi-muted">收录创作预案，留存独属拍摄构思</p>
       </div>
       <div class="flex flex-wrap items-center gap-4">
         <!-- 搜索策划案 -->
@@ -163,14 +163,46 @@
       :title="modal.title"
       :message="modal.message"
       :type="modal.type"
-      :input-value="modal.inputValue"
-      :sub-title="modal.type === 'prompt' ? 'Create New Plan' : 'Confirmation Required'"
+      :sub-title="modal.type === 'confirm' ? 'Confirmation Required' : 'Action Required'"
       cancel-text="取消 Cancel"
       confirm-text="确定 Confirm"
       :on-confirm="handleModalConfirm"
       :on-cancel="closeModal"
       @update:show="modal.show = $event"
     />
+
+    <!-- 新建前命名弹窗 (保持全站统一的内联弹窗风格) -->
+    <transition name="fade">
+      <div v-if="showNamePrompt" class="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-morandi-paper p-8 shadow-2xl w-[400px] border border-morandi-border rounded-none animate-in fade-in zoom-in-95 duration-200">
+          <h3 class="text-luxury-title-md text-morandi-text mb-2">{{ namePromptTitle }}</h3>
+          <p class="text-luxury-meta-sm text-morandi-muted mb-6">{{ namePromptSubTitle }}</p>
+          <div class="mb-8">
+            <label class="block text-luxury-meta-sm text-morandi-muted mb-2">请输入策划案名称</label>
+            <input 
+              v-model="promptName" 
+              type="text" 
+              class="w-full px-1 py-3 border-b border-morandi-border bg-transparent focus:border-morandi-text outline-none text-sm text-morandi-text rounded-none" 
+              placeholder="必填..."
+              autofocus
+              @keyup.enter="confirmNamePrompt"
+            />
+          </div>
+          <div class="flex justify-end gap-3">
+            <button @click="cancelNamePrompt" class="px-6 py-2 text-[11px] uppercase tracking-widest text-morandi-muted hover:text-morandi-text transition-colors font-medium outline-none">
+              取消 / Cancel
+            </button>
+            <button 
+              @click="confirmNamePrompt" 
+              class="px-6 py-2 bg-morandi-text text-morandi-canvas text-[11px] uppercase tracking-widest rounded-full hover:opacity-90 transition-opacity disabled:opacity-50 font-medium outline-none shadow-sm"
+              :disabled="!promptName.trim()"
+            >
+              确认 / Confirm
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -291,21 +323,40 @@ const cancelManageMode = () => {
   selectedIds.value = []
 }
 
+const showNamePrompt = ref(false)
+const promptName = ref('')
+const namePromptTitle = ref('')
+const namePromptSubTitle = ref('')
+let activeConfirmCallback = null
+
+const openNamePrompt = (title, subtitle, callback) => {
+  promptName.value = ''
+  namePromptTitle.value = title
+  namePromptSubTitle.value = subtitle
+  activeConfirmCallback = callback
+  showNamePrompt.value = true
+}
+
+const cancelNamePrompt = () => {
+  showNamePrompt.value = false
+}
+
+const confirmNamePrompt = async () => {
+  if (!promptName.value.trim()) return
+  const name = promptName.value.trim()
+  showNamePrompt.value = false
+  if (activeConfirmCallback) {
+    await activeConfirmCallback(name)
+  }
+}
+
 /** 新建空策划案并跳转到编辑器 (自动进入编辑模式) */
 const createNewPlan = () => {
-  showModal({
-    title: '新建策划',
-    message: '请为您的新策划案命名：',
-    type: 'prompt',
-    inputValue: '未命名策划案',
-    onConfirm: async (name) => {
-      if (name) {
-        const record = await store.createPlan(name)
-        if (record) {
-          await store.loadPlan(record.id)
-          router.push({ path: '/editor', query: { mode: 'edit' } })
-        }
-      }
+  openNamePrompt('新建策划', 'Create New Plan', async (name) => {
+    const record = await store.createPlan(name)
+    if (record) {
+      await store.loadPlan(record.id)
+      router.push({ path: '/editor', query: { mode: 'edit' } })
     }
   })
 }
@@ -313,19 +364,11 @@ const createNewPlan = () => {
 /** 从模板新建策划案 (自动进入编辑模式) */
 const createFromTemplate = (template) => {
   showTemplateMenu.value = false
-  showModal({
-    title: '从模板新建',
-    message: `使用模板 "${template.name}" 创建，请为新策划案命名：`,
-    type: 'prompt',
-    inputValue: `${template.name}的副本`,
-    onConfirm: async (name) => {
-      if (name) {
-        const record = await store.createPlanFromTemplate(name, template.id)
-        if (record) {
-          await store.loadPlan(record.id)
-          router.push({ path: '/editor', query: { mode: 'edit' } })
-        }
-      }
+  openNamePrompt('从模板新建', 'Create From Template', async (name) => {
+    const record = await store.createPlanFromTemplate(name, template.id)
+    if (record) {
+      await store.loadPlan(record.id)
+      router.push({ path: '/editor', query: { mode: 'edit' } })
     }
   })
 }

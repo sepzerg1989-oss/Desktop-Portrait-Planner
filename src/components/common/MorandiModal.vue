@@ -14,6 +14,7 @@
             v-model="inputValue" 
             type="text" 
             class="w-full px-1 py-3 border-b border-morandi-border bg-transparent outline-none focus:border-morandi-text text-sm text-morandi-text rounded-none"
+            :placeholder="placeholder"
             autofocus
             @keyup.enter="handleConfirm"
           />
@@ -49,6 +50,7 @@ const props = defineProps({
   subTitle: { type: String, default: '' },
   type: { type: String, default: 'alert' },
   inputValue: { type: String, default: '' },
+  placeholder: { type: String, default: '' },
   cancelText: { type: String, default: '' },
   confirmText: { type: String, default: '' },
   onConfirm: { type: Function, default: null },

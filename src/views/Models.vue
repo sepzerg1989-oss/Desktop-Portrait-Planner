@@ -2,8 +2,8 @@
   <div class="h-full overflow-y-auto px-12 py-10 relative">
     <div class="flex flex-col md:flex-row justify-between items-stretch md:items-end gap-6 mb-12">
       <div>
-        <h1 class="text-luxury-title-lg text-morandi-text/90 mb-2">模特素材库</h1>
-        <p class="text-luxury-meta-sm text-morandi-muted">Model Library / Collection</p>
+        <h1 class="text-luxury-title-lg text-morandi-text/90 mb-2">浮生人影</h1>
+        <p class="text-luxury-meta-lg text-morandi-muted">收录百态身姿，定格人物灵韵</p>
       </div>
       <div class="flex flex-wrap items-center gap-3">
         <!-- 高级检索过滤面板 (同行内联) -->

@@ -2,8 +2,8 @@
   <div class="h-full overflow-y-auto px-12 py-10 relative scroll-thin">
     <div class="flex flex-col md:flex-row justify-between items-stretch md:items-end gap-6 mb-12">
       <div>
-        <h1 class="text-luxury-title-lg text-morandi-text/90 mb-2">拍摄场地库</h1>
-        <p class="text-luxury-meta-sm text-morandi-muted">Location Library / Venues</p>
+        <h1 class="text-luxury-title-lg text-morandi-text/90 mb-2">取景隅境</h1>
+        <p class="text-luxury-meta-lg text-morandi-muted">搜罗四方景致，寻得理想画境</p>
       </div>
       <div class="flex flex-wrap items-center gap-3">
         <!-- 高级检索过滤面板 (同行内联) -->

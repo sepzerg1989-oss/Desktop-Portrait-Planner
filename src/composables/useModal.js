@@ -10,6 +10,7 @@ export function useModal() {
     title: '',
     message: '',
     inputValue: '',
+    placeholder: '',
     type: 'alert', // 'alert' | 'prompt' | 'confirm'
     onConfirm: null
   })
@@ -26,9 +27,13 @@ export function useModal() {
     modal.value.show = false
   }
 
-  const handleModalConfirm = async () => {
+  const handleModalConfirm = async (val) => {
+    let finalVal = modal.value.inputValue
+    if (typeof val === 'string') {
+      finalVal = val
+    }
     if (modal.value.onConfirm) {
-      await modal.value.onConfirm(modal.value.inputValue)
+      await modal.value.onConfirm(finalVal)
     }
     closeModal()
   }

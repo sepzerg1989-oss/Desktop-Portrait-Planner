@@ -2,8 +2,8 @@
   <div class="h-full overflow-y-auto px-12 py-10 relative select-none font-sans bg-morandi-canvas text-morandi-text">
     <div class="flex flex-col md:flex-row justify-between items-stretch md:items-end gap-6 mb-12 border-b border-morandi-border/20 pb-6">
       <div>
-        <h1 class="text-4xl font-serif text-morandi-text/90 mb-2 tracking-[0.1em]">服装搭配库</h1>
-        <p class="text-morandi-muted text-[10px] tracking-[0.3em] uppercase">Clothing Library / Lookbook</p>
+        <h1 class="text-luxury-title-lg text-morandi-text/90 mb-2">寸缕霓裳</h1>
+        <p class="text-luxury-meta-lg text-morandi-muted">汇集衣衫形制，塑造造型风骨</p>
       </div>
       <div class="flex flex-wrap items-center gap-3">
         <!-- 检索过滤面板 -->

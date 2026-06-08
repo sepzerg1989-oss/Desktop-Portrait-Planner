@@ -81,23 +81,42 @@ const finishEditing = async () => {
   isEditing.value = false
 }
 
+const showNamePrompt = ref(false)
+const promptName = ref('')
+const namePromptTitle = ref('')
+const namePromptSubTitle = ref('')
+let activeConfirmCallback = null
+
+const openNamePrompt = (title, subtitle, callback) => {
+  promptName.value = ''
+  namePromptTitle.value = title
+  namePromptSubTitle.value = subtitle
+  activeConfirmCallback = callback
+  showNamePrompt.value = true
+}
+
+const cancelNamePrompt = () => {
+  showNamePrompt.value = false
+}
+
+const confirmNamePrompt = async () => {
+  if (!promptName.value.trim()) return
+  const name = promptName.value.trim()
+  showNamePrompt.value = false
+  if (activeConfirmCallback) {
+    await activeConfirmCallback(name)
+  }
+}
+
 /** 保存为模板 */
 const handleSaveTemplate = () => {
-  showModal({
-    title: '另存为模板',
-    message: '请输入模板名称，方便下次直接使用：',
-    type: 'prompt',
-    inputValue: '我的常用策划模板',
-    onConfirm: async (name) => {
-      if (name) {
-        await store.saveAsTemplate(name)
-        showModal({
-          title: '保存成功',
-          message: '模板已存入素材库，下次新建策划时可直接选择。',
-          type: 'alert'
-        })
-      }
-    }
+  openNamePrompt('另存为模板', 'Save As Template', async (name) => {
+    await store.saveAsTemplate(name)
+    showModal({
+      title: '保存成功',
+      message: '模板已存入素材库，下次新建策划时可直接选择。',
+      type: 'alert'
+    })
   })
 }
 
@@ -227,7 +246,6 @@ const executeExport = async (selectedModuleIds) => {
       :title="modal.title"
       :message="modal.message"
       :type="modal.type"
-      :input-value="modal.inputValue"
       :sub-title="modal.type === 'confirm' ? 'Confirmation Required' : 'Action Required'"
       :on-confirm="handleModalConfirm"
       :on-cancel="closeModal"
@@ -235,6 +253,39 @@ const executeExport = async (selectedModuleIds) => {
       :confirm-text="modal.type === 'confirm' ? '确定删除' : '确定'"
       @update:show="modal.show = $event"
     />
+
+    <!-- 新建前命名弹窗 (保持全站统一的内联弹窗风格) -->
+    <transition name="fade">
+      <div v-if="showNamePrompt" class="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-morandi-paper p-8 shadow-2xl w-[400px] border border-morandi-border rounded-none animate-in fade-in zoom-in-95 duration-200">
+          <h3 class="text-luxury-title-md text-morandi-text mb-2">{{ namePromptTitle }}</h3>
+          <p class="text-luxury-meta-sm text-morandi-muted mb-6">{{ namePromptSubTitle }}</p>
+          <div class="mb-8">
+            <label class="block text-luxury-meta-sm text-morandi-muted mb-2">请输入模板名称</label>
+            <input 
+              v-model="promptName" 
+              type="text" 
+              class="w-full px-1 py-3 border-b border-morandi-border bg-transparent focus:border-morandi-text outline-none text-sm text-morandi-text rounded-none" 
+              placeholder="必填..."
+              autofocus
+              @keyup.enter="confirmNamePrompt"
+            />
+          </div>
+          <div class="flex justify-end gap-3">
+            <button @click="cancelNamePrompt" class="px-6 py-2 text-[11px] uppercase tracking-widest text-morandi-muted hover:text-morandi-text transition-colors font-medium outline-none">
+              取消 / Cancel
+            </button>
+            <button 
+              @click="confirmNamePrompt" 
+              class="px-6 py-2 bg-morandi-text text-morandi-canvas text-[11px] uppercase tracking-widest rounded-full hover:opacity-90 transition-opacity disabled:opacity-50 font-medium outline-none shadow-sm"
+              :disabled="!promptName.trim()"
+            >
+              确认 / Confirm
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
 
     <!-- 选择导出模块弹窗 -->
     <ExportModuleModal
