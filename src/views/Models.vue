@@ -165,37 +165,17 @@
       @cancel="isConfirmOpen = false"
     />
 
-    <!-- 新建前命名弹窗 -->
-    <transition name="fade">
-      <div v-if="showNamePrompt" class="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-morandi-paper p-8 shadow-2xl w-[400px] border border-morandi-border rounded-none">
-          <h3 class="text-luxury-title-md text-morandi-text mb-2">新建模特</h3>
-          <p class="text-luxury-meta-sm text-morandi-muted mb-6">Create New Model</p>
-          <div class="mb-8">
-            <label class="block text-luxury-meta-sm text-morandi-muted mb-2">输入模特姓名</label>
-            <input 
-              v-model="promptName" 
-              type="text" 
-              class="w-full px-1 py-3 border-b border-morandi-border bg-transparent focus:border-morandi-text outline-none text-sm text-morandi-text rounded-none" 
-              placeholder="必填..."
-              @keyup.enter="confirmNamePromptWithForm"
-            />
-          </div>
-          <div class="flex justify-end gap-3">
-            <button @click="cancelNamePrompt" class="px-6 py-2 text-[11px] uppercase tracking-widest text-morandi-muted hover:text-morandi-text transition-colors font-medium outline-none">
-              取消 / Cancel
-            </button>
-            <button 
-              @click="confirmNamePromptWithForm" 
-              class="px-6 py-2 bg-morandi-text text-morandi-canvas text-[11px] uppercase tracking-widest rounded-full hover:opacity-90 transition-opacity disabled:opacity-50 font-medium outline-none"
-              :disabled="!promptName.trim()"
-            >
-              确认 / Confirm
-            </button>
-          </div>
-        </div>
-      </div>
-    </transition>
+    <!-- 新建前命名弹窗 (已抽离为通用组件) -->
+    <NamePromptModal
+      v-model:show="showNamePrompt"
+      v-model:value="promptName"
+      title="新建模特"
+      sub-title="Create New Model"
+      label="输入模特姓名"
+      placeholder="未命名模特"
+      @confirm="confirmNamePromptWithForm"
+      @cancel="cancelNamePrompt"
+    />
 
     <!-- 全屏大图预览 -->
     <transition name="fade">
@@ -210,6 +190,7 @@
 import { ref, onMounted, reactive, computed } from 'vue'
 import ResourceDrawer from '../components/ResourceDrawer.vue'
 import ConfirmModal from '../components/ConfirmModal.vue'
+import NamePromptModal from '../components/common/NamePromptModal.vue'
 import ModelView from '../components/Models/ModelView.vue'
 import ModelForm from '../components/Models/ModelForm.vue'
 import FilterPanel from '../components/common/FilterPanel.vue'

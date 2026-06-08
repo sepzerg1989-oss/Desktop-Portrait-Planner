@@ -8,6 +8,7 @@ import Canvas from '../components/PlanEditor/Canvas.vue'
 import PropertyInspector from '../components/PlanEditor/PropertyInspector.vue'
 import MorandiModal from '../components/common/MorandiModal.vue'
 import ExportModuleModal from '../components/PlanEditor/ExportModuleModal.vue'
+import NamePromptModal from '../components/common/NamePromptModal.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -100,8 +101,10 @@ const cancelNamePrompt = () => {
 }
 
 const confirmNamePrompt = async () => {
-  if (!promptName.value.trim()) return
-  const name = promptName.value.trim()
+  let name = promptName.value.trim()
+  if (!name) {
+    name = '未命名模板'
+  }
   showNamePrompt.value = false
   if (activeConfirmCallback) {
     await activeConfirmCallback(name)
@@ -254,38 +257,17 @@ const executeExport = async (selectedModuleIds) => {
       @update:show="modal.show = $event"
     />
 
-    <!-- 新建前命名弹窗 (保持全站统一的内联弹窗风格) -->
-    <transition name="fade">
-      <div v-if="showNamePrompt" class="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-morandi-paper p-8 shadow-2xl w-[400px] border border-morandi-border rounded-none animate-in fade-in zoom-in-95 duration-200">
-          <h3 class="text-luxury-title-md text-morandi-text mb-2">{{ namePromptTitle }}</h3>
-          <p class="text-luxury-meta-sm text-morandi-muted mb-6">{{ namePromptSubTitle }}</p>
-          <div class="mb-8">
-            <label class="block text-luxury-meta-sm text-morandi-muted mb-2">请输入模板名称</label>
-            <input 
-              v-model="promptName" 
-              type="text" 
-              class="w-full px-1 py-3 border-b border-morandi-border bg-transparent focus:border-morandi-text outline-none text-sm text-morandi-text rounded-none" 
-              placeholder="必填..."
-              autofocus
-              @keyup.enter="confirmNamePrompt"
-            />
-          </div>
-          <div class="flex justify-end gap-3">
-            <button @click="cancelNamePrompt" class="px-6 py-2 text-[11px] uppercase tracking-widest text-morandi-muted hover:text-morandi-text transition-colors font-medium outline-none">
-              取消 / Cancel
-            </button>
-            <button 
-              @click="confirmNamePrompt" 
-              class="px-6 py-2 bg-morandi-text text-morandi-canvas text-[11px] uppercase tracking-widest rounded-full hover:opacity-90 transition-opacity disabled:opacity-50 font-medium outline-none shadow-sm"
-              :disabled="!promptName.trim()"
-            >
-              确认 / Confirm
-            </button>
-          </div>
-        </div>
-      </div>
-    </transition>
+    <!-- 新建前命名弹窗 (已抽离为通用组件) -->
+    <NamePromptModal
+      v-model:show="showNamePrompt"
+      v-model:value="promptName"
+      :title="namePromptTitle"
+      :sub-title="namePromptSubTitle"
+      label="请输入模板名称"
+      placeholder="未命名模板"
+      @confirm="confirmNamePrompt"
+      @cancel="cancelNamePrompt"
+    />
 
     <!-- 选择导出模块弹窗 -->
     <ExportModuleModal

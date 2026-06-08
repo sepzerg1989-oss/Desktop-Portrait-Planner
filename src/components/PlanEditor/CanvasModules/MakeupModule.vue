@@ -1,14 +1,10 @@
 <template>
   <div class="mb-0">
-    <!-- 暂无妆容占位 -->
-    <div v-if="!module.data.name && (!module.data.images || module.data.images.length === 0)" class="py-8 text-center text-xs text-morandi-muted/60 font-sans select-none bg-morandi-canvas/5 border border-dashed border-morandi-border/30">
-      {{ isEditing ? '请在右侧属性编辑面板“从素材库导入”或手动填写您的妆容造型' : '暂无妆容造型内容 / No Makeup Added' }}
-    </div>
-
-    <div v-else>
+    <div>
       <div class="flex items-start space-x-12 mb-12">
         <!-- 左侧：无边框原比例图片（参考模特页面，支持拖拽和就地删除） -->
         <div 
+          v-if="getCover()"
           class="w-48 bg-black/5 flex-shrink-0 shadow-lg overflow-hidden relative group transition-all duration-500"
           :class="{ 'cursor-move': isEditing }"
           :draggable="isEditing" 
@@ -17,14 +13,11 @@
           @drop.prevent="$emit('drop', $event, module, 0)"
           @dragend="$emit('dragend')"
         >
-          <img v-if="getCover()" :src="getCover()" draggable="false" class="w-full h-auto block" :class="{ 'opacity-40 scale-95': draggingIdx === 0 && draggedModuleId === module.id }" loading="lazy" />
-          <div v-else class="w-full aspect-[3/4] flex items-center justify-center text-morandi-text/10 text-xl font-serif">
-            M
-          </div>
+          <img :src="getCover()" draggable="false" class="w-full h-auto block" :class="{ 'opacity-40 scale-95': draggingIdx === 0 && draggedModuleId === module.id }" loading="lazy" />
           
           <!-- 首图移除按钮 (极简直角暗房风格) -->
           <button 
-            v-if="isEditing && getCover()" 
+            v-if="isEditing" 
             @click.stop="$emit('remove-image', module, 0)" 
             class="absolute top-2 right-2 w-5 h-5 bg-morandi-text/80 hover:bg-morandi-red text-morandi-canvas opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center text-[10px] z-20 shadow-md outline-none rounded-none" 
             title="移除封面照片"
@@ -38,7 +31,7 @@
           <div class="mb-4">
             <h3 class="text-luxury-meta-sm text-morandi-muted font-bold">妆面造型 / MAKEUP LOOK</h3>
           </div>
-          <h2 class="text-luxury-title-lg text-morandi-text mb-4">{{ module.data.name || '待定妆容造型' }}</h2>
+          <h2 class="text-luxury-title-lg text-morandi-text mb-4">{{ module.data.name }}</h2>
 
           <div v-if="module.data.tags && module.data.tags.length > 0" class="text-luxury-meta-lg text-morandi-muted mb-6 select-none">
             <span v-for="(tag, index) in module.data.tags" :key="tag">
@@ -47,7 +40,7 @@
             </span>
           </div>
 
-          <div v-if="module.data.description" class="text-xs text-morandi-muted/90 font-sans leading-relaxed whitespace-pre-wrap p-5 bg-morandi-canvas/10 border border-morandi-border/20 rounded-[2px]">
+          <div v-if="module.data.description" class="text-xs text-morandi-muted/90 font-sans leading-relaxed whitespace-pre-wrap mt-4">
             {{ module.data.description }}
           </div>
         </div>

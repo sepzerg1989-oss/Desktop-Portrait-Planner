@@ -42,6 +42,5 @@ dist-release/
 
 # Non-app directories (Local background and Agent config)
 projectbackground/
-Projectbackground/
 .agents/
 Requirement_input/

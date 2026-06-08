@@ -195,12 +195,18 @@ ipcMain.handle('db:plans:createFromTemplate', (event, title, templateId) => {
   if (!template) return null
   const structure = JSON.parse(template.structure_json)
   // 根据模板结构生成模块 JSON
-  const modules = structure.map((item, idx) => ({
-    id: 'm' + Date.now() + idx,
-    type: item.type,
-    title: item.title,
-    data: getDefaultDataForType(item.type)
-  }))
+  const modules = structure.map((item, idx) => {
+    const data = JSON.parse(JSON.stringify(getDefaultDataForType(item.type)))
+    if (item.type === 'theme') {
+      data.title = title
+    }
+    return {
+      id: 'm' + Date.now() + idx,
+      type: item.type,
+      title: item.title,
+      data
+    }
+  })
   return DatabaseService.insert('plans', {
     title,
     modules_json: JSON.stringify(modules)

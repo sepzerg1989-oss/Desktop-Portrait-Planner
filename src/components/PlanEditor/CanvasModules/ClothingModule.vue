@@ -4,13 +4,8 @@
       <h3 class="text-luxury-meta-sm text-morandi-muted font-bold">服装搭配 / OUTFIT LOOK</h3>
     </div>
 
-    <!-- 暂无服装占位 -->
-    <div v-if="isEmpty" class="py-8 text-center text-xs text-morandi-muted/60 font-sans select-none bg-morandi-canvas/5 border border-dashed border-morandi-border/30">
-      {{ isEditing ? '请在右侧属性编辑面板“从素材库导入”或手动填写您的服装搭配' : '暂无服装搭配内容 / No Outfit Added' }}
-    </div>
-
     <!-- 画册三列等高展平连贯网格 -->
-    <div v-else class="space-y-6">
+    <div v-if="!isEmpty" class="space-y-6">
       <div v-for="(row, rowIdx) in chunkArray(allImages, 3)" :key="rowIdx" class="flex gap-4 items-start">
         <div 
           v-for="(img, imgIdx) in row" 

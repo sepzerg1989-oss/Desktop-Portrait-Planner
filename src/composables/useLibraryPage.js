@@ -148,13 +148,16 @@ export function useLibraryPage(options) {
   }
 
   const confirmNamePrompt = (resetFormFn) => {
-    if (!promptName.value.trim()) return
+    let finalName = promptName.value.trim()
+    if (!finalName) {
+      finalName = `未命名${entityLabel}`
+    }
     drawerMode.value = 'edit'
     editingId.value = null
     tempId.value = Date.now()
-    initialFolderName.value = `${sanitize(promptName.value)}_${tempId.value}`
+    initialFolderName.value = `${sanitize(finalName)}_${tempId.value}`
     if (resetFormFn) resetFormFn()
-    promptName.value = promptName.value.trim()
+    promptName.value = finalName
     showNamePrompt.value = false
     isDrawerOpen.value = true
   }
