@@ -5,11 +5,11 @@
         @click="$emit('toggle-library')"
         class="flex-1 py-3 bg-morandi-text text-morandi-canvas text-[10px] uppercase tracking-widest rounded-full hover:opacity-90 transition-all outline-none font-medium shadow-sm"
       >
-        从妆容库导入
+        从素材库导入
       </button>
       <button 
         @click="$emit('save-library')"
-        class="px-5 py-3 border border-morandi-text text-morandi-text text-[10px] uppercase tracking-widest rounded-full hover:bg-morandi-text hover:text-morandi-canvas transition-all outline-none font-medium"
+        class="flex-1 py-3 border border-morandi-text text-morandi-text text-[10px] uppercase tracking-widest rounded-full hover:bg-morandi-text hover:text-morandi-canvas transition-all outline-none font-medium"
         title="同步到全局妆面造型库"
       >
         存入素材库

@@ -63,11 +63,24 @@
         />
       </div>
     </div>
+    
+    <!-- 简易高奢提示 Toast -->
+    <Transition name="toast-fade">
+      <div 
+        v-if="toastMessage" 
+        class="fixed bottom-12 left-1/2 -translate-x-1/2 z-[100] px-6 py-2 bg-morandi-text text-morandi-canvas text-xs tracking-widest font-sans shadow-2xl flex items-center gap-2 border border-morandi-border/30 backdrop-blur-md rounded-full"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-morandi-green" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+        <span>{{ toastMessage }}</span>
+      </div>
+    </Transition>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { usePlanStore } from '../../store/planStore'
 import html2canvas from 'html2canvas'
 
@@ -190,5 +203,96 @@ defineExpose({
 
 onBeforeUnmount(() => {
   if (saveTimeout) clearTimeout(saveTimeout)
+  if (toastTimeout) clearTimeout(toastTimeout)
+  
+  const container = document.getElementById('canvas-container')
+  if (container) {
+    container.removeEventListener('mouseover', handleMouseOver)
+  }
+  window.removeEventListener('keydown', handleKeyDown)
+})
+
+// -------------------- 图片复制到剪贴板逻辑 --------------------
+const hoveredImageUrl = ref('')
+const toastMessage = ref('')
+let toastTimeout = null
+
+const showToast = (msg) => {
+  toastMessage.value = msg
+  if (toastTimeout) clearTimeout(toastTimeout)
+  toastTimeout = setTimeout(() => {
+    toastMessage.value = ''
+  }, 2000)
+}
+
+const copyImage = async (url) => {
+  try {
+    const res = await window.electronAPI.clipboard.copyImage(url)
+    if (res.success) {
+      showToast('已成功复制图片至剪贴板')
+    } else {
+      console.error('复制图片失败:', res.error)
+      showToast('复制图片失败')
+    }
+  } catch (err) {
+    console.error('复制图片异常:', err)
+    showToast('复制图片异常')
+  }
+}
+
+const handleMouseOver = (e) => {
+  const target = e.target
+  const img = target.closest('img')
+  if (img && document.getElementById('export-canvas')?.contains(img)) {
+    if (img.src) {
+      hoveredImageUrl.value = img.src
+    }
+  } else {
+    hoveredImageUrl.value = ''
+  }
+}
+
+const handleKeyDown = async (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) {
+    return
+  }
+  
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
+    if (hoveredImageUrl.value) {
+      e.preventDefault()
+      await copyImage(hoveredImageUrl.value)
+    }
+  }
+}
+
+onMounted(() => {
+  const container = document.getElementById('canvas-container')
+  if (container) {
+    container.addEventListener('mouseover', handleMouseOver)
+  }
+  window.addEventListener('keydown', handleKeyDown)
 })
 </script>
+
+<style scoped>
+/* 让画布内的所有元素（包括子组件内的图片和容器）在悬浮和拖拽时都保持默认的箭头指针 */
+#export-canvas, #export-canvas :deep(*) {
+  cursor: default !important;
+}
+
+/* 按钮及其内容依然保持手型指针，以便于操作 */
+#export-canvas :deep(button), #export-canvas :deep(button *) {
+  cursor: pointer !important;
+}
+
+/* Toast 淡入淡出动画 */
+.toast-fade-enter-active,
+.toast-fade-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.toast-fade-enter-from,
+.toast-fade-leave-to {
+  opacity: 0;
+  transform: translate(-50%, 1rem);
+}
+</style>

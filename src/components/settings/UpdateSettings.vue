@@ -110,7 +110,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 
-const currentVersion = ref('1.1.0') // 初始默认版本号，随后检查更新时会从主进程获取
+const currentVersion = ref('') // 软件当前的版本号，挂载时从主进程自动获取
 const isChecking = ref(false)
 const hasUpdate = ref(false)
 const isDownloading = ref(false)
@@ -220,21 +220,17 @@ const cancelDownload = async () => {
   downloadError.value = null
 }
 
-onMounted(() => {
-  // 仅在挂载时悄悄获取一次当前版本号，不触发网络加载与检查
-  if (window.electronAPI && window.electronAPI.checkUpdate) {
-    // 我们可以触发检查，但通常最好只是显示当前版本，
-    // 为了省去加载状态，我们可以从以前打包过的常量获取，
-    // 或者直接在此处以静默方式获取主进程的版本
-    // 主进程 manualCheck() 会拉取 update.json 导致网络等待，
-    // 我们在这里先直接从 checkUpdate 获取，也可以在 main.js 中增加单独获取版本的 API，
-    // 不过在 manualCheck 响应速度快的情况下静默执行一次也是可以的，
-    // 让我们做一次静默更新版本号：
-    window.electronAPI.checkUpdate().then(res => {
-      if (res && res.currentVersion) {
-        currentVersion.value = res.currentVersion
-      }
-    }).catch(() => {})
+onMounted(async () => {
+  // 从主进程获取当前运行的真实版本号，无需网络加载
+  if (window.electronAPI && window.electronAPI.getVersion) {
+    try {
+      currentVersion.value = await window.electronAPI.getVersion()
+    } catch (err) {
+      console.error('获取本地版本号失败:', err)
+      currentVersion.value = '1.5.2'
+    }
+  } else {
+    currentVersion.value = '1.5.2'
   }
 
   // 监听下载进度更新

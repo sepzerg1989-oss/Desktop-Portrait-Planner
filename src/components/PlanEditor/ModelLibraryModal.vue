@@ -43,32 +43,8 @@
           </div>
         </div>
 
-        <!-- 常用 Tag 滑动条 -->
-        <div v-if="topTags.length > 0" class="flex items-center space-x-2 overflow-x-auto no-scrollbar py-1">
-          <button 
-            @click="selectedTag = ''"
-            :class="[
-              'px-3 py-1 rounded-full border text-[10px] tracking-wider transition-all duration-300 whitespace-nowrap outline-none',
-              selectedTag === '' 
-                ? 'bg-morandi-text text-morandi-paper border-transparent shadow-[0_2px_8px_rgba(0,0,0,0.03)]' 
-                : 'bg-transparent border-black/10 text-morandi-muted hover:text-morandi-text hover:bg-black/5'
-            ]"
-          >
-            全部标签
-          </button>
-          <button 
-            v-for="tag in topTags" :key="tag"
-            @click="selectedTag = tag"
-            :class="[
-              'px-3 py-1 rounded-full border text-[10px] tracking-wider transition-all duration-300 whitespace-nowrap outline-none',
-              selectedTag === tag 
-                ? 'bg-morandi-text text-morandi-paper border-transparent shadow-[0_2px_8px_rgba(0,0,0,0.03)]' 
-                : 'bg-transparent border-black/10 text-morandi-muted hover:text-morandi-text hover:bg-black/5'
-            ]"
-          >
-            {{ tag }}
-          </button>
-        </div>
+        <!-- 常用 Tag 过滤组件 -->
+        <TagFilter v-model="selectedTags" :tags="topTags" />
       </div>
 
       <!-- 列表区 -->
@@ -103,6 +79,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useModelStore } from '../../store/modelStore'
+import TagFilter from '../common/TagFilter.vue'
 
 defineProps({
   show: {
@@ -118,7 +95,7 @@ const modelStore = useModelStore()
 // 过滤状态
 const searchQuery = ref('')
 const selectedRegion = ref('')
-const selectedTag = ref('')
+const selectedTags = ref([])
 
 // 地区提取
 const regions = computed(() => {
@@ -126,12 +103,12 @@ const regions = computed(() => {
   return [...new Set(all)]
 })
 
-// 最常用前 6 个 Tag
+// 最常用前 15 个 Tag
 const topTags = computed(() => {
   const all = modelStore.models.flatMap(m => m.tags || []).filter(Boolean)
   const counts = {}
   all.forEach(t => counts[t] = (counts[t] || 0) + 1)
-  return Object.keys(counts).sort((a, b) => counts[b] - counts[a]).slice(0, 6)
+  return Object.keys(counts).sort((a, b) => counts[b] - counts[a]).slice(0, 15)
 })
 
 // 过滤计算
@@ -139,11 +116,12 @@ const filteredModels = computed(() => {
   return modelStore.models.filter(m => {
     const matchesSearch = !searchQuery.value.trim() || 
       m.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      m.tags.some(t => t.toLowerCase().includes(searchQuery.value.toLowerCase()))
+      (m.tags && m.tags.some(t => t.toLowerCase().includes(searchQuery.value.toLowerCase())))
     
     const matchesRegion = !selectedRegion.value || m.region === selectedRegion.value
     
-    const matchesTag = !selectedTag.value || m.tags.includes(selectedTag.value)
+    const matchesTag = selectedTags.value.length === 0 || 
+      (m.tags && selectedTags.value.some(tag => m.tags.includes(tag)))
     
     return matchesSearch && matchesRegion && matchesTag
   })

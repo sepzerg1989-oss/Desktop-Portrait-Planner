@@ -5,7 +5,7 @@
         @click="$emit('toggle-library')"
         class="flex-1 py-3 bg-morandi-text text-morandi-canvas text-[10px] uppercase tracking-widest rounded-full hover:opacity-90 transition-all outline-none font-medium shadow-sm"
       >
-        从素材库导入场地
+        从素材库导入
       </button>
       <button 
         @click="$emit('save-library')"

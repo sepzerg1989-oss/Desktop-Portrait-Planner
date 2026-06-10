@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, protocol, dialog, Menu } from 'electron'
+import { app, BrowserWindow, ipcMain, protocol, dialog, Menu, clipboard, nativeImage } from 'electron'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import fs from 'fs'
@@ -291,6 +291,49 @@ ipcMain.handle('image:selectFiles', async (event) => {
   return result.filePaths
 })
 
+// --- 剪贴板复制图片 ---
+ipcMain.handle('clipboard:copyImage', async (event, pathOrUrl) => {
+  try {
+    let filePath = pathOrUrl
+    
+    // 如果是 data:image 类型的 base64 URL
+    if (pathOrUrl.startsWith('data:image/')) {
+      const image = nativeImage.createFromDataURL(pathOrUrl)
+      if (image.isEmpty()) {
+        return { success: false, error: 'Failed to create image from DataURL' }
+      }
+      clipboard.writeImage(image)
+      return { success: true }
+    }
+    
+    // 如果是 local-image://host/ 格式，需要还原为本地路径
+    if (pathOrUrl.startsWith('local-image://host/')) {
+      filePath = decodeURIComponent(pathOrUrl.replace('local-image://host/', ''))
+    }
+    
+    // Windows 下如果路径以斜杠开头，比如 /D:/...，去除开头的斜杠
+    if (process.platform === 'win32' && filePath.startsWith('/')) {
+      filePath = filePath.substring(1)
+    }
+    
+    if (!fs.existsSync(filePath)) {
+      return { success: false, error: `File not found: ${filePath}` }
+    }
+    
+    const image = nativeImage.createFromPath(filePath)
+    if (image.isEmpty()) {
+      return { success: false, error: 'Failed to load image from path' }
+    }
+    
+    clipboard.writeImage(image)
+    return { success: true }
+  } catch (error) {
+    console.error('Clipboard copy error:', error)
+    return { success: false, error: error.message }
+  }
+})
+
+
 
 
 // --- 导出功能 ---
@@ -372,6 +415,7 @@ ipcMain.on('theme:setBackgroundColor', (event, hexColor) => {
 })
 
 // --- 自动与手动更新 ---
+ipcMain.handle('app:getVersion', () => app.getVersion())
 ipcMain.handle('update:check', () => UpdateService.manualCheck())
 ipcMain.handle('update:ignore', (event, version) => UpdateService.ignoreVersion(version))
 ipcMain.handle('update:download', (event, url) => {

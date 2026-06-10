@@ -10,7 +10,7 @@
       </div>
       
       <!-- 描述 -->
-      <div v-if="prop?.description" class="p-6 bg-morandi-canvas/30 rounded-sm border border-morandi-border/20 text-xs text-morandi-text/80 leading-relaxed font-sans whitespace-pre-wrap">
+      <div v-if="prop?.description" class="text-xs text-morandi-text/80 leading-relaxed font-sans whitespace-pre-wrap mt-4">
         {{ prop.description }}
       </div>
 

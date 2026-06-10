@@ -80,6 +80,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
 
   // ==================== 自动与手动更新 ====================
+  getVersion: () => ipcRenderer.invoke('app:getVersion'),
   checkUpdate: () => ipcRenderer.invoke('update:check'),
   ignoreVersion: (ver) => ipcRenderer.invoke('update:ignore', ver),
   startDownload: (url) => ipcRenderer.invoke('update:download', url),
@@ -107,5 +108,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getSavedTheme: () => ipcRenderer.invoke('theme:getSaved'),
     saveTheme: (themeName) => ipcRenderer.invoke('theme:save', themeName),
     setBackgroundColor: (hexColor) => ipcRenderer.send('theme:setBackgroundColor', hexColor)
+  },
+
+  // ==================== 剪贴板 ====================
+  clipboard: {
+    copyImage: (pathOrUrl) => ipcRenderer.invoke('clipboard:copyImage', pathOrUrl)
   }
 })

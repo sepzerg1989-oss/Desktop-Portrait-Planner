@@ -87,7 +87,7 @@ export function useLibraryPage(options) {
       const query = searchQuery.value.trim().toLowerCase()
       const matchesSearch = !query || parseItemMatch(item, query)
       const matchesTags = selectedTags.value.length === 0 ||
-        selectedTags.value.every(t => item.tags.includes(t))
+        selectedTags.value.some(t => item.tags.includes(t))
       return matchesSearch && matchesTags
     })
     return applySort(list.slice())

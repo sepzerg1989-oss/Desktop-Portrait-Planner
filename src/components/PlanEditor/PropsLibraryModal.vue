@@ -29,32 +29,8 @@
           </div>
         </div>
 
-        <!-- 常用 Tag 滑动条 -->
-        <div v-if="topTags.length > 0" class="flex items-center space-x-2 overflow-x-auto no-scrollbar py-1">
-          <button 
-            @click="selectedTag = ''"
-            :class="[
-              'px-3 py-1 rounded-full border text-[10px] tracking-wider transition-all duration-300 whitespace-nowrap outline-none',
-              selectedTag === '' 
-                ? 'bg-morandi-text text-morandi-paper border-transparent shadow-[0_2px_8px_rgba(0,0,0,0.03)]' 
-                : 'bg-transparent border-black/10 text-morandi-muted hover:text-morandi-text hover:bg-black/5'
-            ]"
-          >
-            全部标签
-          </button>
-          <button 
-            v-for="tag in topTags" :key="tag"
-            @click="selectedTag = tag"
-            :class="[
-              'px-3 py-1 rounded-full border text-[10px] tracking-wider transition-all duration-300 whitespace-nowrap outline-none',
-              selectedTag === tag 
-                ? 'bg-morandi-text text-morandi-paper border-transparent shadow-[0_2px_8px_rgba(0,0,0,0.03)]' 
-                : 'bg-transparent border-black/10 text-morandi-muted hover:text-morandi-text hover:bg-black/5'
-            ]"
-          >
-            {{ tag }}
-          </button>
-        </div>
+        <!-- 常用 Tag 过滤组件 -->
+        <TagFilter v-model="selectedTags" :tags="topTags" />
       </div>
 
       <!-- 列表区 -->
@@ -89,6 +65,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { usePropsStore } from '../../store/propsStore'
+import TagFilter from '../common/TagFilter.vue'
 
 defineProps({
   show: {
@@ -102,14 +79,14 @@ defineEmits(['close', 'import'])
 const propsStore = usePropsStore()
 
 const searchQuery = ref('')
-const selectedTag = ref('')
+const selectedTags = ref([])
 
-// 最常用前 6 个 Tag
+// 最常用前 15 个 Tag
 const topTags = computed(() => {
   const all = propsStore.propsList.flatMap(p => p.tags || []).filter(Boolean)
   const counts = {}
   all.forEach(t => counts[t] = (counts[t] || 0) + 1)
-  return Object.keys(counts).sort((a, b) => counts[b] - counts[a]).slice(0, 6)
+  return Object.keys(counts).sort((a, b) => counts[b] - counts[a]).slice(0, 15)
 })
 
 // 过滤计算
@@ -118,9 +95,10 @@ const filteredProps = computed(() => {
     const matchesSearch = !searchQuery.value.trim() || 
       p.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
       p.description.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      p.tags.some(t => t.toLowerCase().includes(searchQuery.value.toLowerCase()))
+      (p.tags && p.tags.some(t => t.toLowerCase().includes(searchQuery.value.toLowerCase())))
     
-    const matchesTag = !selectedTag.value || p.tags.includes(selectedTag.value)
+    const matchesTag = selectedTags.value.length === 0 || 
+      (p.tags && selectedTags.value.some(tag => p.tags.includes(tag)))
     
     return matchesSearch && matchesTag
   })

@@ -1,6 +1,6 @@
 {
-  "version": "1.5.4",
-  "changelog": "1. 修复了新建策划后标题无法自动填入的BUG\n 2. 简化了策划画布中的显示文字",
-  "downloadUrl": "https://github.com/sepzerg1989-oss/Desktop-Portrait-Planner/releases/download/v1.5.4/PortraitPlanner_Setup.exe",
-  "macDownloadUrl": "https://github.com/sepzerg1989-oss/Desktop-Portrait-Planner/releases/download/v1.5.4/PortraitPlanner_Mac.dmg"
+  "version": "1.5.5",
+  "changelog": "1.策划编辑页面增加了复制画布的图片到剪切板的功能，用户可以把鼠标移动到想要复制的图片上，通过Ctrl+C复制到剪切板，再通过Ctrl+V粘贴到另一个任何一个模块的上传区域中\n 2. 优化了Tag筛选的bug\n 3. 修复了自动更新时无法获取版本号的bug",
+  "downloadUrl": "https://github.com/sepzerg1989-oss/Desktop-Portrait-Planner/releases/download/v1.5.5/PortraitPlanner_Setup.exe",
+  "macDownloadUrl": "https://github.com/sepzerg1989-oss/Desktop-Portrait-Planner/releases/download/v1.5.5/PortraitPlanner_Mac.dmg"
 }

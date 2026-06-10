@@ -9,7 +9,7 @@
       </button>
       <button 
         @click="$emit('save-library')"
-        class="px-5 py-3 border border-morandi-text text-morandi-text text-[10px] uppercase tracking-widest rounded-full hover:bg-morandi-text hover:text-morandi-canvas transition-all outline-none font-medium"
+        class="flex-1 py-3 border border-morandi-text text-morandi-text text-[10px] uppercase tracking-widest rounded-full hover:bg-morandi-text hover:text-morandi-canvas transition-all outline-none font-medium"
         title="同步到全局模特库"
       >
         存入素材库
