@@ -4,6 +4,10 @@ import path from 'path'
 import crypto from 'crypto'
 import DatabaseService from './DatabaseService.js'
 import WorkspaceService from './WorkspaceService.js'
+import {
+  getImagePath,
+  validateImportPackage
+} from './DataSafety.js'
 
 // 清理文件名中的非法字符，用于生成安全的文件夹名称
 const sanitize = (name) => (name || '').replace(/[\\\/:*?"<>|]/g, '_').trim() || 'unnamed';
@@ -28,7 +32,8 @@ class ExportService {
       }
 
       // 提取图片的辅助方法
-      const addImage = (absPath) => {
+      const addImage = (imageValue) => {
+        const absPath = getImagePath(imageValue);
         if (!absPath || exportData.images[absPath]) return;
         try {
           if (fs.existsSync(absPath)) {
@@ -48,13 +53,15 @@ class ExportService {
             if (plan.cover_path) addImage(plan.cover_path);
             const modules = JSON.parse(plan.modules_json || '[]');
             modules.forEach(m => {
-              if (m.data?.images) m.data.images.forEach(img => addImage(img.path));
+              if (m.data?.images) m.data.images.forEach(img => addImage(img));
               if (m.data?.avatar) addImage(m.data.avatar);
+              if (m.data?.avatarPath) addImage(m.data.avatarPath);
               if (m.data?.modelCard) addImage(m.data.modelCard);
+              if (m.data?.modelCardPath) addImage(m.data.modelCardPath);
               if (m.data?.items) {
                 m.data.items.forEach(item => {
                   if (item.images) {
-                    item.images.forEach(img => addImage(img.path));
+                    item.images.forEach(img => addImage(img));
                   }
                 });
               }
@@ -72,7 +79,7 @@ class ExportService {
             if (model.avatar_path) addImage(model.avatar_path);
             if (model.model_card_path) addImage(model.model_card_path);
             const images = JSON.parse(model.images_json || '[]');
-            images.forEach(img => addImage(img.path));
+            images.forEach(img => addImage(img));
           }
         }
       }
@@ -85,7 +92,7 @@ class ExportService {
             exportData.data.locations.push(loc);
             if (loc.cover_path) addImage(loc.cover_path);
             const images = JSON.parse(loc.images_json || '[]');
-            images.forEach(img => addImage(img.path));
+            images.forEach(img => addImage(img));
           }
         }
       }
@@ -97,7 +104,7 @@ class ExportService {
           if (item) {
             exportData.data.clothing.push(item);
             const images = JSON.parse(item.images_json || '[]');
-            images.forEach(img => addImage(img.path));
+            images.forEach(img => addImage(img));
           }
         }
       }
@@ -109,7 +116,7 @@ class ExportService {
           if (item) {
             exportData.data.props.push(item);
             const images = JSON.parse(item.images_json || '[]');
-            images.forEach(img => addImage(img.path));
+            images.forEach(img => addImage(img));
           }
         }
       }
@@ -121,7 +128,7 @@ class ExportService {
           if (item) {
             exportData.data.makeup.push(item);
             const images = JSON.parse(item.images_json || '[]');
-            images.forEach(img => addImage(img.path));
+            images.forEach(img => addImage(img));
           }
         }
       }
@@ -148,6 +155,7 @@ class ExportService {
    * @param {string} [filePath] - 可选的直接文件路径，用于拖拽上传等静默导入
    */
   async importData(win, filePath = null) {
+    let importTempDir = null;
     try {
       let finalFilePath = filePath;
       if (!finalFilePath) {
@@ -161,15 +169,14 @@ class ExportService {
         finalFilePath = result.filePaths[0];
       }
 
+      const fileStat = fs.statSync(finalFilePath);
       const fileContent = fs.readFileSync(finalFilePath, 'utf-8');
       const exportData = JSON.parse(fileContent);
 
-      if (exportData.type !== 'portraitplanner-export') {
-        throw new Error('无效的导出文件格式');
-      }
+      validateImportPackage(exportData, fileStat.size);
 
       // 准备临时图片解压目录
-      const importTempDir = path.join(WorkspaceService.getPath(), 'images', 'import_temp');
+      importTempDir = path.join(WorkspaceService.getPath(), 'images', 'import_temp');
       if (!fs.existsSync(importTempDir)) {
         fs.mkdirSync(importTempDir, { recursive: true });
       }
@@ -187,13 +194,41 @@ class ExportService {
           const targetPath = path.join(importTempDir, fileName);
           fs.writeFileSync(targetPath, buffer);
           tempPathMapping[oldPath] = targetPath;
+          const normalizedOldPath = getImagePath(oldPath);
+          if (normalizedOldPath) {
+            tempPathMapping[normalizedOldPath] = targetPath;
+          }
         }
       }
 
       // 获取临时路径的辅助方法
-      const getTempPath = (oldPath) => {
+      const getTempPath = (imageValue) => {
+        const oldPath = getImagePath(imageValue);
         if (!oldPath) return oldPath;
         return tempPathMapping[oldPath] || oldPath;
+      };
+
+      const importImageValue = (imageValue, tableName, entityId, name, index) => {
+        const oldPath = getImagePath(imageValue);
+        if (!oldPath) return imageValue;
+
+        let newPath = getTempPath(oldPath);
+        if (newPath && newPath !== oldPath) {
+          newPath = copyToEntityDir(newPath, tableName, entityId, name, index);
+        }
+
+        if (imageValue && typeof imageValue === 'object') {
+          return {
+            ...imageValue,
+            path: newPath,
+            url: pathToLocalImageURL(newPath)
+          };
+        }
+        return {
+          path: newPath,
+          url: pathToLocalImageURL(newPath),
+          ratio: 1
+        };
       };
 
       // 复制临时图片到目标实体目录的辅助方法
@@ -255,22 +290,13 @@ class ExportService {
             
             // 复制作品照片组
             const images = JSON.parse(newModel.images_json || '[]');
-            images.forEach((img, idx) => {
-              if (img && typeof img === 'object') {
-                let p = getTempPath(img.path);
-                if (p && p !== img.path) {
-                  p = copyToEntityDir(p, 'models', newId, record.name, `photo_${idx}`);
-                }
-                img.path = p;
-                img.url = pathToLocalImageURL(p);
-              }
-            });
+            const finalImages = images.map((img, idx) => importImageValue(img, 'models', newId, record.name, `photo_${idx}`));
             
             // 更新该记录
             DatabaseService.update('models', newId, {
               avatar_path: avatarPath,
               model_card_path: modelCardPath,
-              images_json: JSON.stringify(images)
+              images_json: JSON.stringify(finalImages)
             });
           }
         }
@@ -291,20 +317,11 @@ class ExportService {
             }
             
             const images = JSON.parse(newLoc.images_json || '[]');
-            images.forEach((img, idx) => {
-              if (img && typeof img === 'object') {
-                let p = getTempPath(img.path);
-                if (p && p !== img.path) {
-                  p = copyToEntityDir(p, 'locations', newId, record.name, `photo_${idx}`);
-                }
-                img.path = p;
-                img.url = pathToLocalImageURL(p);
-              }
-            });
+            const finalImages = images.map((img, idx) => importImageValue(img, 'locations', newId, record.name, `photo_${idx}`));
             
             DatabaseService.update('locations', newId, {
               cover_path: coverPath,
-              images_json: JSON.stringify(images)
+              images_json: JSON.stringify(finalImages)
             });
           }
         }
@@ -327,16 +344,9 @@ class ExportService {
             const modules = JSON.parse(newPlan.modules_json || '[]');
             modules.forEach((m, mIdx) => {
               if (m.data?.images) {
-                m.data.images.forEach((img, imgIdx) => {
-                  if (img && typeof img === 'object') {
-                    let p = getTempPath(img.path);
-                    if (p && p !== img.path) {
-                      p = copyToEntityDir(p, 'plans', newId, record.title, `mod_${mIdx}_img_${imgIdx}`);
-                    }
-                    img.path = p;
-                    img.url = pathToLocalImageURL(img.path);
-                  }
-                });
+                m.data.images = m.data.images.map((img, imgIdx) => (
+                  importImageValue(img, 'plans', newId, record.title, `mod_${mIdx}_img_${imgIdx}`)
+                ));
               }
               if (m.data?.avatar) {
                 let p = getTempPath(m.data.avatarPath || m.data.avatar);
@@ -371,16 +381,9 @@ class ExportService {
               if (m.data?.items) {
                 m.data.items.forEach((item, itemIdx) => {
                   if (item.images) {
-                    item.images.forEach((img, imgIdx) => {
-                      if (img && typeof img === 'object') {
-                        let p = getTempPath(img.path);
-                        if (p && p !== img.path) {
-                          p = copyToEntityDir(p, 'plans', newId, record.title, `mod_${mIdx}_item_${itemIdx}_img_${imgIdx}`);
-                        }
-                        img.path = p;
-                        img.url = pathToLocalImageURL(img.path);
-                      }
-                    });
+                    item.images = item.images.map((img, imgIdx) => (
+                      importImageValue(img, 'plans', newId, record.title, `mod_${mIdx}_item_${itemIdx}_img_${imgIdx}`)
+                    ));
                   }
                 });
               }
@@ -404,19 +407,10 @@ class ExportService {
             const newId = record.id;
             
             const images = JSON.parse(newItem.images_json || '[]');
-            images.forEach((img, idx) => {
-              if (img && typeof img === 'object') {
-                let p = getTempPath(img.path);
-                if (p && p !== img.path) {
-                  p = copyToEntityDir(p, 'clothing', newId, record.name, `photo_${idx}`);
-                }
-                img.path = p;
-                img.url = pathToLocalImageURL(p);
-              }
-            });
+            const finalImages = images.map((img, idx) => importImageValue(img, 'clothing', newId, record.name, `photo_${idx}`));
             
             DatabaseService.update('clothing', newId, {
-              images_json: JSON.stringify(images)
+              images_json: JSON.stringify(finalImages)
             });
           }
         }
@@ -432,19 +426,10 @@ class ExportService {
             const newId = record.id;
             
             const images = JSON.parse(newItem.images_json || '[]');
-            images.forEach((img, idx) => {
-              if (img && typeof img === 'object') {
-                let p = getTempPath(img.path);
-                if (p && p !== img.path) {
-                  p = copyToEntityDir(p, 'props', newId, record.name, `photo_${idx}`);
-                }
-                img.path = p;
-                img.url = pathToLocalImageURL(p);
-              }
-            });
+            const finalImages = images.map((img, idx) => importImageValue(img, 'props', newId, record.name, `photo_${idx}`));
             
             DatabaseService.update('props', newId, {
-              images_json: JSON.stringify(images)
+              images_json: JSON.stringify(finalImages)
             });
           }
         }
@@ -460,19 +445,10 @@ class ExportService {
             const newId = record.id;
             
             const images = JSON.parse(newItem.images_json || '[]');
-            images.forEach((img, idx) => {
-              if (img && typeof img === 'object') {
-                let p = getTempPath(img.path);
-                if (p && p !== img.path) {
-                  p = copyToEntityDir(p, 'makeup', newId, record.name, `photo_${idx}`);
-                }
-                img.path = p;
-                img.url = pathToLocalImageURL(p);
-              }
-            });
+            const finalImages = images.map((img, idx) => importImageValue(img, 'makeup', newId, record.name, `photo_${idx}`));
             
             DatabaseService.update('makeup', newId, {
-              images_json: JSON.stringify(images)
+              images_json: JSON.stringify(finalImages)
             });
           }
         }
@@ -491,6 +467,14 @@ class ExportService {
     } catch (e) {
       console.error('[ExportService] 导入失败:', e);
       return { success: false, error: e.message };
+    } finally {
+      if (importTempDir && fs.existsSync(importTempDir)) {
+        try {
+          fs.rmSync(importTempDir, { recursive: true, force: true });
+        } catch (e) {
+          console.warn('[ExportService] 清理临时文件夹失败:', e);
+        }
+      }
     }
   }
 }

@@ -7,7 +7,7 @@
           {{ module.type === 'custom' ? 'Custom' : module.type }}
         </h3>
         <h2 class="text-luxury-title-lg text-morandi-text mb-4">{{ module.title }}</h2>
-        <p class="text-luxury-body text-morandi-text/90 whitespace-pre-wrap">{{ module.data.description || '暂无描述' }}</p>
+        <p class="canvas-copy text-luxury-body text-morandi-text/90">{{ module.data.description || '暂无描述' }}</p>
       </div>
       
       <!-- 图片区域 -->

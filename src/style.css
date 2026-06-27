@@ -218,6 +218,12 @@ select option {
     font-variant-numeric: tabular-nums lining-nums;
   }
 
+  .canvas-copy {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
   /* 对比度强反色保护类 */
   .text-forced-ink {
     color: #2C2C2C !important;

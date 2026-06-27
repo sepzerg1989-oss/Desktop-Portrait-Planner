@@ -1,15 +1,15 @@
 <template>
-  <div class="h-full bg-morandi-canvas overflow-y-auto px-12 py-16 scroll-smooth" id="canvas-container">
-    <div id="export-canvas" class="max-w-4xl mx-auto bg-morandi-paper shadow-[0_10px_35px_rgba(0,0,0,0.015),0_30px_90px_rgba(0,0,0,0.035)] min-h-full p-16 rounded-none">
+  <div class="h-full bg-morandi-canvas overflow-y-auto px-8 py-10 scroll-smooth" id="canvas-container">
+    <div id="export-canvas" class="max-w-4xl mx-auto bg-morandi-paper shadow-[0_10px_35px_rgba(0,0,0,0.015),0_30px_90px_rgba(0,0,0,0.035)] min-h-full p-8 rounded-none">
       
       <!-- 动态渲染所有模块 -->
       <div 
         v-for="module in renderedModules" 
         :key="module.id"
         :id="'module-' + module.id"
-        class="group transition-all duration-500 py-16 pl-6 border-l-2 border-transparent border-t border-morandi-border/30 first:border-t-0 first:pt-0"
+        class="group transition-all duration-500 py-16 border-t border-morandi-border/30 first:border-t-0 first:pt-0"
         :class="[ 
-          (isEditing && store.activeModuleId === module.id) ? 'border-l-morandi-red bg-morandi-canvas/10' : '',
+          (isEditing && store.activeModuleId === module.id) ? 'shadow-[-2px_0_0_var(--color-primary-red)] bg-morandi-canvas/10' : '',
           isEditing ? 'cursor-pointer' : ''
         ]"
         @click="isEditing && store.setActiveModule(module.id)"

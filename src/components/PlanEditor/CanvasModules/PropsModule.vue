@@ -30,7 +30,7 @@
 
           <!-- 文字排版参数 (斜杠拼接，自动换行) -->
           <div class="border-t border-morandi-border/30 mt-3 pt-3 text-center px-1">
-            <div class="font-serif text-[10px] text-morandi-text leading-relaxed whitespace-pre-wrap">
+            <div class="canvas-copy font-serif text-[10px] text-morandi-text leading-relaxed">
               <span class="font-bold">{{ img.parent.name || '未命名道具' }}</span>
               <span v-if="img.parent.tags && img.parent.tags.length > 0" class="text-morandi-muted font-sans font-normal text-[8px] tracking-wider">
                 / {{ Array.isArray(img.parent.tags) ? img.parent.tags.join(' · ') : img.parent.tags }}

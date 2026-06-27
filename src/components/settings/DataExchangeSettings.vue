@@ -100,12 +100,18 @@ import { ref, reactive, onBeforeUnmount } from 'vue'
 import { usePlanStore } from '../../store/planStore'
 import { useModelStore } from '../../store/modelStore'
 import { useLocationStore } from '../../store/locationStore'
+import { useClothingStore } from '../../store/clothingStore'
+import { usePropsStore } from '../../store/propsStore'
+import { useMakeupStore } from '../../store/makeupStore'
 import DataExchangeModal from '../common/DataExchangeModal.vue'
 import MorandiModal from '../common/MorandiModal.vue'
 
 const planStore = usePlanStore()
 const modelStore = useModelStore()
 const locationStore = useLocationStore()
+const clothingStore = useClothingStore()
+const propsStore = usePropsStore()
+const makeupStore = useMakeupStore()
 
 const showExportModal = ref(false)
 const isImporting = ref(false)
@@ -214,6 +220,9 @@ const executeImport = async (filePath = null) => {
         planStore.fetchPlans(),
         modelStore.fetchAll(),
         locationStore.fetchAll(),
+        clothingStore.fetchAll(),
+        propsStore.fetchAll(),
+        makeupStore.fetchAll(),
       ])
       setTimeout(() => {
         importSuccess.value = false

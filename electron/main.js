@@ -10,6 +10,12 @@ import DatabaseService from './services/DatabaseService.js'
 import ImageService from './services/ImageService.js'
 import ExportService from './services/ExportService.js'
 import UpdateService from './services/UpdateService.js'
+import {
+  getImageMimeType,
+  isAllowedImagePath,
+  resolveLocalImageRequestPath,
+  localImageUrlToPath
+} from './services/DataSafety.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const themeStore = new Store({ name: 'theme-config' })
@@ -66,14 +72,13 @@ protocol.registerSchemesAsPrivileged([
 app.whenReady().then(async () => {
   // 注册自定义协议处理器 — 将 local-image://path 映射到本地文件
   protocol.handle('local-image', async (request) => {
-    const url = new URL(request.url)
-    let filePath = decodeURIComponent(url.pathname)
-
-    if (process.platform === 'win32' && filePath.startsWith('/')) {
-      filePath = filePath.substring(1)
-    }
+    const filePath = resolveLocalImageRequestPath(request.url)
+    const workspacePath = WorkspaceService.getPath()
 
     try {
+      if (!isAllowedImagePath(filePath, workspacePath)) {
+        return new Response('Access denied', { status: 403 })
+      }
       await fs.promises.access(filePath, fs.constants.R_OK)
     } catch (e) {
       return new Response('File not found', { status: 404 })
@@ -81,14 +86,8 @@ app.whenReady().then(async () => {
 
     // 使用流式返回，避免阻塞主进程
     const stream = fs.createReadStream(filePath)
-    const ext = path.extname(filePath).toLowerCase()
-    const mimeMap = {
-      '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
-      '.png': 'image/png', '.webp': 'image/webp',
-      '.gif': 'image/gif', '.bmp': 'image/bmp',
-    }
     return new Response(stream, {
-      headers: { 'Content-Type': mimeMap[ext] || 'image/jpeg' },
+      headers: { 'Content-Type': getImageMimeType(filePath) },
     })
   })
 
@@ -307,15 +306,17 @@ ipcMain.handle('clipboard:copyImage', async (event, pathOrUrl) => {
     }
     
     // 如果是 local-image://host/ 格式，需要还原为本地路径
-    if (pathOrUrl.startsWith('local-image://host/')) {
-      filePath = decodeURIComponent(pathOrUrl.replace('local-image://host/', ''))
-    }
+    filePath = localImageUrlToPath(filePath)
     
     // Windows 下如果路径以斜杠开头，比如 /D:/...，去除开头的斜杠
     if (process.platform === 'win32' && filePath.startsWith('/')) {
       filePath = filePath.substring(1)
     }
     
+    if (!isAllowedImagePath(filePath, WorkspaceService.getPath())) {
+      return { success: false, error: 'Access denied' }
+    }
+
     if (!fs.existsSync(filePath)) {
       return { success: false, error: `File not found: ${filePath}` }
     }

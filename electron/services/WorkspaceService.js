@@ -51,6 +51,9 @@ class WorkspaceService {
       path.join(dirPath, 'images', 'models'),
       path.join(dirPath, 'images', 'locations'),
       path.join(dirPath, 'images', 'plans'),
+      path.join(dirPath, 'images', 'clothing'),
+      path.join(dirPath, 'images', 'props'),
+      path.join(dirPath, 'images', 'makeup'),
       path.join(dirPath, 'exports')
     ]
 

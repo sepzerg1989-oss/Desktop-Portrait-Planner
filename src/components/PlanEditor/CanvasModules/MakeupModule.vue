@@ -40,7 +40,7 @@
             </span>
           </div>
 
-          <div v-if="module.data.description" class="text-xs text-morandi-muted/90 font-sans leading-relaxed whitespace-pre-wrap mt-4">
+          <div v-if="module.data.description" class="canvas-copy text-xs text-morandi-muted/90 font-sans leading-relaxed mt-4">
             {{ module.data.description }}
           </div>
         </div>

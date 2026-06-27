@@ -2,7 +2,7 @@
   <div class="mb-0">
     <div class="text-center mb-12 select-none">
       <h1 class="text-luxury-display text-morandi-text mb-6">{{ module.data.title }}</h1>
-      <p class="text-luxury-body text-morandi-muted max-w-2xl mx-auto">{{ module.data.description }}</p>
+      <p class="canvas-copy text-luxury-body text-morandi-muted max-w-2xl mx-auto">{{ module.data.description }}</p>
     </div>
     
     <!-- 主题图片排版 -->
