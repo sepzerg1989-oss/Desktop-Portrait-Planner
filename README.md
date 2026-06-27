@@ -16,6 +16,7 @@
 ---
 
 ## 🎨 界面视觉预览
+<img width="1280" height="680" alt="image" src="https://github.com/user-attachments/assets/66268149-73e0-48e7-88ac-53ab07af0b40" />
 
 应用拥有一套极具艺术感的**无边框（Frameless）高奢莫兰迪（Morandi）多主题界面设计**，支持 6 套精心调配的莫兰迪色系主题一键切换：
 
@@ -33,10 +34,19 @@
 
 ### 👥 2. 五大独立摄影资源库
 * **模特库 (Models)**：全面管理模特档案，包含联系方式、地区、合作报价、模卡文件，并支持上传个人样片图集。
+<img width="1280" height="676" alt="image" src="https://github.com/user-attachments/assets/c34a746d-73ac-4247-bdc3-c6f47b0a48bd" />
+
 * **场地库 (Locations)**：整理机位与拍摄点位，管理档期价格、详细地址，以及上传场地环境图集。
+<img width="1278" height="682" alt="image" src="https://github.com/user-attachments/assets/49d29bb7-36d3-4637-9e66-7f23d4d73832" />
+
 * **服装搭配库 (Clothing)**：记录服装风格、购买链接及参考图，方便随时在策划中绑定。
+<img width="1280" height="676" alt="image" src="https://github.com/user-attachments/assets/153ccfd7-0e56-4ae5-9b5a-4b873bbceccd" />
+
 * **拍摄道具库 (Props)**：管理拥有的拍摄道具、参考样式与购买地址。
+<img width="1280" height="681" alt="image" src="https://github.com/user-attachments/assets/cca951c5-f23f-473a-8bb5-327e0f18a2b9" />
+
 * **妆面造型库 (Makeup)**：积累妆容灵感、发型造型与参考图集。
+<img width="1280" height="679" alt="image" src="https://github.com/user-attachments/assets/23606233-5db6-45d4-8ae2-489e99cad2fe" />
 
 ### 📝 3. 积木式模块化策划编辑器 (Drag-and-Drop Canvas)
 * 策划案支持一键调用预设模板，或在画布中自由拼装模块。
@@ -46,10 +56,13 @@
 ### ☀️ 4. 智能户外日照时刻计算 (Golden Hour Calculator)
 * 拍摄日期模块集成了天文学算法 `suncalc`。
 * 仅需选择拍摄城市或输入对应经纬度，即可自动计算并可视化渲染拍摄当天的**黄金时间段（Golden Hour）**、**蓝调时间段（Blue Hour）**、日出日落及晨昏蒙影时刻，助您精准掌控外景自然光。
+<img width="1280" height="681" alt="image" src="https://github.com/user-attachments/assets/408edb27-ba60-411a-aad2-99ac6920c8f7" />
+
 
 ### 🖼️ 5. 高清长图导出与备份数据包 (Export System)
 * **长图导出**：一键将策划案的画布内容排版并渲染导出为一张极具质感的高清长图，方便发送至微信、小红书与模特或客户沟通。
 * **数据包导入/导出**：将策划案及关联的所有模特、场地、服装、道具等高清物理图片，一键打包为 `.portrait` 压缩数据包，实现轻松共享或全量备份。
+<img width="1280" height="680" alt="image" src="https://github.com/user-attachments/assets/ac3765d5-452c-4b3d-acf8-98925cba7ddd" />
 
 ---
 
