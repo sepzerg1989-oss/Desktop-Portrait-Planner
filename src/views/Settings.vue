@@ -63,6 +63,7 @@ import ThemeSettings from '../components/settings/ThemeSettings.vue'
 import StorageSettings from '../components/settings/StorageSettings.vue'
 import DataExchangeSettings from '../components/settings/DataExchangeSettings.vue'
 import UpdateSettings from '../components/settings/UpdateSettings.vue'
+import AISettings from '../components/settings/AISettings.vue'
 
 const tabs = [
   {
@@ -79,6 +80,11 @@ const tabs = [
     id: 'exchange',
     name: '导入导出',
     component: DataExchangeSettings
+  },
+  {
+    id: 'ai',
+    name: 'AI 创意',
+    component: AISettings
   },
   {
     id: 'update',

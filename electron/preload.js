@@ -110,6 +110,18 @@ contextBridge.exposeInMainWorld('electronAPI', {
     setBackgroundColor: (hexColor) => ipcRenderer.send('theme:setBackgroundColor', hexColor)
   },
 
+  // ==================== AI 创意生成 ====================
+  ai: {
+    getConfig: () => ipcRenderer.invoke('ai:getConfig'),
+    saveConfig: (config) => ipcRenderer.invoke('ai:saveConfig', config),
+    resetPrompt: () => ipcRenderer.invoke('ai:resetPrompt'),
+    generateThemeCopy: (payload) => ipcRenderer.invoke('ai:generateThemeCopy', payload),
+    testConnection: (config) => ipcRenderer.invoke('ai:testConnection', config)
+  },
+
+  // ==================== 系统外部打开 ====================
+  openExternal: (url) => ipcRenderer.invoke('system:openExternal', url),
+
   // ==================== 剪贴板 ====================
   clipboard: {
     copyImage: (pathOrUrl) => ipcRenderer.invoke('clipboard:copyImage', pathOrUrl)

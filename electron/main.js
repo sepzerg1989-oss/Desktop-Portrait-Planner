@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, protocol, dialog, Menu, clipboard, nativeImage } from 'electron'
+import { app, BrowserWindow, ipcMain, protocol, dialog, Menu, clipboard, nativeImage, shell } from 'electron'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import fs from 'fs'
@@ -10,6 +10,7 @@ import DatabaseService from './services/DatabaseService.js'
 import ImageService from './services/ImageService.js'
 import ExportService from './services/ExportService.js'
 import UpdateService from './services/UpdateService.js'
+import AIService from './services/AIService.js'
 import {
   getImageMimeType,
   isAllowedImagePath,
@@ -19,6 +20,7 @@ import {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const themeStore = new Store({ name: 'theme-config' })
+AIService.setWorkspaceService(WorkspaceService)
 
 function createWindow() {
   const savedTheme = themeStore.get('theme', 'default')
@@ -413,6 +415,33 @@ ipcMain.on('theme:setBackgroundColor', (event, hexColor) => {
   if (win && !win.isDestroyed()) {
     win.setBackgroundColor(hexColor)
   }
+})
+
+// --- AI 创意生成 ---
+ipcMain.handle('ai:getConfig', () => {
+  return AIService.getConfig()
+})
+
+ipcMain.handle('ai:saveConfig', (event, config) => {
+  return AIService.saveConfig(config)
+})
+
+ipcMain.handle('ai:resetPrompt', () => {
+  return AIService.resetPrompt()
+})
+
+ipcMain.handle('ai:generateThemeCopy', async (event, payload) => {
+  return await AIService.generateThemeCopy(payload)
+})
+
+ipcMain.handle('ai:testConnection', async (event, config) => {
+  return await AIService.testConnection(config)
+})
+
+// --- 系统工具 ---
+ipcMain.handle('system:openExternal', async (event, url) => {
+  await shell.openExternal(url)
+  return { success: true }
 })
 
 // --- 自动与手动更新 ---

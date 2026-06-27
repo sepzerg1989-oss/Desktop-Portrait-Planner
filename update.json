@@ -1,6 +1,6 @@
 {
-  "version": "1.5.5",
-  "changelog": "1.策划编辑页面增加了复制画布的图片到剪切板的功能，用户可以把鼠标移动到想要复制的图片上，通过Ctrl+C复制到剪切板，再通过Ctrl+V粘贴到另一个任何一个模块的上传区域中\n 2. 优化了Tag筛选的bug\n 3. 修复了自动更新时无法获取版本号的bug",
-  "downloadUrl": "https://github.com/sepzerg1989-oss/Desktop-Portrait-Planner/releases/download/v1.5.5/PortraitPlanner_Setup.exe",
-  "macDownloadUrl": "https://github.com/sepzerg1989-oss/Desktop-Portrait-Planner/releases/download/v1.5.5/PortraitPlanner_Mac.dmg"
+  "version": "1.6.0",
+  "changelog": "1.新增了AI创意生成文案的功能，可在主题模块下点击Ai创意标签一键生成文案，使用前须前往全局设置-Ai创意工作台配置API\n 2. 修复了一些BUG",
+  "downloadUrl": "https://github.com/sepzerg1989-oss/Desktop-Portrait-Planner/releases/download/v1.6.0/PortraitPlanner_Setup.exe",
+  "macDownloadUrl": "https://github.com/sepzerg1989-oss/Desktop-Portrait-Planner/releases/download/v1.6.0/PortraitPlanner_Mac.dmg"
 }

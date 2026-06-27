@@ -20,8 +20,14 @@ test('export paper uses compact padding for phone viewing', () => {
 })
 
 test('module content does not add one-sided horizontal spacing', () => {
-  const moduleLine = canvas.split('\n').find((line) => line.includes('group transition-all duration-500'))
+  const moduleLine = canvas.split('\n').find((line) => line.includes('py-16 border-t border-morandi-border'))
 
   assert.doesNotMatch(moduleLine, /\bpl-6\b/)
   assert.doesNotMatch(moduleLine, /\bborder-l-2\b/)
+})
+
+test('active module marker sits outside the content edge', () => {
+  assert.match(canvas, /active-module-marker/)
+  assert.match(canvas, /left:\s*-14px;/)
+  assert.match(canvas, /width:\s*2px;/)
 })

@@ -7,9 +7,9 @@
         v-for="module in renderedModules" 
         :key="module.id"
         :id="'module-' + module.id"
-        class="group transition-all duration-500 py-16 border-t border-morandi-border/30 first:border-t-0 first:pt-0"
+        class="group relative transition-all duration-500 py-16 border-t border-morandi-border/30 first:border-t-0 first:pt-0"
         :class="[ 
-          (isEditing && store.activeModuleId === module.id) ? 'shadow-[-2px_0_0_var(--color-primary-red)] bg-morandi-canvas/10' : '',
+          (isEditing && store.activeModuleId === module.id) ? 'active-module-marker bg-morandi-canvas/10' : '',
           isEditing ? 'cursor-pointer' : ''
         ]"
         @click="isEditing && store.setActiveModule(module.id)"
@@ -283,6 +283,17 @@ onMounted(() => {
 /* 按钮及其内容依然保持手型指针，以便于操作 */
 #export-canvas :deep(button), #export-canvas :deep(button *) {
   cursor: pointer !important;
+}
+
+.active-module-marker::before {
+  content: '';
+  position: absolute;
+  left: -14px;
+  top: 4rem;
+  bottom: 4rem;
+  width: 2px;
+  background: var(--color-primary-red);
+  pointer-events: none;
 }
 
 /* Toast 淡入淡出动画 */
