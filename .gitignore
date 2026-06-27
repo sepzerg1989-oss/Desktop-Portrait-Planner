@@ -44,4 +44,7 @@ dist-release/
 projectbackground/
 .agents/
 Requirement_input/
+AGENTS.md
 Agent.md
+.codex/
+.vscode/
