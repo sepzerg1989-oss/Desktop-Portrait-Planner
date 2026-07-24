@@ -1,7 +1,7 @@
 {
   "name": "portraitplanner",
   "private": true,
-  "version": "1.6.0",
+  "version": "1.6.1",
   "type": "module",
   "main": "dist-electron/main.js",
   "scripts": {
@@ -49,7 +49,9 @@
     },
     "files": [
       "dist",
-      "dist-electron"
+      "dist-electron",
+      "build/icon.ico",
+      "build/logo.png"
     ],
     "win": {
       "icon": "build/icon.ico",

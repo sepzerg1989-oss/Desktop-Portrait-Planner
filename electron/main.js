@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, protocol, dialog, Menu, clipboard, nativeImage, shell } from 'electron'
+import { app, BrowserWindow, ipcMain, protocol, dialog, Menu, Tray, clipboard, nativeImage, shell } from 'electron'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import fs from 'fs'
@@ -11,6 +11,7 @@ import ImageService from './services/ImageService.js'
 import ExportService from './services/ExportService.js'
 import UpdateService from './services/UpdateService.js'
 import AIService from './services/AIService.js'
+import AppBehaviorService from './services/AppBehaviorService.js'
 import {
   getImageMimeType,
   isAllowedImagePath,
@@ -21,6 +22,7 @@ import {
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const themeStore = new Store({ name: 'theme-config' })
 AIService.setWorkspaceService(WorkspaceService)
+let mainWindow = null
 
 function createWindow() {
   const savedTheme = themeStore.get('theme', 'default')
@@ -55,6 +57,8 @@ function createWindow() {
     // 生产环境下加载打包后的文件
     win.loadFile(path.join(__dirname, '../dist/index.html'))
   }
+
+  return win
 }
 
 // ==================== 注册本地图片自定义协议 ====================
@@ -106,7 +110,15 @@ app.whenReady().then(async () => {
     }
   }
 
-  createWindow()
+  mainWindow = createWindow()
+  AppBehaviorService.init({
+    app,
+    mainWindow,
+    Tray,
+    Menu,
+    nativeImage,
+    dialog
+  })
 
   // 启动 4 秒后延迟执行自动更新检测，避免抢占首屏资源
   setTimeout(() => {
@@ -121,19 +133,29 @@ app.whenReady().then(async () => {
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow()
+      mainWindow = createWindow()
+      AppBehaviorService.bindWindow(mainWindow)
+      AppBehaviorService.createTray()
+    } else {
+      AppBehaviorService.showWindow()
     }
   })
 })
 
+app.on('before-quit', () => {
+  AppBehaviorService.markQuitting()
+})
+
 app.on('window-all-closed', () => {
-  DatabaseService.close()
-  if (process.platform !== 'darwin') {
+  if (AppBehaviorService.shouldQuitWhenAllWindowsClosed()) {
+    DatabaseService.close()
     app.quit()
   }
 })
 
 // ==================== IPC 处理器注册 ====================
+
+AppBehaviorService.registerIpc(ipcMain)
 
 // --- 工作区相关 ---
 ipcMain.handle('workspace:getPath', () => {

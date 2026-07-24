@@ -74,6 +74,17 @@ e.exposeInMainWorld("electronAPI", {
 		toggleMaximize: () => t.send("window-toggle-maximize"),
 		close: () => t.send("window-close")
 	},
+	appBehavior: {
+		getSettings: () => t.invoke("app-behavior:getSettings"),
+		saveSettings: (e) => t.invoke("app-behavior:saveSettings", e),
+		getCapabilities: () => t.invoke("app-behavior:getCapabilities"),
+		resolveCloseNotice: (e) => t.invoke("app-behavior:resolveCloseNotice", e),
+		onCloseNotice: (e) => {
+			let n = (t, n) => e(n);
+			return t.on("app-behavior:show-close-notice", n), () => t.removeListener("app-behavior:show-close-notice", n);
+		},
+		quit: () => t.invoke("app-behavior:quit")
+	},
 	theme: {
 		getSavedTheme: () => t.invoke("theme:getSaved"),
 		saveTheme: (e) => t.invoke("theme:save", e),

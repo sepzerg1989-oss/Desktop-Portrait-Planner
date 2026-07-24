@@ -58,12 +58,14 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import ThemeSettings from '../components/settings/ThemeSettings.vue'
 import StorageSettings from '../components/settings/StorageSettings.vue'
 import DataExchangeSettings from '../components/settings/DataExchangeSettings.vue'
 import UpdateSettings from '../components/settings/UpdateSettings.vue'
 import AISettings from '../components/settings/AISettings.vue'
+import BehaviorSettings from '../components/settings/BehaviorSettings.vue'
 
 const tabs = [
   {
@@ -87,18 +89,34 @@ const tabs = [
     component: AISettings
   },
   {
+    id: 'behavior',
+    name: '应用行为',
+    component: BehaviorSettings
+  },
+  {
     id: 'update',
     name: '软件更新',
     component: UpdateSettings
   }
 ]
 
-const activeTab = ref('theme')
+const route = useRoute()
+const initialTab = tabs.some(tab => tab.id === route.query.tab) ? route.query.tab : 'theme'
+const activeTab = ref(initialTab)
 
 const activeComponent = computed(() => {
   const active = tabs.find(t => t.id === activeTab.value)
   return active ? active.component : null
 })
+
+watch(
+  () => route.query.tab,
+  (tab) => {
+    if (tabs.some(item => item.id === tab)) {
+      activeTab.value = tab
+    }
+  }
+)
 </script>
 
 <style scoped>

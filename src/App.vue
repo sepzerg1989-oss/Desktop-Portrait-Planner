@@ -1,19 +1,42 @@
 <script setup>
 import { useRoute } from 'vue-router'
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import TopHeader from './components/TopHeader.vue'
 import TitleBar from './components/common/TitleBar.vue'
 import UpdatePromptModal from './components/common/UpdatePromptModal.vue'
+import CloseToBackgroundModal from './components/common/CloseToBackgroundModal.vue'
 import { useThemeStore } from './store/themeStore'
 
 const route = useRoute()
 const isMac = ref(false)
 const themeStore = useThemeStore()
+const showCloseNotice = ref(false)
+const closeNoticeTarget = ref('系统托盘')
+let cleanupCloseNotice = null
 
 onMounted(() => {
   themeStore.initTheme()
   isMac.value = window.navigator.platform.toUpperCase().indexOf('MAC') >= 0
+
+  if (window.electronAPI?.appBehavior?.onCloseNotice) {
+    cleanupCloseNotice = window.electronAPI.appBehavior.onCloseNotice((payload) => {
+      closeNoticeTarget.value = payload?.backgroundTargetLabel || '系统托盘'
+      showCloseNotice.value = true
+    })
+  }
 })
+
+onUnmounted(() => {
+  if (cleanupCloseNotice) cleanupCloseNotice()
+})
+
+const resolveCloseNotice = async (action, payload) => {
+  showCloseNotice.value = false
+  await window.electronAPI.appBehavior.resolveCloseNotice({
+    action,
+    dontShowAgain: payload?.dontShowAgain === true
+  })
+}
 </script>
 
 <template>
@@ -36,6 +59,13 @@ onMounted(() => {
 
     <!-- 自动更新弹窗组件 -->
     <UpdatePromptModal />
+
+    <CloseToBackgroundModal
+      :show="showCloseNotice"
+      :target-label="closeNoticeTarget"
+      @hide="resolveCloseNotice('hide', $event)"
+      @quit="resolveCloseNotice('quit', $event)"
+    />
   </div>
 </template>
 

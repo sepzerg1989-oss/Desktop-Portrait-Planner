@@ -103,6 +103,20 @@ contextBridge.exposeInMainWorld('electronAPI', {
     close: () => ipcRenderer.send('window-close')
   },
 
+  // ==================== 应用行为设置 ====================
+  appBehavior: {
+    getSettings: () => ipcRenderer.invoke('app-behavior:getSettings'),
+    saveSettings: (settings) => ipcRenderer.invoke('app-behavior:saveSettings', settings),
+    getCapabilities: () => ipcRenderer.invoke('app-behavior:getCapabilities'),
+    resolveCloseNotice: (payload) => ipcRenderer.invoke('app-behavior:resolveCloseNotice', payload),
+    onCloseNotice: (callback) => {
+      const listener = (event, payload) => callback(payload)
+      ipcRenderer.on('app-behavior:show-close-notice', listener)
+      return () => ipcRenderer.removeListener('app-behavior:show-close-notice', listener)
+    },
+    quit: () => ipcRenderer.invoke('app-behavior:quit')
+  },
+
   // ==================== 高奢多主题同步与持久化 ====================
   theme: {
     getSavedTheme: () => ipcRenderer.invoke('theme:getSaved'),

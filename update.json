@@ -1,6 +1,6 @@
 {
-  "version": "1.6.0",
-  "changelog": "1.新增了AI创意生成文案的功能，可在主题模块下点击Ai创意标签一键生成文案，使用前须前往全局设置-Ai创意工作台配置API\n 2. 修复了一些BUG",
-  "downloadUrl": "https://github.com/sepzerg1989-oss/Desktop-Portrait-Planner/releases/download/v1.6.0/PortraitPlanner_Setup.exe",
-  "macDownloadUrl": "https://github.com/sepzerg1989-oss/Desktop-Portrait-Planner/releases/download/v1.6.0/PortraitPlanner_Mac.dmg"
+  "version": "1.6.1",
+  "changelog": "1.增加了关闭后常驻后台以及开启自动启动选项\n 2. 修复了一些BUG",
+  "downloadUrl": "https://github.com/sepzerg1989-oss/Desktop-Portrait-Planner/releases/download/v1.6.1/PortraitPlanner_Setup.exe",
+  "macDownloadUrl": "https://github.com/sepzerg1989-oss/Desktop-Portrait-Planner/releases/download/v1.6.1/PortraitPlanner_Mac.dmg"
 }
